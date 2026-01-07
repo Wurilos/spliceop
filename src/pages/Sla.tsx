@@ -5,17 +5,22 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { DataTable } from '@/components/shared/DataTable';
 import { DeleteDialog } from '@/components/shared/DeleteDialog';
+import { ImportDialog } from '@/components/shared/ImportDialog';
 import { SlaForm } from '@/components/sla/SlaForm';
 import { useSlaMetrics } from '@/hooks/useSlaMetrics';
 import { useContracts } from '@/hooks/useContracts';
 import { Badge } from '@/components/ui/badge';
 import { exportToPDF, exportToExcel, exportToCSV } from '@/lib/export';
+import { slaImportConfig } from '@/lib/importConfigs';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export default function Sla() {
   const { slaMetrics, isLoading, deleteSlaMetric } = useSlaMetrics();
   const { contracts } = useContracts();
   const [formOpen, setFormOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [selectedMetric, setSelectedMetric] = useState<any>(null);
 
   const getContractName = (contractId: string) => {
@@ -102,6 +107,12 @@ export default function Sla() {
     else exportToCSV(data, exportColumns, 'sla');
   };
 
+  const handleImport = async (data: any[]) => {
+    const { error } = await supabase.from('sla_metrics').insert(data);
+    if (error) throw error;
+    toast.success(`${data.length} registros importados com sucesso!`);
+  };
+
   return (
     <AppLayout>
       <PageHeader
@@ -112,6 +123,7 @@ export default function Sla() {
           setFormOpen(true);
         }}
         onExport={handleExport}
+        onImport={() => setImportOpen(true)}
       />
 
       <DataTable
@@ -135,6 +147,16 @@ export default function Sla() {
         onConfirm={confirmDelete}
         title="Excluir Métrica"
         description="Tem certeza que deseja excluir esta métrica de SLA?"
+      />
+
+      <ImportDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        onImport={handleImport}
+        title="Importar Métricas SLA"
+        columnMappings={slaImportConfig.mappings}
+        templateColumns={slaImportConfig.templateColumns}
+        templateFilename="template_sla"
       />
     </AppLayout>
   );

@@ -5,16 +5,21 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { DataTable } from '@/components/shared/DataTable';
 import { DeleteDialog } from '@/components/shared/DeleteDialog';
+import { ImportDialog } from '@/components/shared/ImportDialog';
 import { ImageMetricForm } from '@/components/image-metrics/ImageMetricForm';
 import { useImageMetrics } from '@/hooks/useImageMetrics';
 import { useEquipment } from '@/hooks/useEquipment';
 import { exportToPDF, exportToExcel, exportToCSV } from '@/lib/export';
+import { imageMetricImportConfig } from '@/lib/importConfigs';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export default function ImageMetrics() {
   const { imageMetrics, isLoading, deleteImageMetric } = useImageMetrics();
   const { equipment } = useEquipment();
   const [formOpen, setFormOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [selectedMetric, setSelectedMetric] = useState<any>(null);
 
   const getEquipmentSerial = (equipmentId: string) => {
@@ -82,6 +87,12 @@ export default function ImageMetrics() {
     else exportToCSV(data, exportColumns, 'metricas_imagem');
   };
 
+  const handleImport = async (data: any[]) => {
+    const { error } = await supabase.from('image_metrics').insert(data);
+    if (error) throw error;
+    toast.success(`${data.length} registros importados com sucesso!`);
+  };
+
   return (
     <AppLayout>
       <PageHeader
@@ -92,6 +103,7 @@ export default function ImageMetrics() {
           setFormOpen(true);
         }}
         onExport={handleExport}
+        onImport={() => setImportOpen(true)}
       />
 
       <DataTable
@@ -115,6 +127,16 @@ export default function ImageMetrics() {
         onConfirm={confirmDelete}
         title="Excluir Métrica"
         description="Tem certeza que deseja excluir esta métrica?"
+      />
+
+      <ImportDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        onImport={handleImport}
+        title="Importar Métricas de Aproveitamento"
+        columnMappings={imageMetricImportConfig.mappings}
+        templateColumns={imageMetricImportConfig.templateColumns}
+        templateFilename="template_metricas_imagem"
       />
     </AppLayout>
   );

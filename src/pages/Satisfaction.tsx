@@ -3,16 +3,21 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { DataTable } from '@/components/shared/DataTable';
 import { DeleteDialog } from '@/components/shared/DeleteDialog';
+import { ImportDialog } from '@/components/shared/ImportDialog';
 import { SatisfactionForm } from '@/components/satisfaction/SatisfactionForm';
 import { useCustomerSatisfaction } from '@/hooks/useCustomerSatisfaction';
 import { useContracts } from '@/hooks/useContracts';
 import { exportToPDF, exportToExcel, exportToCSV } from '@/lib/export';
+import { satisfactionImportConfig } from '@/lib/importConfigs';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export default function Satisfaction() {
   const { satisfactionRecords, isLoading, deleteSatisfaction } = useCustomerSatisfaction();
   const { contracts } = useContracts();
   const [formOpen, setFormOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<any>(null);
 
   const getContractName = (contractId: string) => {
@@ -76,6 +81,12 @@ export default function Satisfaction() {
     else exportToCSV(data, exportColumns, 'satisfacao');
   };
 
+  const handleImport = async (data: any[]) => {
+    const { error } = await supabase.from('customer_satisfaction').insert(data);
+    if (error) throw error;
+    toast.success(`${data.length} registros importados com sucesso!`);
+  };
+
   return (
     <AppLayout>
       <PageHeader
@@ -86,6 +97,7 @@ export default function Satisfaction() {
           setFormOpen(true);
         }}
         onExport={handleExport}
+        onImport={() => setImportOpen(true)}
       />
 
       <DataTable
@@ -109,6 +121,16 @@ export default function Satisfaction() {
         onConfirm={confirmDelete}
         title="Excluir Registro"
         description="Tem certeza que deseja excluir esta pesquisa de satisfação?"
+      />
+
+      <ImportDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        onImport={handleImport}
+        title="Importar Pesquisas de Satisfação"
+        columnMappings={satisfactionImportConfig.mappings}
+        templateColumns={satisfactionImportConfig.templateColumns}
+        templateFilename="template_satisfacao"
       />
     </AppLayout>
   );

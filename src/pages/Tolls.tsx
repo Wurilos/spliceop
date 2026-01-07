@@ -5,16 +5,21 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { DataTable } from '@/components/shared/DataTable';
 import { DeleteDialog } from '@/components/shared/DeleteDialog';
+import { ImportDialog } from '@/components/shared/ImportDialog';
 import { TollTagForm } from '@/components/tolls/TollTagForm';
 import { useTollTags } from '@/hooks/useTollTags';
 import { useVehicles } from '@/hooks/useVehicles';
 import { exportToPDF, exportToExcel, exportToCSV } from '@/lib/export';
+import { tollImportConfig } from '@/lib/importConfigs';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export default function Tolls() {
   const { tollTags, isLoading, deleteTollTag } = useTollTags();
   const { vehicles } = useVehicles();
   const [formOpen, setFormOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [selectedTag, setSelectedTag] = useState<any>(null);
 
   const getVehiclePlate = (vehicleId: string) => {
@@ -83,6 +88,12 @@ export default function Tolls() {
     else exportToCSV(data, exportColumns, 'pedagios');
   };
 
+  const handleImport = async (data: any[]) => {
+    const { error } = await supabase.from('toll_tags').insert(data);
+    if (error) throw error;
+    toast.success(`${data.length} registros importados com sucesso!`);
+  };
+
   return (
     <AppLayout>
       <PageHeader
@@ -93,6 +104,7 @@ export default function Tolls() {
           setFormOpen(true);
         }}
         onExport={handleExport}
+        onImport={() => setImportOpen(true)}
       />
 
       <DataTable
@@ -116,6 +128,16 @@ export default function Tolls() {
         onConfirm={confirmDelete}
         title="Excluir Passagem"
         description="Tem certeza que deseja excluir esta passagem de pedágio?"
+      />
+
+      <ImportDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        onImport={handleImport}
+        title="Importar Passagens de Pedágio"
+        columnMappings={tollImportConfig.mappings}
+        templateColumns={tollImportConfig.templateColumns}
+        templateFilename="template_pedagios"
       />
     </AppLayout>
   );

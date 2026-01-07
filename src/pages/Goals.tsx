@@ -5,17 +5,22 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { DataTable } from '@/components/shared/DataTable';
 import { DeleteDialog } from '@/components/shared/DeleteDialog';
+import { ImportDialog } from '@/components/shared/ImportDialog';
 import { GoalForm } from '@/components/goals/GoalForm';
 import { useServiceGoals } from '@/hooks/useServiceGoals';
 import { useContracts } from '@/hooks/useContracts';
 import { Progress } from '@/components/ui/progress';
 import { exportToPDF, exportToExcel, exportToCSV } from '@/lib/export';
+import { goalImportConfig } from '@/lib/importConfigs';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export default function Goals() {
   const { serviceGoals, isLoading, deleteServiceGoal } = useServiceGoals();
   const { contracts } = useContracts();
   const [formOpen, setFormOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [selectedGoal, setSelectedGoal] = useState<any>(null);
 
   const getContractName = (contractId: string) => {
@@ -91,6 +96,12 @@ export default function Goals() {
     else exportToCSV(data, exportColumns, 'metas');
   };
 
+  const handleImport = async (data: any[]) => {
+    const { error } = await supabase.from('service_goals').insert(data);
+    if (error) throw error;
+    toast.success(`${data.length} registros importados com sucesso!`);
+  };
+
   return (
     <AppLayout>
       <PageHeader
@@ -101,6 +112,7 @@ export default function Goals() {
           setFormOpen(true);
         }}
         onExport={handleExport}
+        onImport={() => setImportOpen(true)}
       />
 
       <DataTable
@@ -124,6 +136,16 @@ export default function Goals() {
         onConfirm={confirmDelete}
         title="Excluir Meta"
         description="Tem certeza que deseja excluir esta meta?"
+      />
+
+      <ImportDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        onImport={handleImport}
+        title="Importar Metas"
+        columnMappings={goalImportConfig.mappings}
+        templateColumns={goalImportConfig.templateColumns}
+        templateFilename="template_metas"
       />
     </AppLayout>
   );

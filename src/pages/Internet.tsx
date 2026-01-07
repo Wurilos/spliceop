@@ -5,16 +5,21 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { DataTable, StatusBadge } from '@/components/shared/DataTable';
 import { DeleteDialog } from '@/components/shared/DeleteDialog';
+import { ImportDialog } from '@/components/shared/ImportDialog';
 import { InternetForm } from '@/components/internet/InternetForm';
 import { useInternetBills } from '@/hooks/useInternetBills';
 import { useContracts } from '@/hooks/useContracts';
 import { exportToPDF, exportToExcel, exportToCSV } from '@/lib/export';
+import { internetImportConfig } from '@/lib/importConfigs';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export default function Internet() {
   const { internetBills, isLoading, deleteInternetBill } = useInternetBills();
   const { contracts } = useContracts();
   const [formOpen, setFormOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [selectedBill, setSelectedBill] = useState<any>(null);
 
   const getContractName = (contractId: string | null) => {
@@ -96,6 +101,12 @@ export default function Internet() {
     else exportToCSV(data, exportColumns, 'internet');
   };
 
+  const handleImport = async (data: any[]) => {
+    const { error } = await supabase.from('internet_bills').insert(data);
+    if (error) throw error;
+    toast.success(`${data.length} registros importados com sucesso!`);
+  };
+
   return (
     <AppLayout>
       <PageHeader
@@ -106,6 +117,7 @@ export default function Internet() {
           setFormOpen(true);
         }}
         onExport={handleExport}
+        onImport={() => setImportOpen(true)}
       />
 
       <DataTable
@@ -129,6 +141,16 @@ export default function Internet() {
         onConfirm={confirmDelete}
         title="Excluir Conta"
         description="Tem certeza que deseja excluir esta conta de internet?"
+      />
+
+      <ImportDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        onImport={handleImport}
+        title="Importar Contas de Internet"
+        columnMappings={internetImportConfig.mappings}
+        templateColumns={internetImportConfig.templateColumns}
+        templateFilename="template_internet"
       />
     </AppLayout>
   );
