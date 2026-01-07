@@ -5,11 +5,15 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { DataTable } from '@/components/shared/DataTable';
 import { DeleteDialog } from '@/components/shared/DeleteDialog';
+import { ImportDialog } from '@/components/shared/ImportDialog';
 import { SealForm } from '@/components/seals/SealForm';
 import { useSeals } from '@/hooks/useSeals';
 import { useEquipment } from '@/hooks/useEquipment';
 import { useEmployees } from '@/hooks/useEmployees';
 import { exportToPDF, exportToExcel, exportToCSV } from '@/lib/export';
+import { sealImportConfig } from '@/lib/importConfigs';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export default function Seals() {
   const { seals, isLoading, deleteSeal } = useSeals();
@@ -17,6 +21,7 @@ export default function Seals() {
   const { employees } = useEmployees();
   const [formOpen, setFormOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [selectedSeal, setSelectedSeal] = useState<any>(null);
 
   const getEquipmentSerial = (equipmentId: string) => {
@@ -90,6 +95,12 @@ export default function Seals() {
     else exportToCSV(data, exportColumns, 'lacres');
   };
 
+  const handleImport = async (data: any[]) => {
+    const { error } = await supabase.from('seals').insert(data);
+    if (error) throw error;
+    toast.success(`${data.length} registros importados com sucesso!`);
+  };
+
   return (
     <AppLayout>
       <PageHeader
@@ -100,6 +111,7 @@ export default function Seals() {
           setFormOpen(true);
         }}
         onExport={handleExport}
+        onImport={() => setImportOpen(true)}
       />
 
       <DataTable
@@ -123,6 +135,16 @@ export default function Seals() {
         onConfirm={confirmDelete}
         title="Excluir Lacre"
         description="Tem certeza que deseja excluir este lacre?"
+      />
+
+      <ImportDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        onImport={handleImport}
+        title="Importar Lacres"
+        columnMappings={sealImportConfig.mappings}
+        templateColumns={sealImportConfig.templateColumns}
+        templateFilename="template_lacres"
       />
     </AppLayout>
   );

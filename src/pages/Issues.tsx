@@ -5,12 +5,16 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { DataTable, StatusBadge } from '@/components/shared/DataTable';
 import { DeleteDialog } from '@/components/shared/DeleteDialog';
+import { ImportDialog } from '@/components/shared/ImportDialog';
 import { IssueForm } from '@/components/issues/IssueForm';
 import { usePendingIssues } from '@/hooks/usePendingIssues';
 import { useContracts } from '@/hooks/useContracts';
 import { useEquipment } from '@/hooks/useEquipment';
 import { Badge } from '@/components/ui/badge';
 import { exportToPDF, exportToExcel, exportToCSV } from '@/lib/export';
+import { issueImportConfig } from '@/lib/importConfigs';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export default function Issues() {
   const { pendingIssues, isLoading, deletePendingIssue } = usePendingIssues();
@@ -18,6 +22,7 @@ export default function Issues() {
   const { equipment } = useEquipment();
   const [formOpen, setFormOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [selectedIssue, setSelectedIssue] = useState<any>(null);
 
   const getContractName = (contractId: string | null) => {
@@ -117,6 +122,12 @@ export default function Issues() {
     else exportToCSV(data, exportColumns, 'pendencias');
   };
 
+  const handleImport = async (data: any[]) => {
+    const { error } = await supabase.from('pending_issues').insert(data);
+    if (error) throw error;
+    toast.success(`${data.length} registros importados com sucesso!`);
+  };
+
   return (
     <AppLayout>
       <PageHeader
@@ -127,6 +138,7 @@ export default function Issues() {
           setFormOpen(true);
         }}
         onExport={handleExport}
+        onImport={() => setImportOpen(true)}
       />
 
       <DataTable
@@ -150,6 +162,16 @@ export default function Issues() {
         onConfirm={confirmDelete}
         title="Excluir Pendência"
         description="Tem certeza que deseja excluir esta pendência?"
+      />
+
+      <ImportDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        onImport={handleImport}
+        title="Importar Pendências"
+        columnMappings={issueImportConfig.mappings}
+        templateColumns={issueImportConfig.templateColumns}
+        templateFilename="template_pendencias"
       />
     </AppLayout>
   );

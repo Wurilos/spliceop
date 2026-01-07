@@ -5,16 +5,21 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { DataTable, StatusBadge } from '@/components/shared/DataTable';
 import { DeleteDialog } from '@/components/shared/DeleteDialog';
+import { ImportDialog } from '@/components/shared/ImportDialog';
 import { AdvanceForm } from '@/components/advances/AdvanceForm';
 import { useAdvances } from '@/hooks/useAdvances';
 import { useEmployees } from '@/hooks/useEmployees';
 import { exportToPDF, exportToExcel, exportToCSV } from '@/lib/export';
+import { advanceImportConfig } from '@/lib/importConfigs';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export default function Advances() {
   const { advances, isLoading, deleteAdvance } = useAdvances();
   const { employees } = useEmployees();
   const [formOpen, setFormOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [selectedAdvance, setSelectedAdvance] = useState<any>(null);
 
   const getEmployeeName = (employeeId: string) => {
@@ -87,6 +92,12 @@ export default function Advances() {
     else exportToCSV(data, exportColumns, 'adiantamentos');
   };
 
+  const handleImport = async (data: any[]) => {
+    const { error } = await supabase.from('advances').insert(data);
+    if (error) throw error;
+    toast.success(`${data.length} registros importados com sucesso!`);
+  };
+
   return (
     <AppLayout>
       <PageHeader
@@ -97,6 +108,7 @@ export default function Advances() {
           setFormOpen(true);
         }}
         onExport={handleExport}
+        onImport={() => setImportOpen(true)}
       />
 
       <DataTable
@@ -120,6 +132,16 @@ export default function Advances() {
         onConfirm={confirmDelete}
         title="Excluir Adiantamento"
         description="Tem certeza que deseja excluir este adiantamento?"
+      />
+
+      <ImportDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        onImport={handleImport}
+        title="Importar Adiantamentos"
+        columnMappings={advanceImportConfig.mappings}
+        templateColumns={advanceImportConfig.templateColumns}
+        templateFilename="template_adiantamentos"
       />
     </AppLayout>
   );
