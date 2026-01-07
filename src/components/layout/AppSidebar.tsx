@@ -80,6 +80,7 @@ const menuGroups = [
       { title: 'Manutenções', href: '/maintenance', icon: Wrench },
       { title: 'Aferições', href: '/calibrations', icon: Award },
       { title: 'Atendimentos', href: '/service-calls', icon: Headphones },
+      { title: 'Infraestrutura', href: '/infrastructure', icon: Building2 },
     ],
   },
   {

@@ -512,6 +512,53 @@ export type Database = {
           },
         ]
       }
+      infrastructure_services: {
+        Row: {
+          contract_id: string | null
+          created_at: string | null
+          date: string
+          id: string
+          municipality: string
+          notes: string | null
+          serial_number: string
+          service_type: string
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          contract_id?: string | null
+          created_at?: string | null
+          date: string
+          id?: string
+          municipality: string
+          notes?: string | null
+          serial_number: string
+          service_type: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          contract_id?: string | null
+          created_at?: string | null
+          date?: string
+          id?: string
+          municipality?: string
+          notes?: string | null
+          serial_number?: string
+          service_type?: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "infrastructure_services_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       internet_bills: {
         Row: {
           contract_id: string | null
