@@ -31,10 +31,10 @@ import { useEquipment } from '@/hooks/useEquipment';
 const formSchema = z.object({
   equipment_id: z.string().min(1, 'Selecione um equipamento'),
   date: z.string().min(1, 'Data/hora é obrigatória'),
-  plate: z.string().optional(),
-  speed: z.coerce.number().optional(),
-  limit_speed: z.coerce.number().optional(),
-  status: z.string().default('pending'),
+  plate: z.string().nullable().optional(),
+  speed: z.coerce.number().nullable().optional(),
+  limit_speed: z.coerce.number().nullable().optional(),
+  status: z.string().nullable().optional().default('pending'),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -85,8 +85,12 @@ export function InfractionForm({ open, onOpenChange, infraction }: InfractionFor
 
   const onSubmit = (values: FormValues) => {
     const data = {
-      ...values,
+      equipment_id: values.equipment_id,
+      date: values.date,
       plate: values.plate || null,
+      speed: values.speed || null,
+      limit_speed: values.limit_speed || null,
+      status: values.status || 'pending',
     };
 
     if (infraction) {

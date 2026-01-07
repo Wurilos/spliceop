@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import AppLayout from '@/components/layout/AppLayout';
+import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { DataTable, StatusBadge } from '@/components/shared/DataTable';
 import { DeleteDialog } from '@/components/shared/DeleteDialog';
@@ -69,6 +69,15 @@ export default function Infractions() {
     }
   };
 
+  const exportColumns = [
+    { key: 'Data/Hora', label: 'Data/Hora' },
+    { key: 'Equipamento', label: 'Equipamento' },
+    { key: 'Placa', label: 'Placa' },
+    { key: 'Velocidade', label: 'Velocidade' },
+    { key: 'Limite', label: 'Limite' },
+    { key: 'Status', label: 'Status' },
+  ];
+
   const handleExport = (type: 'pdf' | 'excel' | 'csv') => {
     const data = infractions.map((i) => ({
       'Data/Hora': format(new Date(i.date), 'dd/MM/yyyy HH:mm'),
@@ -79,9 +88,9 @@ export default function Infractions() {
       Status: i.status || '',
     }));
 
-    if (type === 'pdf') exportToPDF(data, 'Infrações');
-    else if (type === 'excel') exportToExcel(data, 'infracoes');
-    else exportToCSV(data, 'infracoes');
+    if (type === 'pdf') exportToPDF(data, exportColumns, 'Infrações');
+    else if (type === 'excel') exportToExcel(data, exportColumns, 'infracoes');
+    else exportToCSV(data, exportColumns, 'infracoes');
   };
 
   return (

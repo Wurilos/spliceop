@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import AppLayout from '@/components/layout/AppLayout';
+import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { DataTable, StatusBadge } from '@/components/shared/DataTable';
 import { DeleteDialog } from '@/components/shared/DeleteDialog';
@@ -72,6 +72,15 @@ export default function Internet() {
     }
   };
 
+  const exportColumns = [
+    { key: 'Provedor', label: 'Provedor' },
+    { key: 'Mês Referência', label: 'Mês Referência' },
+    { key: 'Contrato', label: 'Contrato' },
+    { key: 'Valor', label: 'Valor' },
+    { key: 'Vencimento', label: 'Vencimento' },
+    { key: 'Status', label: 'Status' },
+  ];
+
   const handleExport = (type: 'pdf' | 'excel' | 'csv') => {
     const data = internetBills.map((b) => ({
       Provedor: b.provider,
@@ -82,9 +91,9 @@ export default function Internet() {
       Status: b.status || '',
     }));
 
-    if (type === 'pdf') exportToPDF(data, 'Contas de Internet');
-    else if (type === 'excel') exportToExcel(data, 'internet');
-    else exportToCSV(data, 'internet');
+    if (type === 'pdf') exportToPDF(data, exportColumns, 'Contas de Internet');
+    else if (type === 'excel') exportToExcel(data, exportColumns, 'internet');
+    else exportToCSV(data, exportColumns, 'internet');
   };
 
   return (

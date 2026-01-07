@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import AppLayout from '@/components/layout/AppLayout';
+import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { DataTable } from '@/components/shared/DataTable';
 import { DeleteDialog } from '@/components/shared/DeleteDialog';
@@ -68,6 +68,14 @@ export default function Seals() {
     }
   };
 
+  const exportColumns = [
+    { key: 'Número do Lacre', label: 'Número do Lacre' },
+    { key: 'Equipamento', label: 'Equipamento' },
+    { key: 'Data Instalação', label: 'Data Instalação' },
+    { key: 'Ordem de Serviço', label: 'Ordem de Serviço' },
+    { key: 'Técnico', label: 'Técnico' },
+  ];
+
   const handleExport = (type: 'pdf' | 'excel' | 'csv') => {
     const data = seals.map((s) => ({
       'Número do Lacre': s.seal_number,
@@ -77,9 +85,9 @@ export default function Seals() {
       Técnico: getTechnicianName(s.technician_id),
     }));
 
-    if (type === 'pdf') exportToPDF(data, 'Lacres e OS');
-    else if (type === 'excel') exportToExcel(data, 'lacres');
-    else exportToCSV(data, 'lacres');
+    if (type === 'pdf') exportToPDF(data, exportColumns, 'Lacres e OS');
+    else if (type === 'excel') exportToExcel(data, exportColumns, 'lacres');
+    else exportToCSV(data, exportColumns, 'lacres');
   };
 
   return (

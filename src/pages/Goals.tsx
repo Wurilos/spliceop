@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import AppLayout from '@/components/layout/AppLayout';
+import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { DataTable } from '@/components/shared/DataTable';
 import { DeleteDialog } from '@/components/shared/DeleteDialog';
@@ -69,6 +69,14 @@ export default function Goals() {
     }
   };
 
+  const exportColumns = [
+    { key: 'Contrato', label: 'Contrato' },
+    { key: 'Mês', label: 'Mês' },
+    { key: 'Meta', label: 'Meta' },
+    { key: 'Realizados', label: 'Realizados' },
+    { key: 'Progresso (%)', label: 'Progresso (%)' },
+  ];
+
   const handleExport = (type: 'pdf' | 'excel' | 'csv') => {
     const data = serviceGoals.map((g) => ({
       Contrato: getContractName(g.contract_id),
@@ -78,9 +86,9 @@ export default function Goals() {
       'Progresso (%)': g.percentage || 0,
     }));
 
-    if (type === 'pdf') exportToPDF(data, 'Metas de Atendimento');
-    else if (type === 'excel') exportToExcel(data, 'metas');
-    else exportToCSV(data, 'metas');
+    if (type === 'pdf') exportToPDF(data, exportColumns, 'Metas de Atendimento');
+    else if (type === 'excel') exportToExcel(data, exportColumns, 'metas');
+    else exportToCSV(data, exportColumns, 'metas');
   };
 
   return (

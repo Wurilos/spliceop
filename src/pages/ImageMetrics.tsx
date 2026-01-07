@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import AppLayout from '@/components/layout/AppLayout';
+import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { DataTable } from '@/components/shared/DataTable';
 import { DeleteDialog } from '@/components/shared/DeleteDialog';
@@ -60,6 +60,14 @@ export default function ImageMetrics() {
     }
   };
 
+  const exportColumns = [
+    { key: 'Data', label: 'Data' },
+    { key: 'Equipamento', label: 'Equipamento' },
+    { key: 'Total Capturas', label: 'Total Capturas' },
+    { key: 'Válidas', label: 'Válidas' },
+    { key: 'Aproveitamento (%)', label: 'Aproveitamento (%)' },
+  ];
+
   const handleExport = (type: 'pdf' | 'excel' | 'csv') => {
     const data = imageMetrics.map((m) => ({
       Data: format(new Date(m.date), 'dd/MM/yyyy'),
@@ -69,9 +77,9 @@ export default function ImageMetrics() {
       'Aproveitamento (%)': m.utilization_rate || 0,
     }));
 
-    if (type === 'pdf') exportToPDF(data, 'Métricas de Aproveitamento');
-    else if (type === 'excel') exportToExcel(data, 'metricas_imagem');
-    else exportToCSV(data, 'metricas_imagem');
+    if (type === 'pdf') exportToPDF(data, exportColumns, 'Métricas de Aproveitamento');
+    else if (type === 'excel') exportToExcel(data, exportColumns, 'metricas_imagem');
+    else exportToCSV(data, exportColumns, 'metricas_imagem');
   };
 
   return (

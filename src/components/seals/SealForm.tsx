@@ -34,9 +34,9 @@ const formSchema = z.object({
   equipment_id: z.string().min(1, 'Selecione um equipamento'),
   seal_number: z.string().min(1, 'Número do lacre é obrigatório'),
   installation_date: z.string().min(1, 'Data de instalação é obrigatória'),
-  service_order: z.string().optional(),
-  technician_id: z.string().optional(),
-  notes: z.string().optional(),
+  service_order: z.string().nullable().optional(),
+  technician_id: z.string().nullable().optional(),
+  notes: z.string().nullable().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -88,7 +88,9 @@ export function SealForm({ open, onOpenChange, seal }: SealFormProps) {
 
   const onSubmit = (values: FormValues) => {
     const data = {
-      ...values,
+      equipment_id: values.equipment_id,
+      seal_number: values.seal_number,
+      installation_date: values.installation_date,
       service_order: values.service_order || null,
       technician_id: values.technician_id || null,
       notes: values.notes || null,

@@ -32,11 +32,11 @@ import { useEmployees } from '@/hooks/useEmployees';
 
 const formSchema = z.object({
   vehicle_id: z.string().min(1, 'Selecione um veículo'),
-  employee_id: z.string().optional(),
+  employee_id: z.string().nullable().optional(),
   date: z.string().min(1, 'Data é obrigatória'),
   initial_km: z.coerce.number().min(0, 'Km inicial inválido'),
   final_km: z.coerce.number().min(0, 'Km final inválido'),
-  notes: z.string().optional(),
+  notes: z.string().nullable().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -48,7 +48,7 @@ interface MileageFormProps {
 }
 
 export function MileageForm({ open, onOpenChange, record }: MileageFormProps) {
-  const { createMileageRecord, updateMileageRecord } = useMileageRecords();
+  const { create, update } = useMileageRecords();
   const { vehicles } = useVehicles();
   const { employees } = useEmployees();
 
@@ -88,15 +88,18 @@ export function MileageForm({ open, onOpenChange, record }: MileageFormProps) {
 
   const onSubmit = (values: FormValues) => {
     const data = {
-      ...values,
+      vehicle_id: values.vehicle_id,
+      date: values.date,
+      initial_km: values.initial_km,
+      final_km: values.final_km,
       employee_id: values.employee_id || null,
       notes: values.notes || null,
     };
 
     if (record) {
-      updateMileageRecord({ id: record.id, ...data });
+      update({ id: record.id, ...data });
     } else {
-      createMileageRecord(data);
+      create(data);
     }
     onOpenChange(false);
   };

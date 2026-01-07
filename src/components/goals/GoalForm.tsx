@@ -31,9 +31,9 @@ import { useContracts } from '@/hooks/useContracts';
 const formSchema = z.object({
   contract_id: z.string().min(1, 'Selecione um contrato'),
   month: z.string().min(1, 'Mês é obrigatório'),
-  target_calls: z.coerce.number().min(0),
-  completed_calls: z.coerce.number().min(0),
-  percentage: z.coerce.number().optional(),
+  target_calls: z.coerce.number().nullable().optional(),
+  completed_calls: z.coerce.number().nullable().optional(),
+  percentage: z.coerce.number().nullable().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -90,10 +90,18 @@ export function GoalForm({ open, onOpenChange, goal }: GoalFormProps) {
   }, [goal, form]);
 
   const onSubmit = (values: FormValues) => {
+    const data = {
+      contract_id: values.contract_id,
+      month: values.month,
+      target_calls: values.target_calls || null,
+      completed_calls: values.completed_calls || null,
+      percentage: values.percentage || null,
+    };
+
     if (goal) {
-      updateServiceGoal({ id: goal.id, ...values });
+      updateServiceGoal({ id: goal.id, ...data });
     } else {
-      createServiceGoal(values);
+      createServiceGoal(data);
     }
     onOpenChange(false);
   };

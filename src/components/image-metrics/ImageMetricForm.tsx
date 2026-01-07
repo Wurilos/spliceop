@@ -31,9 +31,9 @@ import { useEquipment } from '@/hooks/useEquipment';
 const formSchema = z.object({
   equipment_id: z.string().min(1, 'Selecione um equipamento'),
   date: z.string().min(1, 'Data é obrigatória'),
-  total_captures: z.coerce.number().min(0),
-  valid_captures: z.coerce.number().min(0),
-  utilization_rate: z.coerce.number().optional(),
+  total_captures: z.coerce.number().nullable().optional(),
+  valid_captures: z.coerce.number().nullable().optional(),
+  utilization_rate: z.coerce.number().nullable().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -90,10 +90,18 @@ export function ImageMetricForm({ open, onOpenChange, metric }: ImageMetricFormP
   }, [metric, form]);
 
   const onSubmit = (values: FormValues) => {
+    const data = {
+      equipment_id: values.equipment_id,
+      date: values.date,
+      total_captures: values.total_captures || null,
+      valid_captures: values.valid_captures || null,
+      utilization_rate: values.utilization_rate || null,
+    };
+
     if (metric) {
-      updateImageMetric({ id: metric.id, ...values });
+      updateImageMetric({ id: metric.id, ...data });
     } else {
-      createImageMetric(values);
+      createImageMetric(data);
     }
     onOpenChange(false);
   };

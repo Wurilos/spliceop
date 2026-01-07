@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import AppLayout from '@/components/layout/AppLayout';
+import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { DataTable } from '@/components/shared/DataTable';
 import { DeleteDialog } from '@/components/shared/DeleteDialog';
@@ -54,6 +54,14 @@ export default function Satisfaction() {
     }
   };
 
+  const exportColumns = [
+    { key: 'Contrato', label: 'Contrato' },
+    { key: 'Trimestre', label: 'Trimestre' },
+    { key: 'Ano', label: 'Ano' },
+    { key: 'Nota', label: 'Nota' },
+    { key: 'Feedback', label: 'Feedback' },
+  ];
+
   const handleExport = (type: 'pdf' | 'excel' | 'csv') => {
     const data = satisfactionRecords.map((r) => ({
       Contrato: getContractName(r.contract_id),
@@ -63,9 +71,9 @@ export default function Satisfaction() {
       Feedback: r.feedback || '',
     }));
 
-    if (type === 'pdf') exportToPDF(data, 'Satisfação do Cliente');
-    else if (type === 'excel') exportToExcel(data, 'satisfacao');
-    else exportToCSV(data, 'satisfacao');
+    if (type === 'pdf') exportToPDF(data, exportColumns, 'Satisfação do Cliente');
+    else if (type === 'excel') exportToExcel(data, exportColumns, 'satisfacao');
+    else exportToCSV(data, exportColumns, 'satisfacao');
   };
 
   return (

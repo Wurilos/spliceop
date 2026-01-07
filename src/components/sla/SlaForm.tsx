@@ -32,10 +32,10 @@ import { useContracts } from '@/hooks/useContracts';
 const formSchema = z.object({
   contract_id: z.string().min(1, 'Selecione um contrato'),
   month: z.string().min(1, 'Mês é obrigatório'),
-  availability: z.coerce.number().optional(),
-  response_time: z.coerce.number().optional(),
-  resolution_time: z.coerce.number().optional(),
-  target_met: z.boolean().default(false),
+  availability: z.coerce.number().nullable().optional(),
+  response_time: z.coerce.number().nullable().optional(),
+  resolution_time: z.coerce.number().nullable().optional(),
+  target_met: z.boolean().nullable().optional().default(false),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -85,10 +85,19 @@ export function SlaForm({ open, onOpenChange, metric }: SlaFormProps) {
   }, [metric, form]);
 
   const onSubmit = (values: FormValues) => {
+    const data = {
+      contract_id: values.contract_id,
+      month: values.month,
+      availability: values.availability || null,
+      response_time: values.response_time || null,
+      resolution_time: values.resolution_time || null,
+      target_met: values.target_met || null,
+    };
+
     if (metric) {
-      updateSlaMetric({ id: metric.id, ...values });
+      updateSlaMetric({ id: metric.id, ...data });
     } else {
-      createSlaMetric(values);
+      createSlaMetric(data);
     }
     onOpenChange(false);
   };

@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import AppLayout from '@/components/layout/AppLayout';
+import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/shared/PageHeader';
-import { DataTable, StatusBadge } from '@/components/shared/DataTable';
+import { DataTable } from '@/components/shared/DataTable';
 import { DeleteDialog } from '@/components/shared/DeleteDialog';
 import { MileageForm } from '@/components/mileage/MileageForm';
 import { useMileageRecords } from '@/hooks/useMileageRecords';
@@ -12,7 +12,7 @@ import { useEmployees } from '@/hooks/useEmployees';
 import { exportToPDF, exportToExcel, exportToCSV } from '@/lib/export';
 
 export default function Mileage() {
-  const { mileageRecords, isLoading, deleteMileageRecord } = useMileageRecords();
+  const { records: mileageRecords, loading: isLoading, delete: deleteMileageRecord } = useMileageRecords();
   const { vehicles } = useVehicles();
   const { employees } = useEmployees();
   const [formOpen, setFormOpen] = useState(false);
@@ -73,6 +73,15 @@ export default function Mileage() {
     }
   };
 
+  const exportColumns = [
+    { key: 'Data', label: 'Data' },
+    { key: 'Veículo', label: 'Veículo' },
+    { key: 'Colaborador', label: 'Colaborador' },
+    { key: 'Km Inicial', label: 'Km Inicial' },
+    { key: 'Km Final', label: 'Km Final' },
+    { key: 'Total (km)', label: 'Total (km)' },
+  ];
+
   const handleExport = (type: 'pdf' | 'excel' | 'csv') => {
     const data = mileageRecords.map((r) => ({
       Data: format(new Date(r.date), 'dd/MM/yyyy'),
@@ -83,9 +92,9 @@ export default function Mileage() {
       'Total (km)': r.final_km - r.initial_km,
     }));
 
-    if (type === 'pdf') exportToPDF(data, 'Quilometragem');
-    else if (type === 'excel') exportToExcel(data, 'quilometragem');
-    else exportToCSV(data, 'quilometragem');
+    if (type === 'pdf') exportToPDF(data, exportColumns, 'Quilometragem');
+    else if (type === 'excel') exportToExcel(data, exportColumns, 'quilometragem');
+    else exportToCSV(data, exportColumns, 'quilometragem');
   };
 
   return (
