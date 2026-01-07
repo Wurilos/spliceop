@@ -30,6 +30,7 @@ import Goals from "./pages/Goals";
 import Issues from "./pages/Issues";
 import Seals from "./pages/Seals";
 import AuditLog from "./pages/AuditLog";
+import Infrastructure from "./pages/Infrastructure";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -52,6 +53,7 @@ const App = () => (
             <Route path="/maintenance" element={<Maintenance />} />
             <Route path="/calibrations" element={<Calibrations />} />
             <Route path="/service-calls" element={<ServiceCalls />} />
+            <Route path="/infrastructure" element={<Infrastructure />} />
             <Route path="/invoices" element={<Invoices />} />
             <Route path="/inventory" element={<Inventory />} />
             <Route path="/map" element={<MapPage />} />
