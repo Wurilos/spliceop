@@ -3,11 +3,14 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { DataTable, Column, StatusBadge } from '@/components/shared/DataTable';
 import { DeleteDialog } from '@/components/shared/DeleteDialog';
+import { ImportDialog } from '@/components/shared/ImportDialog';
 import { useServiceCalls } from '@/hooks/useServiceCalls';
 import { ServiceCallForm } from '@/components/service-calls/ServiceCallForm';
 import { Tables } from '@/integrations/supabase/types';
 import { format } from 'date-fns';
 import { exportToPDF, exportToExcel, exportToCSV } from '@/lib/export';
+import { serviceCallImportConfig } from '@/lib/importConfigs';
+import { supabase } from '@/integrations/supabase/client';
 
 type ServiceCall = Tables<'service_calls'> & { 
   contracts?: { number: string; client_name: string } | null;
@@ -28,6 +31,7 @@ const columns: Column<ServiceCall>[] = [
 export default function ServiceCalls() {
   const { serviceCalls, loading, create, update, delete: deleteRecord, isCreating, isUpdating, isDeleting } = useServiceCalls();
   const [formOpen, setFormOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [editing, setEditing] = useState<ServiceCall | null>(null);
   const [deleting, setDeleting] = useState<ServiceCall | null>(null);
 
@@ -38,13 +42,35 @@ export default function ServiceCalls() {
     else exportToCSV(serviceCalls, exportColumns, 'Atendimentos');
   };
 
+  const handleImport = async (data: any[]) => {
+    const { error } = await supabase.from('service_calls').insert(data);
+    if (error) throw error;
+  };
+
   return (
     <AppLayout title="Atendimentos">
       <div className="space-y-6">
-        <PageHeader title="Atendimentos" description="Chamados técnicos e atendimentos" onAdd={() => { setEditing(null); setFormOpen(true); }} addLabel="Novo Atendimento" onExport={handleExport} />
+        <PageHeader 
+          title="Atendimentos" 
+          description="Chamados técnicos e atendimentos" 
+          onAdd={() => { setEditing(null); setFormOpen(true); }} 
+          addLabel="Novo Atendimento" 
+          onExport={handleExport}
+          onImport={() => setImportOpen(true)}
+        />
         <DataTable data={serviceCalls} columns={columns} loading={loading} searchPlaceholder="Buscar..." onEdit={(r) => { setEditing(r); setFormOpen(true); }} onDelete={setDeleting} />
         <ServiceCallForm open={formOpen} onOpenChange={setFormOpen} onSubmit={(data) => { editing ? update({ id: editing.id, ...data }) : create(data as any); setFormOpen(false); }} initialData={editing} loading={isCreating || isUpdating} />
         <DeleteDialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)} onConfirm={() => { if (deleting) { deleteRecord(deleting.id); setDeleting(null); } }} loading={isDeleting} />
+        <ImportDialog
+          open={importOpen}
+          onOpenChange={setImportOpen}
+          title="Importar Atendimentos"
+          description="Importe atendimentos a partir de uma planilha Excel"
+          columnMappings={serviceCallImportConfig.mappings}
+          templateColumns={serviceCallImportConfig.templateColumns}
+          templateFilename="atendimentos"
+          onImport={handleImport}
+        />
       </div>
     </AppLayout>
   );

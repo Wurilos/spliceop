@@ -3,10 +3,14 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { DataTable, Column, StatusBadge } from '@/components/shared/DataTable';
 import { DeleteDialog } from '@/components/shared/DeleteDialog';
+import { ImportDialog } from '@/components/shared/ImportDialog';
 import { useEquipment } from '@/hooks/useEquipment';
 import { EquipmentForm } from '@/components/equipment/EquipmentForm';
 import { Tables } from '@/integrations/supabase/types';
 import { format } from 'date-fns';
+import { equipmentImportConfig } from '@/lib/importConfigs';
+import { supabase } from '@/integrations/supabase/client';
+import { exportToPDF, exportToExcel, exportToCSV } from '@/lib/export';
 
 type Equipment = Tables<'equipment'> & { contracts?: { number: string; client_name: string } | null };
 
@@ -33,9 +37,19 @@ const columns: Column<Equipment>[] = [
   },
 ];
 
+const exportColumns = [
+  { key: 'Nº Série', label: 'Nº Série' },
+  { key: 'Tipo', label: 'Tipo' },
+  { key: 'Marca', label: 'Marca' },
+  { key: 'Modelo', label: 'Modelo' },
+  { key: 'Localização', label: 'Localização' },
+  { key: 'Status', label: 'Status' },
+];
+
 export default function EquipmentPage() {
   const { equipment, loading, create, update, delete: deleteEquipment, isCreating, isUpdating, isDeleting } = useEquipment();
   const [formOpen, setFormOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [editingEquipment, setEditingEquipment] = useState<Equipment | null>(null);
   const [deletingEquipment, setDeletingEquipment] = useState<Equipment | null>(null);
 
@@ -70,6 +84,25 @@ export default function EquipmentPage() {
     }
   };
 
+  const handleImport = async (data: any[]) => {
+    const { error } = await supabase.from('equipment').insert(data);
+    if (error) throw error;
+  };
+
+  const handleExport = (type: 'pdf' | 'excel' | 'csv') => {
+    const data = equipment.map((e) => ({
+      'Nº Série': e.serial_number,
+      'Tipo': e.type || '',
+      'Marca': e.brand || '',
+      'Modelo': e.model || '',
+      'Localização': e.address || '',
+      'Status': e.status || '',
+    }));
+    if (type === 'pdf') exportToPDF(data, exportColumns, 'Equipamentos');
+    else if (type === 'excel') exportToExcel(data, exportColumns, 'equipamentos');
+    else exportToCSV(data, exportColumns, 'equipamentos');
+  };
+
   return (
     <AppLayout title="Equipamentos">
       <div className="space-y-6">
@@ -78,6 +111,8 @@ export default function EquipmentPage() {
           description="Gerencie radares e medidores de velocidade"
           onAdd={handleAdd}
           addLabel="Novo Equipamento"
+          onImport={() => setImportOpen(true)}
+          onExport={handleExport}
         />
 
         <DataTable
@@ -102,6 +137,17 @@ export default function EquipmentPage() {
           onOpenChange={(open) => !open && setDeletingEquipment(null)}
           onConfirm={handleConfirmDelete}
           loading={isDeleting}
+        />
+
+        <ImportDialog
+          open={importOpen}
+          onOpenChange={setImportOpen}
+          title="Importar Equipamentos"
+          description="Importe equipamentos a partir de uma planilha Excel"
+          columnMappings={equipmentImportConfig.mappings}
+          templateColumns={equipmentImportConfig.templateColumns}
+          templateFilename="equipamentos"
+          onImport={handleImport}
         />
       </div>
     </AppLayout>

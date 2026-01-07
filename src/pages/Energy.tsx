@@ -5,15 +5,19 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { DataTable, StatusBadge } from '@/components/shared/DataTable';
 import { DeleteDialog } from '@/components/shared/DeleteDialog';
+import { ImportDialog } from '@/components/shared/ImportDialog';
 import { EnergyForm } from '@/components/energy/EnergyForm';
 import { useEnergyBills } from '@/hooks/useEnergyBills';
 import { useContracts } from '@/hooks/useContracts';
 import { exportToPDF, exportToExcel, exportToCSV } from '@/lib/export';
+import { energyImportConfig } from '@/lib/importConfigs';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function Energy() {
   const { energyBills, isLoading, deleteEnergyBill } = useEnergyBills();
   const { contracts } = useContracts();
   const [formOpen, setFormOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [selectedBill, setSelectedBill] = useState<any>(null);
 
@@ -95,6 +99,11 @@ export default function Energy() {
     else exportToCSV(data, exportColumns, 'energia');
   };
 
+  const handleImport = async (data: any[]) => {
+    const { error } = await supabase.from('energy_bills').insert(data);
+    if (error) throw error;
+  };
+
   return (
     <AppLayout>
       <PageHeader
@@ -105,6 +114,7 @@ export default function Energy() {
           setFormOpen(true);
         }}
         onExport={handleExport}
+        onImport={() => setImportOpen(true)}
       />
 
       <DataTable
@@ -128,6 +138,17 @@ export default function Energy() {
         onConfirm={confirmDelete}
         title="Excluir Conta"
         description="Tem certeza que deseja excluir esta conta de energia?"
+      />
+
+      <ImportDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        title="Importar Contas de Energia"
+        description="Importe contas de energia a partir de uma planilha Excel"
+        columnMappings={energyImportConfig.mappings}
+        templateColumns={energyImportConfig.templateColumns}
+        templateFilename="energia"
+        onImport={handleImport}
       />
     </AppLayout>
   );
