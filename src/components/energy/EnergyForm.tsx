@@ -31,11 +31,11 @@ import { useContracts } from '@/hooks/useContracts';
 const formSchema = z.object({
   consumer_unit: z.string().min(1, 'Unidade consumidora é obrigatória'),
   reference_month: z.string().min(1, 'Mês de referência é obrigatório'),
-  contract_id: z.string().optional(),
-  value: z.coerce.number().optional(),
-  consumption_kwh: z.coerce.number().optional(),
-  due_date: z.string().optional(),
-  status: z.string().default('pending'),
+  contract_id: z.string().nullable().optional(),
+  value: z.coerce.number().nullable().optional(),
+  consumption_kwh: z.coerce.number().nullable().optional(),
+  due_date: z.string().nullable().optional(),
+  status: z.string().nullable().optional().default('pending'),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -89,9 +89,13 @@ export function EnergyForm({ open, onOpenChange, bill }: EnergyFormProps) {
 
   const onSubmit = (values: FormValues) => {
     const data = {
-      ...values,
+      consumer_unit: values.consumer_unit,
+      reference_month: values.reference_month,
       contract_id: values.contract_id || null,
+      value: values.value || null,
+      consumption_kwh: values.consumption_kwh || null,
       due_date: values.due_date || null,
+      status: values.status || 'pending',
     };
 
     if (bill) {

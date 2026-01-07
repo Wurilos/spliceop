@@ -32,11 +32,12 @@ import { useEquipment } from '@/hooks/useEquipment';
 
 const formSchema = z.object({
   title: z.string().min(1, 'Título é obrigatório'),
-  description: z.string().optional(),
-  priority: z.string().default('medium'),
-  status: z.string().default('open'),
-  contract_id: z.string().optional(),
-  equipment_id: z.string().optional(),
+  description: z.string().nullable().optional(),
+  priority: z.string().nullable().optional().default('medium'),
+  status: z.string().nullable().optional().default('open'),
+  contract_id: z.string().nullable().optional(),
+  equipment_id: z.string().nullable().optional(),
+  assigned_to: z.string().nullable().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -88,10 +89,13 @@ export function IssueForm({ open, onOpenChange, issue }: IssueFormProps) {
 
   const onSubmit = (values: FormValues) => {
     const data = {
-      ...values,
+      title: values.title,
       description: values.description || null,
+      priority: values.priority || 'medium',
+      status: values.status || 'open',
       contract_id: values.contract_id || null,
       equipment_id: values.equipment_id || null,
+      assigned_to: values.assigned_to || null,
     };
 
     if (issue) {

@@ -33,8 +33,8 @@ const formSchema = z.object({
   contract_id: z.string().min(1, 'Selecione um contrato'),
   quarter: z.string().min(1, 'Trimestre é obrigatório'),
   year: z.coerce.number().min(2000, 'Ano inválido'),
-  score: z.coerce.number().min(0).max(10).optional(),
-  feedback: z.string().optional(),
+  score: z.coerce.number().min(0).max(10).nullable().optional(),
+  feedback: z.string().nullable().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -82,7 +82,10 @@ export function SatisfactionForm({ open, onOpenChange, record }: SatisfactionFor
 
   const onSubmit = (values: FormValues) => {
     const data = {
-      ...values,
+      contract_id: values.contract_id,
+      quarter: values.quarter,
+      year: values.year,
+      score: values.score || null,
       feedback: values.feedback || null,
     };
 

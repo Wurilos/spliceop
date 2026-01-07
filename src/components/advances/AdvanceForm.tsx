@@ -33,8 +33,8 @@ const formSchema = z.object({
   employee_id: z.string().min(1, 'Selecione um colaborador'),
   date: z.string().min(1, 'Data é obrigatória'),
   value: z.coerce.number().min(0.01, 'Valor deve ser maior que zero'),
-  reason: z.string().optional(),
-  status: z.string().default('pending'),
+  reason: z.string().nullable().optional(),
+  status: z.string().nullable().optional().default('pending'),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -82,8 +82,11 @@ export function AdvanceForm({ open, onOpenChange, advance }: AdvanceFormProps) {
 
   const onSubmit = (values: FormValues) => {
     const data = {
-      ...values,
+      employee_id: values.employee_id,
+      date: values.date,
+      value: values.value,
       reason: values.reason || null,
+      status: values.status || 'pending',
     };
 
     if (advance) {

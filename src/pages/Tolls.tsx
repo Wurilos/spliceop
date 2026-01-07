@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import AppLayout from '@/components/layout/AppLayout';
+import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { DataTable } from '@/components/shared/DataTable';
 import { DeleteDialog } from '@/components/shared/DeleteDialog';
@@ -61,6 +61,14 @@ export default function Tolls() {
     }
   };
 
+  const exportColumns = [
+    { key: 'Data/Hora', label: 'Data/Hora' },
+    { key: 'Número Tag', label: 'Número Tag' },
+    { key: 'Veículo', label: 'Veículo' },
+    { key: 'Praça de Pedágio', label: 'Praça de Pedágio' },
+    { key: 'Valor', label: 'Valor' },
+  ];
+
   const handleExport = (type: 'pdf' | 'excel' | 'csv') => {
     const data = tollTags.map((t) => ({
       'Data/Hora': format(new Date(t.passage_date), 'dd/MM/yyyy HH:mm'),
@@ -70,9 +78,9 @@ export default function Tolls() {
       Valor: t.value,
     }));
 
-    if (type === 'pdf') exportToPDF(data, 'Tags de Pedágio');
-    else if (type === 'excel') exportToExcel(data, 'pedagios');
-    else exportToCSV(data, 'pedagios');
+    if (type === 'pdf') exportToPDF(data, exportColumns, 'Tags de Pedágio');
+    else if (type === 'excel') exportToExcel(data, exportColumns, 'pedagios');
+    else exportToCSV(data, exportColumns, 'pedagios');
   };
 
   return (

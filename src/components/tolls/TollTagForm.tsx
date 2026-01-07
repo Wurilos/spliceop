@@ -32,7 +32,7 @@ const formSchema = z.object({
   vehicle_id: z.string().min(1, 'Selecione um veículo'),
   tag_number: z.string().min(1, 'Número da tag é obrigatório'),
   passage_date: z.string().min(1, 'Data/hora é obrigatória'),
-  toll_plaza: z.string().optional(),
+  toll_plaza: z.string().nullable().optional(),
   value: z.coerce.number().min(0.01, 'Valor deve ser maior que zero'),
 });
 
@@ -81,7 +81,10 @@ export function TollTagForm({ open, onOpenChange, tag }: TollTagFormProps) {
 
   const onSubmit = (values: FormValues) => {
     const data = {
-      ...values,
+      vehicle_id: values.vehicle_id,
+      tag_number: values.tag_number,
+      passage_date: values.passage_date,
+      value: values.value,
       toll_plaza: values.toll_plaza || null,
     };
 

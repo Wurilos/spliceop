@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import AppLayout from '@/components/layout/AppLayout';
+import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { DataTable, StatusBadge } from '@/components/shared/DataTable';
 import { DeleteDialog } from '@/components/shared/DeleteDialog';
@@ -93,6 +93,15 @@ export default function Issues() {
     }
   };
 
+  const exportColumns = [
+    { key: 'Título', label: 'Título' },
+    { key: 'Prioridade', label: 'Prioridade' },
+    { key: 'Contrato', label: 'Contrato' },
+    { key: 'Equipamento', label: 'Equipamento' },
+    { key: 'Status', label: 'Status' },
+    { key: 'Criado em', label: 'Criado em' },
+  ];
+
   const handleExport = (type: 'pdf' | 'excel' | 'csv') => {
     const data = pendingIssues.map((i) => ({
       Título: i.title,
@@ -103,9 +112,9 @@ export default function Issues() {
       'Criado em': i.created_at ? format(new Date(i.created_at), 'dd/MM/yyyy') : '',
     }));
 
-    if (type === 'pdf') exportToPDF(data, 'Pendências');
-    else if (type === 'excel') exportToExcel(data, 'pendencias');
-    else exportToCSV(data, 'pendencias');
+    if (type === 'pdf') exportToPDF(data, exportColumns, 'Pendências');
+    else if (type === 'excel') exportToExcel(data, exportColumns, 'pendencias');
+    else exportToCSV(data, exportColumns, 'pendencias');
   };
 
   return (

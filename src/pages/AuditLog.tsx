@@ -1,6 +1,6 @@
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import AppLayout from '@/components/layout/AppLayout';
+import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { DataTable } from '@/components/shared/DataTable';
 import { useAuditLog } from '@/hooks/useAuditLog';
@@ -48,6 +48,14 @@ export default function AuditLog() {
     },
   ];
 
+  const exportColumns = [
+    { key: 'Data/Hora', label: 'Data/Hora' },
+    { key: 'Ação', label: 'Ação' },
+    { key: 'Tabela', label: 'Tabela' },
+    { key: 'ID Registro', label: 'ID Registro' },
+    { key: 'Usuário', label: 'Usuário' },
+  ];
+
   const handleExport = (type: 'pdf' | 'excel' | 'csv') => {
     const data = auditLogs.map((log) => ({
       'Data/Hora': log.created_at ? format(new Date(log.created_at), 'dd/MM/yyyy HH:mm:ss') : '',
@@ -57,9 +65,9 @@ export default function AuditLog() {
       Usuário: log.user_id || 'Sistema',
     }));
 
-    if (type === 'pdf') exportToPDF(data, 'Audit Log');
-    else if (type === 'excel') exportToExcel(data, 'audit_log');
-    else exportToCSV(data, 'audit_log');
+    if (type === 'pdf') exportToPDF(data, exportColumns, 'Audit Log');
+    else if (type === 'excel') exportToExcel(data, exportColumns, 'audit_log');
+    else exportToCSV(data, exportColumns, 'audit_log');
   };
 
   return (

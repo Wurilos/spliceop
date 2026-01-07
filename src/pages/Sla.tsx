@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import AppLayout from '@/components/layout/AppLayout';
+import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { DataTable } from '@/components/shared/DataTable';
 import { DeleteDialog } from '@/components/shared/DeleteDialog';
@@ -78,6 +78,15 @@ export default function Sla() {
     }
   };
 
+  const exportColumns = [
+    { key: 'Contrato', label: 'Contrato' },
+    { key: 'Mês', label: 'Mês' },
+    { key: 'Disponibilidade (%)', label: 'Disponibilidade (%)' },
+    { key: 'T. Resposta (h)', label: 'T. Resposta (h)' },
+    { key: 'T. Resolução (h)', label: 'T. Resolução (h)' },
+    { key: 'Meta Atingida', label: 'Meta Atingida' },
+  ];
+
   const handleExport = (type: 'pdf' | 'excel' | 'csv') => {
     const data = slaMetrics.map((m) => ({
       Contrato: getContractName(m.contract_id),
@@ -88,9 +97,9 @@ export default function Sla() {
       'Meta Atingida': m.target_met ? 'Sim' : 'Não',
     }));
 
-    if (type === 'pdf') exportToPDF(data, 'Métricas SLA');
-    else if (type === 'excel') exportToExcel(data, 'sla');
-    else exportToCSV(data, 'sla');
+    if (type === 'pdf') exportToPDF(data, exportColumns, 'Métricas SLA');
+    else if (type === 'excel') exportToExcel(data, exportColumns, 'sla');
+    else exportToCSV(data, exportColumns, 'sla');
   };
 
   return (

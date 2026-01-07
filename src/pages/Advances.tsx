@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import AppLayout from '@/components/layout/AppLayout';
+import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { DataTable, StatusBadge } from '@/components/shared/DataTable';
 import { DeleteDialog } from '@/components/shared/DeleteDialog';
@@ -65,6 +65,14 @@ export default function Advances() {
     }
   };
 
+  const exportColumns = [
+    { key: 'Data', label: 'Data' },
+    { key: 'Colaborador', label: 'Colaborador' },
+    { key: 'Valor', label: 'Valor' },
+    { key: 'Motivo', label: 'Motivo' },
+    { key: 'Status', label: 'Status' },
+  ];
+
   const handleExport = (type: 'pdf' | 'excel' | 'csv') => {
     const data = advances.map((a) => ({
       Data: format(new Date(a.date), 'dd/MM/yyyy'),
@@ -74,9 +82,9 @@ export default function Advances() {
       Status: a.status || '',
     }));
 
-    if (type === 'pdf') exportToPDF(data, 'Adiantamentos');
-    else if (type === 'excel') exportToExcel(data, 'adiantamentos');
-    else exportToCSV(data, 'adiantamentos');
+    if (type === 'pdf') exportToPDF(data, exportColumns, 'Adiantamentos');
+    else if (type === 'excel') exportToExcel(data, exportColumns, 'adiantamentos');
+    else exportToCSV(data, exportColumns, 'adiantamentos');
   };
 
   return (

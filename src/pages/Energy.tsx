@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import AppLayout from '@/components/layout/AppLayout';
+import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { DataTable, StatusBadge } from '@/components/shared/DataTable';
 import { DeleteDialog } from '@/components/shared/DeleteDialog';
@@ -71,6 +71,15 @@ export default function Energy() {
     }
   };
 
+  const exportColumns = [
+    { key: 'Unidade Consumidora', label: 'Unidade Consumidora' },
+    { key: 'Mês Referência', label: 'Mês Referência' },
+    { key: 'Contrato', label: 'Contrato' },
+    { key: 'Consumo (kWh)', label: 'Consumo (kWh)' },
+    { key: 'Valor', label: 'Valor' },
+    { key: 'Status', label: 'Status' },
+  ];
+
   const handleExport = (type: 'pdf' | 'excel' | 'csv') => {
     const data = energyBills.map((b) => ({
       'Unidade Consumidora': b.consumer_unit,
@@ -81,9 +90,9 @@ export default function Energy() {
       Status: b.status || '',
     }));
 
-    if (type === 'pdf') exportToPDF(data, 'Contas de Energia');
-    else if (type === 'excel') exportToExcel(data, 'energia');
-    else exportToCSV(data, 'energia');
+    if (type === 'pdf') exportToPDF(data, exportColumns, 'Contas de Energia');
+    else if (type === 'excel') exportToExcel(data, exportColumns, 'energia');
+    else exportToCSV(data, exportColumns, 'energia');
   };
 
   return (
