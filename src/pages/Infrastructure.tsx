@@ -6,13 +6,16 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { DataTable, StatusBadge } from '@/components/shared/DataTable';
 import { DeleteDialog } from '@/components/shared/DeleteDialog';
+import { ImportDialog } from '@/components/shared/ImportDialog';
 import { InfrastructureForm } from '@/components/infrastructure/InfrastructureForm';
 import { useInfrastructureServices, InfrastructureService } from '@/hooks/useInfrastructureServices';
 import { exportToPDF, exportToExcel, exportToCSV } from '@/lib/export';
+import { infrastructureImportConfig } from '@/lib/importConfigs';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
 
 type ViewMode = 'dashboard' | 'calendar' | 'table';
 
@@ -20,10 +23,16 @@ export default function Infrastructure() {
   const { services, isLoading, delete: deleteService } = useInfrastructureServices();
   const [formOpen, setFormOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [selectedService, setSelectedService] = useState<InfrastructureService | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('dashboard');
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+
+  const handleImport = async (data: any[]) => {
+    const { error } = await supabase.from('infrastructure_services').insert(data);
+    if (error) throw error;
+  };
 
   // Stats calculations
   const stats = useMemo(() => {
@@ -471,6 +480,7 @@ export default function Infrastructure() {
                 setFormOpen(true);
               }}
               onExport={handleExport}
+              onImport={() => setImportOpen(true)}
             />
             <DataTable
               data={services}
@@ -505,6 +515,17 @@ export default function Infrastructure() {
           onConfirm={confirmDelete}
           title="Excluir Serviço"
           description="Tem certeza que deseja excluir este serviço de infraestrutura?"
+        />
+
+        <ImportDialog
+          open={importOpen}
+          onOpenChange={setImportOpen}
+          title="Importar Serviços de Infraestrutura"
+          description="Importe serviços a partir de uma planilha Excel"
+          columnMappings={infrastructureImportConfig.mappings}
+          templateColumns={infrastructureImportConfig.templateColumns}
+          templateFilename="infraestrutura"
+          onImport={handleImport}
         />
       </div>
     </AppLayout>

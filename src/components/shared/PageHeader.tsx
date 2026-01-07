@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { Plus, Download, FileSpreadsheet, FileText } from 'lucide-react';
+import { Plus, Download, FileSpreadsheet, FileText, Upload } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,6 +13,7 @@ interface PageHeaderProps {
   onAdd?: () => void;
   addLabel?: string;
   onExport?: (format: 'pdf' | 'excel' | 'csv') => void;
+  onImport?: () => void;
 }
 
 export function PageHeader({
@@ -21,6 +22,7 @@ export function PageHeader({
   onAdd,
   addLabel = 'Adicionar',
   onExport,
+  onImport,
 }: PageHeaderProps) {
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -31,6 +33,12 @@ export function PageHeader({
         )}
       </div>
       <div className="flex gap-2">
+        {onImport && (
+          <Button variant="outline" onClick={onImport}>
+            <Upload className="mr-2 h-4 w-4" />
+            Importar
+          </Button>
+        )}
         {onExport && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
