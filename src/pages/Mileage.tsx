@@ -5,17 +5,21 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { DataTable } from '@/components/shared/DataTable';
 import { DeleteDialog } from '@/components/shared/DeleteDialog';
+import { ImportDialog } from '@/components/shared/ImportDialog';
 import { MileageForm } from '@/components/mileage/MileageForm';
 import { useMileageRecords } from '@/hooks/useMileageRecords';
 import { useVehicles } from '@/hooks/useVehicles';
 import { useEmployees } from '@/hooks/useEmployees';
 import { exportToPDF, exportToExcel, exportToCSV } from '@/lib/export';
+import { mileageImportConfig } from '@/lib/importConfigs';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function Mileage() {
   const { records: mileageRecords, loading: isLoading, delete: deleteMileageRecord } = useMileageRecords();
   const { vehicles } = useVehicles();
   const { employees } = useEmployees();
   const [formOpen, setFormOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<any>(null);
 
@@ -97,6 +101,14 @@ export default function Mileage() {
     else exportToCSV(data, exportColumns, 'quilometragem');
   };
 
+  const handleImport = async (data: any[]) => {
+    const firstVehicle = vehicles[0];
+    if (!firstVehicle) throw new Error('Cadastre um veículo primeiro');
+    const dataWithVehicle = data.map(d => ({ ...d, vehicle_id: firstVehicle.id }));
+    const { error } = await supabase.from('mileage_records').insert(dataWithVehicle);
+    if (error) throw error;
+  };
+
   return (
     <AppLayout>
       <PageHeader
@@ -107,6 +119,7 @@ export default function Mileage() {
           setFormOpen(true);
         }}
         onExport={handleExport}
+        onImport={() => setImportOpen(true)}
       />
 
       <DataTable
@@ -130,6 +143,17 @@ export default function Mileage() {
         onConfirm={confirmDelete}
         title="Excluir Registro"
         description="Tem certeza que deseja excluir este registro de quilometragem?"
+      />
+
+      <ImportDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        title="Importar Quilometragem"
+        description="Importe registros de quilometragem a partir de uma planilha Excel"
+        columnMappings={mileageImportConfig.mappings}
+        templateColumns={mileageImportConfig.templateColumns}
+        templateFilename="quilometragem"
+        onImport={handleImport}
       />
     </AppLayout>
   );

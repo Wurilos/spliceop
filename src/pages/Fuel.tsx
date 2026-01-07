@@ -3,11 +3,15 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { DataTable, Column } from '@/components/shared/DataTable';
 import { DeleteDialog } from '@/components/shared/DeleteDialog';
+import { ImportDialog } from '@/components/shared/ImportDialog';
 import { useFuelRecords } from '@/hooks/useFuelRecords';
 import { FuelForm } from '@/components/fuel/FuelForm';
 import { Tables } from '@/integrations/supabase/types';
 import { format } from 'date-fns';
 import { exportToPDF, exportToExcel, exportToCSV } from '@/lib/export';
+import { fuelImportConfig } from '@/lib/importConfigs';
+import { supabase } from '@/integrations/supabase/client';
+import { useVehicles } from '@/hooks/useVehicles';
 
 type FuelRecord = Tables<'fuel_records'> & { vehicles?: { plate: string; brand: string | null; model: string | null } | null };
 
@@ -24,7 +28,9 @@ const columns: Column<FuelRecord>[] = [
 
 export default function Fuel() {
   const { records, loading, create, update, delete: deleteRecord, isCreating, isUpdating, isDeleting } = useFuelRecords();
+  const { vehicles } = useVehicles();
   const [formOpen, setFormOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [editing, setEditing] = useState<FuelRecord | null>(null);
   const [deleting, setDeleting] = useState<FuelRecord | null>(null);
 
@@ -35,13 +41,40 @@ export default function Fuel() {
     else exportToCSV(records, exportColumns, 'Abastecimentos');
   };
 
+  const handleImport = async (data: any[]) => {
+    // Fuel records need vehicle_id - for import we'll skip vehicle mapping
+    // In a real scenario, you'd map by plate
+    const firstVehicle = vehicles[0];
+    if (!firstVehicle) throw new Error('Cadastre um veículo primeiro');
+    const dataWithVehicle = data.map(d => ({ ...d, vehicle_id: firstVehicle.id }));
+    const { error } = await supabase.from('fuel_records').insert(dataWithVehicle);
+    if (error) throw error;
+  };
+
   return (
     <AppLayout title="Abastecimentos">
       <div className="space-y-6">
-        <PageHeader title="Abastecimentos" description="Controle de combustível da frota" onAdd={() => { setEditing(null); setFormOpen(true); }} addLabel="Novo Abastecimento" onExport={handleExport} />
+        <PageHeader 
+          title="Abastecimentos" 
+          description="Controle de combustível da frota" 
+          onAdd={() => { setEditing(null); setFormOpen(true); }} 
+          addLabel="Novo Abastecimento" 
+          onExport={handleExport}
+          onImport={() => setImportOpen(true)}
+        />
         <DataTable data={records} columns={columns} loading={loading} searchPlaceholder="Buscar..." onEdit={(r) => { setEditing(r); setFormOpen(true); }} onDelete={setDeleting} />
         <FuelForm open={formOpen} onOpenChange={setFormOpen} onSubmit={(data) => { editing ? update({ id: editing.id, ...data }) : create(data as any); setFormOpen(false); }} initialData={editing} loading={isCreating || isUpdating} />
         <DeleteDialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)} onConfirm={() => { if (deleting) { deleteRecord(deleting.id); setDeleting(null); } }} loading={isDeleting} />
+        <ImportDialog
+          open={importOpen}
+          onOpenChange={setImportOpen}
+          title="Importar Abastecimentos"
+          description="Importe abastecimentos a partir de uma planilha Excel"
+          columnMappings={fuelImportConfig.mappings}
+          templateColumns={fuelImportConfig.templateColumns}
+          templateFilename="abastecimentos"
+          onImport={handleImport}
+        />
       </div>
     </AppLayout>
   );
