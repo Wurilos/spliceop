@@ -7,8 +7,10 @@ import { DataTable } from '@/components/shared/DataTable';
 import { DeleteDialog } from '@/components/shared/DeleteDialog';
 import { ImportDialog } from '@/components/shared/ImportDialog';
 import { ImageMetricForm } from '@/components/image-metrics/ImageMetricForm';
+import { ImageMetricsDashboard } from '@/components/image-metrics/ImageMetricsDashboard';
 import { useImageMetrics } from '@/hooks/useImageMetrics';
 import { useEquipment } from '@/hooks/useEquipment';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { exportToPDF, exportToExcel, exportToCSV } from '@/lib/export';
 import { imageMetricImportConfig } from '@/lib/importConfigs';
 import { supabase } from '@/integrations/supabase/client';
@@ -106,14 +108,27 @@ export default function ImageMetrics() {
         onImport={() => setImportOpen(true)}
       />
 
-      <DataTable
-        data={imageMetrics}
-        columns={columns}
-        loading={isLoading}
-        searchPlaceholder="Buscar por equipamento..."
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-      />
+      <Tabs defaultValue="dashboard" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+          <TabsTrigger value="list">Listagem</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="dashboard">
+          <ImageMetricsDashboard />
+        </TabsContent>
+
+        <TabsContent value="list">
+          <DataTable
+            data={imageMetrics}
+            columns={columns}
+            loading={isLoading}
+            searchPlaceholder="Buscar por equipamento..."
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+          />
+        </TabsContent>
+      </Tabs>
 
       <ImageMetricForm
         open={formOpen}
