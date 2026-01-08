@@ -6,19 +6,22 @@ import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { KanbanColumn } from '@/components/kanban/KanbanColumn';
 import { KanbanFilters } from '@/components/kanban/KanbanFilters';
 import { KanbanIssueForm } from '@/components/kanban/KanbanIssueForm';
+import { KanbanDetailModal } from '@/components/kanban/KanbanDetailModal';
 import { useKanbanColumns } from '@/hooks/useKanbanColumns';
-import { useKanbanIssues } from '@/hooks/useKanbanIssues';
+import { useKanbanIssues, KanbanIssue } from '@/hooks/useKanbanIssues';
 import { useContracts } from '@/hooks/useContracts';
 import { useEquipment } from '@/hooks/useEquipment';
 
 export default function Kanban() {
   const { activeColumns, isLoading: columnsLoading } = useKanbanColumns();
-  const { issues, isLoading: issuesLoading, createIssue, moveIssue, deleteIssue } = useKanbanIssues();
+  const { issues, isLoading: issuesLoading, createIssue, updateIssue, moveIssue, deleteIssue } = useKanbanIssues();
   const { contracts } = useContracts();
   const { equipment } = useEquipment();
 
   const [showForm, setShowForm] = useState(false);
   const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [selectedIssue, setSelectedIssue] = useState<KanbanIssue | null>(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
 
   // Filters
   const [selectedContract, setSelectedContract] = useState('all');
@@ -56,6 +59,24 @@ export default function Kanban() {
 
   const handleCreateIssue = (data: any) => {
     createIssue(data);
+  };
+
+  const handleClickIssue = (issue: KanbanIssue) => {
+    setSelectedIssue(issue);
+    setShowDetailModal(true);
+  };
+
+  const handleUpdateType = (id: string, type: string) => {
+    updateIssue({ id, type });
+    // Update local state to reflect change immediately
+    if (selectedIssue && selectedIssue.id === id) {
+      setSelectedIssue({ ...selectedIssue, type });
+    }
+  };
+
+  const handleEditIssue = (issue: KanbanIssue) => {
+    setShowDetailModal(false);
+    // For now, just close the modal - full edit form can be added later
   };
 
   const isLoading = columnsLoading || issuesLoading;
@@ -103,6 +124,7 @@ export default function Kanban() {
                   column={column}
                   issues={filteredIssues}
                   onDeleteIssue={deleteIssue}
+                  onClickIssue={handleClickIssue}
                   onDragStart={handleDragStart}
                   onDragOver={handleDragOver}
                   onDrop={handleDrop}
@@ -121,6 +143,15 @@ export default function Kanban() {
         contracts={contracts.map(c => ({ id: c.id, number: c.number, client_name: c.client_name }))}
         equipment={equipment.map(e => ({ id: e.id, serial_number: e.serial_number }))}
         onSubmit={handleCreateIssue}
+      />
+
+      <KanbanDetailModal
+        issue={selectedIssue}
+        columns={activeColumns}
+        open={showDetailModal}
+        onOpenChange={setShowDetailModal}
+        onUpdateType={handleUpdateType}
+        onEdit={handleEditIssue}
       />
     </AppLayout>
   );

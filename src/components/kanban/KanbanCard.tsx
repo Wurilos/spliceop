@@ -10,6 +10,7 @@ interface KanbanCardProps {
   issue: KanbanIssue;
   columnTitle: string;
   onDelete: (id: string) => void;
+  onClick: (issue: KanbanIssue) => void;
   onDragStart: (e: React.DragEvent, id: string) => void;
 }
 
@@ -25,12 +26,19 @@ const priorityLabels: Record<string, string> = {
   low: 'Baixa',
 };
 
-export function KanbanCard({ issue, columnTitle, onDelete, onDragStart }: KanbanCardProps) {
+export function KanbanCard({ issue, columnTitle, onDelete, onClick, onDragStart }: KanbanCardProps) {
+  const handleClick = (e: React.MouseEvent) => {
+    // Don't open modal when clicking delete button
+    if ((e.target as HTMLElement).closest('button')) return;
+    onClick(issue);
+  };
+
   return (
     <Card
       draggable
       onDragStart={(e) => onDragStart(e, issue.id)}
-      className="cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow bg-card border-border"
+      onClick={handleClick}
+      className="cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow bg-card border-border hover:border-primary/50"
     >
       <CardHeader className="p-3 pb-2 space-y-2">
         <div className="flex items-center justify-between gap-2">
@@ -94,7 +102,10 @@ export function KanbanCard({ issue, columnTitle, onDelete, onDragStart }: Kanban
             variant="ghost"
             size="icon"
             className="h-6 w-6 text-muted-foreground hover:text-destructive"
-            onClick={() => onDelete(issue.id)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(issue.id);
+            }}
           >
             <Trash2 className="h-3 w-3" />
           </Button>

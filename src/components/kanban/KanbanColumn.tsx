@@ -8,6 +8,7 @@ interface KanbanColumnProps {
   column: ColumnType;
   issues: KanbanIssue[];
   onDeleteIssue: (id: string) => void;
+  onClickIssue: (issue: KanbanIssue) => void;
   onDragStart: (e: React.DragEvent, id: string) => void;
   onDragOver: (e: React.DragEvent) => void;
   onDrop: (e: React.DragEvent, columnKey: string) => void;
@@ -17,6 +18,7 @@ export function KanbanColumn({
   column,
   issues,
   onDeleteIssue,
+  onClickIssue,
   onDragStart,
   onDragOver,
   onDrop,
@@ -62,6 +64,7 @@ export function KanbanColumn({
                 issue={issue}
                 columnTitle={column.title}
                 onDelete={onDeleteIssue}
+                onClick={onClickIssue}
                 onDragStart={onDragStart}
               />
             ))
