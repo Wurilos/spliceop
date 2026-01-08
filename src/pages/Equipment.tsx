@@ -6,11 +6,14 @@ import { DeleteDialog } from '@/components/shared/DeleteDialog';
 import { ImportDialog } from '@/components/shared/ImportDialog';
 import { useEquipment } from '@/hooks/useEquipment';
 import { EquipmentForm } from '@/components/equipment/EquipmentForm';
+import { EquipmentDashboard } from '@/components/equipment/EquipmentDashboard';
 import { Tables } from '@/integrations/supabase/types';
 import { format } from 'date-fns';
 import { equipmentImportConfig } from '@/lib/importConfigs';
 import { supabase } from '@/integrations/supabase/client';
 import { exportToPDF, exportToExcel, exportToCSV } from '@/lib/export';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { LayoutDashboard, List } from 'lucide-react';
 
 type Equipment = Tables<'equipment'> & { contracts?: { number: string; client_name: string } | null };
 
@@ -115,14 +118,33 @@ export default function EquipmentPage() {
           onExport={handleExport}
         />
 
-        <DataTable
-          data={equipment}
-          columns={columns}
-          loading={loading}
-          searchPlaceholder="Buscar equipamentos..."
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-        />
+        <Tabs defaultValue="dashboard" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="dashboard" className="flex items-center gap-2">
+              <LayoutDashboard className="h-4 w-4" />
+              Dashboard
+            </TabsTrigger>
+            <TabsTrigger value="list" className="flex items-center gap-2">
+              <List className="h-4 w-4" />
+              Listagem
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="dashboard">
+            <EquipmentDashboard />
+          </TabsContent>
+
+          <TabsContent value="list">
+            <DataTable
+              data={equipment}
+              columns={columns}
+              loading={loading}
+              searchPlaceholder="Buscar equipamentos..."
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+            />
+          </TabsContent>
+        </Tabs>
 
         <EquipmentForm
           open={formOpen}
