@@ -4,9 +4,13 @@ import { toast } from 'sonner';
 
 export interface Seal {
   id: string;
-  equipment_id: string;
   seal_number: string;
-  installation_date: string;
+  seal_type: string | null;
+  received_date: string | null;
+  memo_number: string | null;
+  status: string;
+  equipment_id: string | null;
+  installation_date: string | null;
   service_order: string | null;
   technician_id: string | null;
   notes: string | null;
@@ -22,7 +26,7 @@ export function useSeals() {
       const { data, error } = await supabase
         .from('seals')
         .select('*')
-        .order('installation_date', { ascending: false });
+        .order('received_date', { ascending: false });
       if (error) throw error;
       return data as Seal[];
     },

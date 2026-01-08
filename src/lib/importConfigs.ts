@@ -387,15 +387,17 @@ export const serviceCallImportConfig = {
 export const sealImportConfig = {
   mappings: [
     { excelColumn: 'Número Lacre', dbColumn: 'seal_number', required: true, transform: toString },
-    { excelColumn: 'Data Instalação', dbColumn: 'installation_date', required: true, transform: toDate },
-    { excelColumn: 'Ordem Serviço', dbColumn: 'service_order', transform: toString },
-    { excelColumn: 'Observações', dbColumn: 'notes', transform: toString },
+    { excelColumn: 'Tipo Lacre', dbColumn: 'seal_type', transform: toString },
+    { excelColumn: 'Data Recebimento', dbColumn: 'received_date', required: true, transform: toDate },
+    { excelColumn: 'Memorando', dbColumn: 'memo_number', transform: toString },
+    { excelColumn: 'Status', dbColumn: 'status', transform: (v: string) => v?.toLowerCase() || 'available' },
   ] as ColumnMapping[],
   templateColumns: [
     { key: 'seal_number', label: 'Número Lacre' },
-    { key: 'installation_date', label: 'Data Instalação' },
-    { key: 'service_order', label: 'Ordem Serviço' },
-    { key: 'notes', label: 'Observações' },
+    { key: 'seal_type', label: 'Tipo Lacre' },
+    { key: 'received_date', label: 'Data Recebimento' },
+    { key: 'memo_number', label: 'Memorando' },
+    { key: 'status', label: 'Status' },
   ],
 };
 
