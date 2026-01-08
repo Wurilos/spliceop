@@ -33,7 +33,7 @@ const formSchema = z.object({
   contract_id: z.string().min(1, 'Selecione um contrato'),
   quarter: z.string().min(1, 'Trimestre é obrigatório'),
   year: z.coerce.number().min(2000, 'Ano inválido'),
-  score: z.coerce.number().min(0).max(10).nullable().optional(),
+  score: z.coerce.number().min(0).max(100).nullable().optional(),
   feedback: z.string().nullable().optional(),
 });
 
@@ -178,9 +178,9 @@ export function SatisfactionForm({ open, onOpenChange, record }: SatisfactionFor
               name="score"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nota (0-10)</FormLabel>
+                  <FormLabel>Nota (0-100)</FormLabel>
                   <FormControl>
-                    <Input type="number" step="0.1" min="0" max="10" {...field} />
+                    <Input type="number" step="0.1" min="0" max="100" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
