@@ -143,6 +143,33 @@ export type Database = {
           },
         ]
       }
+      components: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       contracts: {
         Row: {
           city: string | null
@@ -1553,6 +1580,137 @@ export type Database = {
             columns: ["contract_id"]
             isOneToOne: false
             referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock: {
+        Row: {
+          component_id: string
+          contract_id: string | null
+          created_at: string | null
+          id: string
+          quantity: number
+          updated_at: string | null
+        }
+        Insert: {
+          component_id: string
+          contract_id?: string | null
+          created_at?: string | null
+          id?: string
+          quantity?: number
+          updated_at?: string | null
+        }
+        Update: {
+          component_id?: string
+          contract_id?: string | null
+          created_at?: string | null
+          id?: string
+          quantity?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_component_id_fkey"
+            columns: ["component_id"]
+            isOneToOne: false
+            referencedRelation: "components"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock_maintenance: {
+        Row: {
+          contract_id: string | null
+          created_at: string | null
+          id: string
+          nf_number: string
+          observations: string | null
+          om_number: string
+          return_date: string | null
+          return_nf: string | null
+          send_date: string
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          contract_id?: string | null
+          created_at?: string | null
+          id?: string
+          nf_number: string
+          observations?: string | null
+          om_number: string
+          return_date?: string | null
+          return_nf?: string | null
+          send_date: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          contract_id?: string | null
+          created_at?: string | null
+          id?: string
+          nf_number?: string
+          observations?: string | null
+          om_number?: string
+          return_date?: string | null
+          return_nf?: string | null
+          send_date?: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_maintenance_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock_maintenance_items: {
+        Row: {
+          component_id: string
+          created_at: string | null
+          id: string
+          maintenance_id: string
+          quantity: number
+        }
+        Insert: {
+          component_id: string
+          created_at?: string | null
+          id?: string
+          maintenance_id: string
+          quantity?: number
+        }
+        Update: {
+          component_id?: string
+          created_at?: string | null
+          id?: string
+          maintenance_id?: string
+          quantity?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_maintenance_items_component_id_fkey"
+            columns: ["component_id"]
+            isOneToOne: false
+            referencedRelation: "components"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_maintenance_items_maintenance_id_fkey"
+            columns: ["maintenance_id"]
+            isOneToOne: false
+            referencedRelation: "stock_maintenance"
             referencedColumns: ["id"]
           },
         ]
