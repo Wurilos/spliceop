@@ -69,11 +69,24 @@ export function useInternetConnections() {
     onError: () => toast.error('Erro ao excluir cadastro'),
   });
 
+  const deleteManyMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase.from('internet_connections').delete().in('id', ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['internet_connections'] });
+      toast.success('Cadastros excluídos!');
+    },
+    onError: () => toast.error('Erro ao excluir cadastros'),
+  });
+
   return {
     connections,
     isLoading,
     createConnection: createMutation.mutate,
     updateConnection: updateMutation.mutate,
     deleteConnection: deleteMutation.mutate,
+    deleteMany: deleteManyMutation.mutate,
   };
 }

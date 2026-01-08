@@ -70,11 +70,24 @@ export function useTollTags() {
     onError: () => toast.error('Erro ao excluir TAG'),
   });
 
+  const deleteManyMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase.from('toll_tags').delete().in('id', ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['toll_tags'] });
+      toast.success('TAGs excluídas!');
+    },
+    onError: () => toast.error('Erro ao excluir TAGs'),
+  });
+
   return {
     tollTags,
     isLoading,
     createTollTag: createMutation.mutate,
     updateTollTag: updateMutation.mutate,
     deleteTollTag: deleteMutation.mutate,
+    deleteMany: deleteManyMutation.mutate,
   };
 }

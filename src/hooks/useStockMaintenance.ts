@@ -163,12 +163,28 @@ export function useStockMaintenance() {
     },
   });
 
+  const deleteManyMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase.from('stock_maintenance').delete().in('id', ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['stock_maintenance'] });
+      queryClient.invalidateQueries({ queryKey: ['stock'] });
+      toast({ title: 'Manutenções excluídas!' });
+    },
+    onError: (error) => {
+      toast({ title: 'Erro ao excluir', description: error.message, variant: 'destructive' });
+    },
+  });
+
   return {
     items: query.data || [],
     loading: query.isLoading,
     create: createMutation.mutate,
     update: updateMutation.mutate,
     delete: deleteMutation.mutate,
+    deleteMany: deleteManyMutation.mutate,
     isCreating: createMutation.isPending,
     isUpdating: updateMutation.isPending,
     isDeleting: deleteMutation.isPending,

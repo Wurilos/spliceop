@@ -70,11 +70,24 @@ export function useInternetBills() {
     onError: () => toast.error('Erro ao excluir conta de internet'),
   });
 
+  const deleteManyMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase.from('internet_bills').delete().in('id', ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['internet_bills'] });
+      toast.success('Contas excluídas!');
+    },
+    onError: () => toast.error('Erro ao excluir contas'),
+  });
+
   return {
     internetBills,
     isLoading,
     createInternetBill: createMutation.mutate,
     updateInternetBill: updateMutation.mutate,
     deleteInternetBill: deleteMutation.mutate,
+    deleteMany: deleteManyMutation.mutate,
   };
 }

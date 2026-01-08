@@ -68,11 +68,24 @@ export function useAdvances() {
     onError: () => toast.error('Erro ao excluir adiantamento'),
   });
 
+  const deleteManyMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase.from('advances').delete().in('id', ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['advances'] });
+      toast.success('Adiantamentos excluídos!');
+    },
+    onError: () => toast.error('Erro ao excluir adiantamentos'),
+  });
+
   return {
     advances,
     isLoading,
     createAdvance: createMutation.mutate,
     updateAdvance: updateMutation.mutate,
     deleteAdvance: deleteMutation.mutate,
+    deleteMany: deleteManyMutation.mutate,
   };
 }

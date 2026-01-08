@@ -67,12 +67,27 @@ export function useCalibrations() {
     },
   });
 
+  const deleteManyMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase.from('calibrations').delete().in('id', ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['calibrations'] });
+      toast({ title: 'Aferições excluídas!' });
+    },
+    onError: (error) => {
+      toast({ title: 'Erro ao excluir', description: error.message, variant: 'destructive' });
+    },
+  });
+
   return {
     calibrations: query.data || [],
     loading: query.isLoading,
     create: createMutation.mutate,
     update: updateMutation.mutate,
     delete: deleteMutation.mutate,
+    deleteMany: deleteManyMutation.mutate,
     isCreating: createMutation.isPending,
     isUpdating: updateMutation.isPending,
     isDeleting: deleteMutation.isPending,

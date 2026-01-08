@@ -68,11 +68,24 @@ export function useServiceGoals() {
     onError: () => toast.error('Erro ao excluir meta'),
   });
 
+  const deleteManyMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase.from('service_goals').delete().in('id', ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['service_goals'] });
+      toast.success('Metas excluídas!');
+    },
+    onError: () => toast.error('Erro ao excluir metas'),
+  });
+
   return {
     serviceGoals,
     isLoading,
     createServiceGoal: createMutation.mutate,
     updateServiceGoal: updateMutation.mutate,
     deleteServiceGoal: deleteMutation.mutate,
+    deleteMany: deleteManyMutation.mutate,
   };
 }
