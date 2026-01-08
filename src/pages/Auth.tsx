@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Shield } from 'lucide-react';
+import { Loader2, Check } from 'lucide-react';
 import { z } from 'zod';
 import grupoSpliceLogo from '@/assets/grupo-splice-logo.png';
 
@@ -136,25 +136,55 @@ export default function Auth() {
   return (
     <div className="flex min-h-screen">
       {/* Left side - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 bg-sidebar items-center justify-center p-12">
-        <div className="max-w-md text-center">
-          <div className="flex items-center justify-center gap-3 mb-8">
-            <img 
-              src={grupoSpliceLogo} 
-              alt="Grupo Splice" 
-              className="h-14 w-auto"
-            />
-            <h1 className="text-4xl font-bold text-sidebar-foreground">
-              Splice OP
-            </h1>
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-purple-600 via-purple-700 to-indigo-800 items-center justify-center p-12">
+        <div className="max-w-md text-left">
+          {/* Logo Box */}
+          <div className="flex items-center gap-4 mb-8">
+            <div className="bg-white rounded-lg px-4 py-2">
+              <img 
+                src={grupoSpliceLogo} 
+                alt="Splice" 
+                className="h-8 w-auto"
+              />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-white">
+                Sistema Splice
+              </h1>
+              <p className="text-sm text-white/80">
+                Gestão Operacional Integrada
+              </p>
+            </div>
           </div>
-          <p className="text-xl text-sidebar-foreground/80 mb-6">
-            Sistema de Gestão Operacional
-          </p>
-          <div className="flex items-center justify-center gap-2 text-sidebar-foreground/60">
-            <Shield className="h-5 w-5" />
-            <span>Acesso seguro e criptografado</span>
-          </div>
+
+          {/* Title */}
+          <h2 className="text-2xl font-bold text-white mb-6">
+            Plataforma completa para gestão operacional
+          </h2>
+
+          {/* Features List */}
+          <ul className="space-y-3">
+            <li className="flex items-center gap-3 text-white/90">
+              <Check className="h-4 w-4 text-white" />
+              <span>19 módulos integrados de gestão</span>
+            </li>
+            <li className="flex items-center gap-3 text-white/90">
+              <Check className="h-4 w-4 text-white" />
+              <span>Controle de contratos e centro de custos</span>
+            </li>
+            <li className="flex items-center gap-3 text-white/90">
+              <Check className="h-4 w-4 text-white" />
+              <span>Gestão de equipamentos e manutenções</span>
+            </li>
+            <li className="flex items-center gap-3 text-white/90">
+              <Check className="h-4 w-4 text-white" />
+              <span>Relatórios e análises em tempo real</span>
+            </li>
+            <li className="flex items-center gap-3 text-white/90">
+              <Check className="h-4 w-4 text-white" />
+              <span>Importação de planilhas Excel</span>
+            </li>
+          </ul>
         </div>
       </div>
 
