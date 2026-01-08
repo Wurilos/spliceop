@@ -7,8 +7,9 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Radio, Shield } from 'lucide-react';
+import { Loader2, Shield } from 'lucide-react';
 import { z } from 'zod';
+import grupoSpliceLogo from '@/assets/grupo-splice-logo.png';
 
 const emailSchema = z.string().email('E-mail inválido');
 const passwordSchema = z.string().min(6, 'Senha deve ter pelo menos 6 caracteres');
@@ -138,9 +139,11 @@ export default function Auth() {
       <div className="hidden lg:flex lg:w-1/2 bg-sidebar items-center justify-center p-12">
         <div className="max-w-md text-center">
           <div className="flex items-center justify-center gap-3 mb-8">
-            <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-primary">
-              <Radio className="h-8 w-8 text-primary-foreground" />
-            </div>
+            <img 
+              src={grupoSpliceLogo} 
+              alt="Grupo Splice" 
+              className="h-14 w-auto"
+            />
             <h1 className="text-4xl font-bold text-sidebar-foreground">
               Splice OP
             </h1>
@@ -160,9 +163,11 @@ export default function Auth() {
         <Card className="w-full max-w-md border-0 shadow-lg">
           <CardHeader className="text-center pb-2">
             <div className="flex items-center justify-center gap-2 mb-4 lg:hidden">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
-                <Radio className="h-5 w-5 text-primary-foreground" />
-              </div>
+              <img 
+                src={grupoSpliceLogo} 
+                alt="Grupo Splice" 
+                className="h-10 w-auto"
+              />
               <span className="text-xl font-bold">Splice OP</span>
             </div>
             <CardTitle className="text-2xl">Acessar Sistema</CardTitle>
