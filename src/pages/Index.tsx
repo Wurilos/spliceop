@@ -6,20 +6,41 @@ import { StatCard } from '@/components/dashboard/StatCard';
 import { AlertsCard } from '@/components/dashboard/AlertsCard';
 import { ModulesGrid } from '@/components/dashboard/ModulesGrid';
 import { RecentActivity } from '@/components/dashboard/RecentActivity';
+import { NotificationPopup } from '@/components/notifications/NotificationPopup';
 import { FileText, Users, Radar, Car, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+
+const NOTIFICATION_POPUP_KEY = 'lastNotificationPopupShown';
 
 export default function Index() {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
   const [stats, setStats] = useState({ contracts: 0, employees: 0, equipment: 0, vehicles: 0 });
   const [loadingStats, setLoadingStats] = useState(true);
+  const [showNotifications, setShowNotifications] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
       navigate('/auth');
     }
   }, [user, loading, navigate]);
+
+  // Show notification popup once per session
+  useEffect(() => {
+    if (user && !loading) {
+      const lastShown = sessionStorage.getItem(NOTIFICATION_POPUP_KEY);
+      const now = new Date().getTime();
+      
+      // Show popup if never shown in this session or shown more than 1 hour ago
+      if (!lastShown || now - parseInt(lastShown) > 3600000) {
+        const timer = setTimeout(() => {
+          setShowNotifications(true);
+          sessionStorage.setItem(NOTIFICATION_POPUP_KEY, now.toString());
+        }, 500);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [user, loading]);
 
   useEffect(() => {
     if (user) {
@@ -77,6 +98,11 @@ export default function Index() {
           <RecentActivity activities={activities} />
         </div>
       </div>
+
+      <NotificationPopup 
+        open={showNotifications} 
+        onOpenChange={setShowNotifications} 
+      />
     </AppLayout>
   );
 }
