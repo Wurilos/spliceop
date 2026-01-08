@@ -145,6 +145,8 @@ export default function Contracts() {
           onOpenChange={(open) => !open && setDeletingContract(null)}
           onConfirm={handleConfirmDelete}
           loading={isDeleting}
+          tableName="contracts"
+          recordId={deletingContract?.id}
         />
 
         <ImportDialog

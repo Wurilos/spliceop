@@ -137,6 +137,8 @@ export default function EquipmentPage() {
           onOpenChange={(open) => !open && setDeletingEquipment(null)}
           onConfirm={handleConfirmDelete}
           loading={isDeleting}
+          tableName="equipment"
+          recordId={deletingEquipment?.id}
         />
 
         <ImportDialog

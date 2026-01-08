@@ -131,6 +131,8 @@ export default function Employees() {
           onOpenChange={(open) => !open && setDeletingEmployee(null)}
           onConfirm={handleConfirmDelete}
           loading={isDeleting}
+          tableName="employees"
+          recordId={deletingEmployee?.id}
         />
 
         <ImportDialog

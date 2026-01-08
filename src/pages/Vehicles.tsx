@@ -132,6 +132,8 @@ export default function Vehicles() {
           onOpenChange={(open) => !open && setDeletingVehicle(null)}
           onConfirm={handleConfirmDelete}
           loading={isDeleting}
+          tableName="vehicles"
+          recordId={deletingVehicle?.id}
         />
 
         <ImportDialog
