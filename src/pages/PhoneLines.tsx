@@ -30,6 +30,15 @@ const columns = [
     label: 'Sub Operadora',
     render: (value: string | null) => value ? <Badge variant="secondary">{value}</Badge> : '-'
   },
+  { 
+    key: 'status', 
+    label: 'Status',
+    render: (value: string) => (
+      <Badge variant={value === 'active' ? 'default' : 'secondary'}>
+        {value === 'active' ? 'Ativa' : 'Inativa'}
+      </Badge>
+    )
+  },
 ];
 
 export default function PhoneLines() {
@@ -74,21 +83,23 @@ export default function PhoneLines() {
   };
 
   const handleExport = (format: 'pdf' | 'excel' | 'csv') => {
-    const exportData = phoneLines.map((pl) => ({
-      Contrato: pl.contracts ? `${pl.contracts.number} - ${pl.contracts.client_name}` : '',
-      'Nº Equipamento': pl.equipment?.serial_number || '',
-      'Nº Linha': pl.line_number,
-      Operadora: pl.carrier,
-      'Sub Operadora': pl.sub_carrier || '',
-    }));
-
     const exportColumns = [
       { key: 'Contrato', label: 'Contrato' },
       { key: 'Nº Equipamento', label: 'Nº Equipamento' },
       { key: 'Nº Linha', label: 'Nº Linha' },
       { key: 'Operadora', label: 'Operadora' },
       { key: 'Sub Operadora', label: 'Sub Operadora' },
+      { key: 'Status', label: 'Status' },
     ];
+
+    const exportData = phoneLines.map((pl) => ({
+      Contrato: pl.contracts ? `${pl.contracts.number} - ${pl.contracts.client_name}` : '',
+      'Nº Equipamento': pl.equipment?.serial_number || '',
+      'Nº Linha': pl.line_number,
+      Operadora: pl.carrier,
+      'Sub Operadora': pl.sub_carrier || '',
+      Status: pl.status === 'active' ? 'Ativa' : 'Inativa',
+    }));
 
     if (format === 'excel' || format === 'csv') {
       exportToExcel(exportData, exportColumns, 'Linhas');

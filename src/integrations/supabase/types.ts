@@ -1027,6 +1027,7 @@ export type Database = {
           equipment_id: string | null
           id: string
           line_number: string
+          status: string
           sub_carrier: string | null
           updated_at: string
         }
@@ -1037,6 +1038,7 @@ export type Database = {
           equipment_id?: string | null
           id?: string
           line_number: string
+          status?: string
           sub_carrier?: string | null
           updated_at?: string
         }
@@ -1047,6 +1049,7 @@ export type Database = {
           equipment_id?: string | null
           id?: string
           line_number?: string
+          status?: string
           sub_carrier?: string | null
           updated_at?: string
         }

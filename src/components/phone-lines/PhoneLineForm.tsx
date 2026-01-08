@@ -31,6 +31,10 @@ import type { PhoneLine } from '@/hooks/usePhoneLines';
 
 const CARRIERS = ['Vivo', 'Oi', 'TIM', 'Claro', 'DATATEM'] as const;
 const SUB_CARRIERS = ['Vivo', 'Oi', 'TIM', 'Claro'] as const;
+const STATUSES = [
+  { value: 'active', label: 'Ativa' },
+  { value: 'inactive', label: 'Inativa' },
+] as const;
 
 const formSchema = z.object({
   contract_id: z.string().min(1, 'Contrato é obrigatório'),
@@ -38,6 +42,7 @@ const formSchema = z.object({
   line_number: z.string().min(1, 'Número da linha é obrigatório'),
   carrier: z.string().min(1, 'Operadora é obrigatória'),
   sub_carrier: z.string().nullable(),
+  status: z.string().min(1, 'Status é obrigatório'),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -68,6 +73,7 @@ export function PhoneLineForm({
       line_number: '',
       carrier: '',
       sub_carrier: null,
+      status: 'active',
     },
   });
 
@@ -81,6 +87,7 @@ export function PhoneLineForm({
         line_number: phoneLine.line_number,
         carrier: phoneLine.carrier,
         sub_carrier: phoneLine.sub_carrier,
+        status: phoneLine.status || 'active',
       });
     } else {
       form.reset({
@@ -89,6 +96,7 @@ export function PhoneLineForm({
         line_number: '',
         carrier: '',
         sub_carrier: null,
+        status: 'active',
       });
     }
   }, [phoneLine, form]);
@@ -229,6 +237,31 @@ export function PhoneLineForm({
                 )}
               />
             )}
+
+            <FormField
+              control={form.control}
+              name="status"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Status</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o status" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {STATUSES.map((status) => (
+                        <SelectItem key={status.value} value={status.value}>
+                          {status.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <div className="flex justify-end gap-2 pt-4">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
