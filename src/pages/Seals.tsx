@@ -1,13 +1,16 @@
 import { useState, useMemo } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Plus, Search, LayoutDashboard, Tag, FileText } from 'lucide-react';
+import { Plus, Search, LayoutDashboard, Tag, FileText, Wrench } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { DeleteDialog } from '@/components/shared/DeleteDialog';
 import { ImportDialog } from '@/components/shared/ImportDialog';
 import { SealForm } from '@/components/seals/SealForm';
 import { SealCard } from '@/components/seals/SealCard';
+import { ServiceOrderForm } from '@/components/seals/ServiceOrderForm';
+import { ServiceOrderCard } from '@/components/seals/ServiceOrderCard';
 import { useSeals, Seal } from '@/hooks/useSeals';
+import { useSealServiceOrders, SealServiceOrder } from '@/hooks/useSealServiceOrders';
 import { exportToPDF, exportToExcel, exportToCSV } from '@/lib/export';
 import { sealImportConfig } from '@/lib/importConfigs';
 import { supabase } from '@/integrations/supabase/client';
@@ -33,10 +36,14 @@ const STATUS_LABELS: Record<string, string> = {
 
 export default function Seals() {
   const { seals, isLoading, deleteSeal } = useSeals();
+  const { serviceOrders, isLoading: isLoadingOrders, deleteServiceOrder } = useSealServiceOrders();
   const [formOpen, setFormOpen] = useState(false);
+  const [serviceOrderFormOpen, setServiceOrderFormOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteOrderOpen, setDeleteOrderOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [selectedSeal, setSelectedSeal] = useState<Seal | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<SealServiceOrder | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('received');
 
@@ -81,6 +88,31 @@ export default function Seals() {
       setSelectedSeal(null);
     }
   };
+
+  const handleDeleteOrder = (order: SealServiceOrder) => {
+    setSelectedOrder(order);
+    setDeleteOrderOpen(true);
+  };
+
+  const confirmDeleteOrder = () => {
+    if (selectedOrder) {
+      deleteServiceOrder(selectedOrder.id);
+      setDeleteOrderOpen(false);
+      setSelectedOrder(null);
+    }
+  };
+
+  // Filter service orders by search
+  const filteredOrders = useMemo(() => {
+    if (!searchTerm) return serviceOrders;
+    const term = searchTerm.toLowerCase();
+    return serviceOrders.filter(order =>
+      order.order_number.toLowerCase().includes(term) ||
+      order.contracts?.number.toLowerCase().includes(term) ||
+      order.equipment?.serial_number.toLowerCase().includes(term) ||
+      order.category?.toLowerCase().includes(term)
+    );
+  }, [serviceOrders, searchTerm]);
 
   const exportColumns = [
     { key: 'Número do Lacre', label: 'Número do Lacre' },
@@ -136,7 +168,7 @@ export default function Seals() {
               Lacres Recebidos
             </TabsTrigger>
             <TabsTrigger value="service-orders" className="flex items-center gap-2">
-              <FileText className="h-4 w-4" />
+              <Wrench className="h-4 w-4" />
               Ordens de Serviços
             </TabsTrigger>
           </TabsList>
@@ -227,38 +259,44 @@ export default function Seals() {
           <TabsContent value="service-orders" className="mt-6">
             <div className="space-y-4">
               <div className="flex items-center justify-between gap-4">
-                <h2 className="text-xl font-semibold">
-                  Ordens de Serviços ({filteredSeals.length})
+                <h2 className="text-xl font-semibold flex items-center gap-2">
+                  <Wrench className="h-5 w-5" />
+                  Ordens de Serviços ({filteredOrders.length})
                 </h2>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Buscar lacres..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 w-64"
-                  />
+                <div className="flex items-center gap-2">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Buscar ordens..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10 w-64"
+                    />
+                  </div>
+                  <Button onClick={() => setServiceOrderFormOpen(true)}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Nova Ordem de Serviço
+                  </Button>
                 </div>
               </div>
 
-              {isLoading ? (
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                  {[...Array(8)].map((_, i) => (
-                    <Skeleton key={i} className="h-40 rounded-lg" />
+              {isLoadingOrders ? (
+                <div className="space-y-4">
+                  {[...Array(3)].map((_, i) => (
+                    <Skeleton key={i} className="h-32 rounded-lg" />
                   ))}
                 </div>
-              ) : filteredSeals.length === 0 ? (
+              ) : filteredOrders.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">
                   Nenhuma ordem de serviço encontrada.
                 </div>
               ) : (
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                  {filteredSeals.map((seal) => (
-                    <SealCard
-                      key={seal.id}
-                      seal={seal}
-                      onEdit={handleEdit}
-                      onDelete={handleDelete}
+                <div className="space-y-4">
+                  {filteredOrders.map((order) => (
+                    <ServiceOrderCard
+                      key={order.id}
+                      order={order}
+                      onDelete={handleDeleteOrder}
                     />
                   ))}
                 </div>
@@ -280,6 +318,19 @@ export default function Seals() {
           onConfirm={confirmDelete}
           title="Excluir Lacre"
           description="Tem certeza que deseja excluir este lacre?"
+        />
+
+        <DeleteDialog
+          open={deleteOrderOpen}
+          onOpenChange={setDeleteOrderOpen}
+          onConfirm={confirmDeleteOrder}
+          title="Excluir Ordem de Serviço"
+          description="Tem certeza que deseja excluir esta ordem de serviço? Os lacres serão liberados novamente."
+        />
+
+        <ServiceOrderForm
+          open={serviceOrderFormOpen}
+          onOpenChange={setServiceOrderFormOpen}
         />
 
         <ImportDialog

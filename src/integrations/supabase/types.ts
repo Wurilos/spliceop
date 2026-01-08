@@ -1097,6 +1097,96 @@ export type Database = {
         }
         Relationships: []
       }
+      seal_service_order_items: {
+        Row: {
+          created_at: string | null
+          id: string
+          installation_item: string
+          seal_id: string
+          service_order_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          installation_item: string
+          seal_id: string
+          service_order_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          installation_item?: string
+          seal_id?: string
+          service_order_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seal_service_order_items_seal_id_fkey"
+            columns: ["seal_id"]
+            isOneToOne: false
+            referencedRelation: "seals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seal_service_order_items_service_order_id_fkey"
+            columns: ["service_order_id"]
+            isOneToOne: false
+            referencedRelation: "seal_service_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seal_service_orders: {
+        Row: {
+          category: string | null
+          contract_id: string | null
+          created_at: string | null
+          equipment_id: string | null
+          id: string
+          maintenance_description: string | null
+          order_number: string
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string | null
+          contract_id?: string | null
+          created_at?: string | null
+          equipment_id?: string | null
+          id?: string
+          maintenance_description?: string | null
+          order_number: string
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string | null
+          contract_id?: string | null
+          created_at?: string | null
+          equipment_id?: string | null
+          id?: string
+          maintenance_description?: string | null
+          order_number?: string
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seal_service_orders_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seal_service_orders_equipment_id_fkey"
+            columns: ["equipment_id"]
+            isOneToOne: false
+            referencedRelation: "equipment"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       seals: {
         Row: {
           created_at: string | null
