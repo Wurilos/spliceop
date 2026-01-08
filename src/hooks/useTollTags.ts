@@ -9,6 +9,7 @@ export interface TollTag {
   toll_plaza: string | null;
   passage_date: string;
   value: number;
+  contract_id: string | null;
   created_at: string | null;
 }
 
@@ -35,9 +36,9 @@ export function useTollTags() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['toll_tags'] });
-      toast.success('Tag de pedágio criada com sucesso!');
+      toast.success('TAG criada com sucesso!');
     },
-    onError: () => toast.error('Erro ao criar tag de pedágio'),
+    onError: () => toast.error('Erro ao criar TAG'),
   });
 
   const updateMutation = useMutation({
@@ -48,9 +49,9 @@ export function useTollTags() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['toll_tags'] });
-      toast.success('Tag de pedágio atualizada!');
+      toast.success('TAG atualizada!');
     },
-    onError: () => toast.error('Erro ao atualizar tag de pedágio'),
+    onError: () => toast.error('Erro ao atualizar TAG'),
   });
 
   const deleteMutation = useMutation({
@@ -60,9 +61,9 @@ export function useTollTags() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['toll_tags'] });
-      toast.success('Tag de pedágio excluída!');
+      toast.success('TAG excluída!');
     },
-    onError: () => toast.error('Erro ao excluir tag de pedágio'),
+    onError: () => toast.error('Erro ao excluir TAG'),
   });
 
   return {

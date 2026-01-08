@@ -1799,6 +1799,7 @@ export type Database = {
       }
       toll_tags: {
         Row: {
+          contract_id: string | null
           created_at: string | null
           id: string
           passage_date: string
@@ -1808,6 +1809,7 @@ export type Database = {
           vehicle_id: string
         }
         Insert: {
+          contract_id?: string | null
           created_at?: string | null
           id?: string
           passage_date: string
@@ -1817,6 +1819,7 @@ export type Database = {
           vehicle_id: string
         }
         Update: {
+          contract_id?: string | null
           created_at?: string | null
           id?: string
           passage_date?: string
@@ -1831,6 +1834,13 @@ export type Database = {
             columns: ["vehicle_id"]
             isOneToOne: false
             referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "toll_tags_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
             referencedColumns: ["id"]
           },
           {
