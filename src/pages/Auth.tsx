@@ -12,6 +12,7 @@ import { z } from 'zod';
 import spliceLogo from '@/assets/splice-logo.png';
 
 const ALLOWED_EMAIL_DOMAIN = '@splice.com.br';
+const ADMIN_EMAIL = 'sergio.silva@splice.com.br';
 
 const emailSchema = z.string().email('E-mail inválido');
 const corporateEmailSchema = z.string()
@@ -22,6 +23,8 @@ const corporateEmailSchema = z.string()
   );
 const passwordSchema = z.string().min(6, 'Senha deve ter pelo menos 6 caracteres');
 const nameSchema = z.string().min(2, 'Nome deve ter pelo menos 2 caracteres');
+
+const isAdminEmail = (email: string) => email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -124,10 +127,18 @@ export default function Auth() {
         variant: 'destructive',
       });
     } else {
-      toast({
-        title: 'Cadastro realizado!',
-        description: 'Um e-mail de confirmação foi enviado para ativar sua conta. Verifique sua caixa de entrada.',
-      });
+      // Admin email doesn't need confirmation message
+      if (isAdminEmail(signupEmail)) {
+        toast({
+          title: 'Cadastro de administrador realizado!',
+          description: 'Sua conta foi criada com sucesso. Você já pode fazer login.',
+        });
+      } else {
+        toast({
+          title: 'Cadastro realizado!',
+          description: 'Um e-mail de confirmação foi enviado para ativar sua conta. Verifique sua caixa de entrada.',
+        });
+      }
       // Clear form after successful signup
       setSignupName('');
       setSignupEmail('');
