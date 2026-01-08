@@ -23,10 +23,15 @@ export function usePendingIssues() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('pending_issues')
-        .select('*')
+        .select(`
+          *,
+          contracts:contracts!fk_pending_issues_contract(number, client_name),
+          equipment:equipment!fk_pending_issues_equipment(serial_number),
+          assigned:employees!fk_pending_issues_employee(full_name)
+        `)
         .order('created_at', { ascending: false });
       if (error) throw error;
-      return data as PendingIssue[];
+      return data;
     },
   });
 

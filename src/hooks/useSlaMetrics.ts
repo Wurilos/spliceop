@@ -21,10 +21,13 @@ export function useSlaMetrics() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('sla_metrics')
-        .select('*')
+        .select(`
+          *,
+          contracts:contracts!fk_sla_metrics_contract(number, client_name)
+        `)
         .order('month', { ascending: false });
       if (error) throw error;
-      return data as SlaMetric[];
+      return data;
     },
   });
 

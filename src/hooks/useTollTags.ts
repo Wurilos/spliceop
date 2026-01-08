@@ -21,10 +21,14 @@ export function useTollTags() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('toll_tags')
-        .select('*')
+        .select(`
+          *,
+          vehicles:vehicles!fk_toll_tags_vehicle(plate, brand, model),
+          contracts:contracts(number, client_name)
+        `)
         .order('passage_date', { ascending: false });
       if (error) throw error;
-      return data as TollTag[];
+      return data;
     },
   });
 

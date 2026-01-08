@@ -20,10 +20,13 @@ export function useCustomerSatisfaction() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('customer_satisfaction')
-        .select('*')
+        .select(`
+          *,
+          contracts:contracts!fk_customer_satisfaction_contract(number, client_name)
+        `)
         .order('year', { ascending: false });
       if (error) throw error;
-      return data as CustomerSatisfaction[];
+      return data;
     },
   });
 

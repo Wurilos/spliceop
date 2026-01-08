@@ -23,10 +23,14 @@ export function useEnergyBills() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('energy_bills')
-        .select('*')
+        .select(`
+          *,
+          contracts:contracts!fk_energy_bills_contract(number, client_name),
+          suppliers:energy_suppliers(name)
+        `)
         .order('reference_month', { ascending: false });
       if (error) throw error;
-      return data as EnergyBill[];
+      return data;
     },
   });
 

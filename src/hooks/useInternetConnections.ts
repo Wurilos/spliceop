@@ -20,10 +20,14 @@ export function useInternetConnections() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('internet_connections')
-        .select('*')
+        .select(`
+          *,
+          contracts(number, client_name),
+          providers:internet_providers(name)
+        `)
         .order('serial_number', { ascending: true });
       if (error) throw error;
-      return data as InternetConnection[];
+      return data;
     },
   });
 

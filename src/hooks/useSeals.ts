@@ -25,10 +25,14 @@ export function useSeals() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('seals')
-        .select('*')
+        .select(`
+          *,
+          equipment:equipment!fk_seals_equipment(serial_number, type),
+          technician:employees!fk_seals_technician(full_name)
+        `)
         .order('received_date', { ascending: false });
       if (error) throw error;
-      return data as Seal[];
+      return data;
     },
   });
 
