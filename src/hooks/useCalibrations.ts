@@ -16,7 +16,7 @@ export function useCalibrations() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('calibrations')
-        .select('*, equipment(serial_number, type, brand)')
+        .select('*, equipment!fk_calibrations_equipment(serial_number, type, brand)')
         .order('calibration_date', { ascending: false });
       if (error) throw error;
       return data;

@@ -50,6 +50,13 @@ export type Database = {
             referencedRelation: "employees"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_advances_employee"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
         ]
       }
       audit_log: {
@@ -122,6 +129,13 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "calibrations_equipment_id_fkey"
+            columns: ["equipment_id"]
+            isOneToOne: false
+            referencedRelation: "equipment"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_calibrations_equipment"
             columns: ["equipment_id"]
             isOneToOne: false
             referencedRelation: "equipment"
@@ -210,6 +224,13 @@ export type Database = {
             referencedRelation: "contracts"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_customer_satisfaction_contract"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
         ]
       }
       employees: {
@@ -278,6 +299,13 @@ export type Database = {
             referencedRelation: "contracts"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_employees_contract"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
         ]
       }
       energy_bills: {
@@ -317,6 +345,13 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "energy_bills_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_energy_bills_contract"
             columns: ["contract_id"]
             isOneToOne: false
             referencedRelation: "contracts"
@@ -384,6 +419,13 @@ export type Database = {
             referencedRelation: "contracts"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_equipment_contract"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
         ]
       }
       fuel_records: {
@@ -425,6 +467,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_fuel_records_vehicle"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "fuel_records_vehicle_id_fkey"
             columns: ["vehicle_id"]
             isOneToOne: false
@@ -462,6 +511,13 @@ export type Database = {
           valid_captures?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_image_metrics_equipment"
+            columns: ["equipment_id"]
+            isOneToOne: false
+            referencedRelation: "equipment"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "image_metrics_equipment_id_fkey"
             columns: ["equipment_id"]
@@ -503,6 +559,13 @@ export type Database = {
           status?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_infractions_equipment"
+            columns: ["equipment_id"]
+            isOneToOne: false
+            referencedRelation: "equipment"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "infractions_equipment_id_fkey"
             columns: ["equipment_id"]
@@ -551,6 +614,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_infrastructure_services_contract"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "infrastructure_services_contract_id_fkey"
             columns: ["contract_id"]
             isOneToOne: false
@@ -591,6 +661,13 @@ export type Database = {
           value?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_internet_bills_contract"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "internet_bills_contract_id_fkey"
             columns: ["contract_id"]
@@ -681,6 +758,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_invoices_contract"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "invoices_contract_id_fkey"
             columns: ["contract_id"]
             isOneToOne: false
@@ -725,6 +809,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_maintenance_records_vehicle"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "maintenance_records_vehicle_id_fkey"
             columns: ["vehicle_id"]
             isOneToOne: false
@@ -765,6 +856,20 @@ export type Database = {
           vehicle_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_mileage_records_employee"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_mileage_records_vehicle"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "mileage_records_employee_id_fkey"
             columns: ["employee_id"]
@@ -819,6 +924,27 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_pending_issues_contract"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_pending_issues_employee"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_pending_issues_equipment"
+            columns: ["equipment_id"]
+            isOneToOne: false
+            referencedRelation: "equipment"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "pending_issues_assigned_to_fkey"
             columns: ["assigned_to"]
@@ -902,6 +1028,20 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_seals_equipment"
+            columns: ["equipment_id"]
+            isOneToOne: false
+            referencedRelation: "equipment"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_seals_technician"
+            columns: ["technician_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "seals_equipment_id_fkey"
             columns: ["equipment_id"]
             isOneToOne: false
@@ -959,6 +1099,27 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_service_calls_contract"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_service_calls_employee"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_service_calls_equipment"
+            columns: ["equipment_id"]
+            isOneToOne: false
+            referencedRelation: "equipment"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "service_calls_contract_id_fkey"
             columns: ["contract_id"]
             isOneToOne: false
@@ -1011,6 +1172,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_service_goals_contract"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "service_goals_contract_id_fkey"
             columns: ["contract_id"]
             isOneToOne: false
@@ -1052,6 +1220,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_sla_metrics_contract"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "sla_metrics_contract_id_fkey"
             columns: ["contract_id"]
             isOneToOne: false
@@ -1089,6 +1264,13 @@ export type Database = {
           vehicle_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_toll_tags_vehicle"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "toll_tags_vehicle_id_fkey"
             columns: ["vehicle_id"]
@@ -1166,6 +1348,13 @@ export type Database = {
           year?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_vehicles_contract"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "vehicles_contract_id_fkey"
             columns: ["contract_id"]

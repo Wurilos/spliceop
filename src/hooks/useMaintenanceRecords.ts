@@ -16,7 +16,7 @@ export function useMaintenanceRecords() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('maintenance_records')
-        .select('*, vehicles(plate, brand, model)')
+        .select('*, vehicles!fk_maintenance_records_vehicle(plate, brand, model)')
         .order('date', { ascending: false });
       if (error) throw error;
       return data;

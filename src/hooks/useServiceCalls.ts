@@ -16,7 +16,7 @@ export function useServiceCalls() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('service_calls')
-        .select('*, contracts(number, client_name), equipment(serial_number), employees(full_name)')
+        .select('*, contracts!fk_service_calls_contract(number, client_name), equipment!fk_service_calls_equipment(serial_number), employees!fk_service_calls_employee(full_name)')
         .order('date', { ascending: false });
       if (error) throw error;
       return data;

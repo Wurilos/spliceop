@@ -24,7 +24,7 @@ export function useInfrastructureServices() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('infrastructure_services')
-        .select('*, contracts(client_name, number)')
+        .select('*, contracts!fk_infrastructure_services_contract(client_name, number)')
         .order('date', { ascending: false });
       if (error) throw error;
       return data as InfrastructureService[];

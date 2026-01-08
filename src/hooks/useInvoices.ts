@@ -16,7 +16,7 @@ export function useInvoices() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('invoices')
-        .select('*, contracts(number, client_name)')
+        .select('*, contracts!fk_invoices_contract(number, client_name)')
         .order('issue_date', { ascending: false });
       if (error) throw error;
       return data;
