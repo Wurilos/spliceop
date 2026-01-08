@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -18,8 +18,9 @@ const schema = z.object({
   contract_id: z.string().min(1, 'Contrato é obrigatório'),
   issue_date: z.string().min(1, 'Data de emissão é obrigatória'),
   due_date: z.string().optional(),
-  value: z.coerce.number().min(0.01, 'Valor deve ser maior que 0'),
-  discount: z.coerce.number().min(0).optional(),
+  value: z.coerce.number().min(0, 'Valor deve ser maior ou igual a 0'),
+  monthly_value: z.coerce.number().min(0).optional(),
+  discount: z.coerce.number().optional(),
   payment_date: z.string().optional(),
   status: z.enum(['pending', 'paid', 'overdue', 'cancelled']).optional(),
   notes: z.string().optional(),
@@ -31,8 +32,33 @@ export function InvoiceForm({ open, onOpenChange, onSubmit, initialData, loading
   const { contracts } = useContracts();
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { number: '', contract_id: '', issue_date: new Date().toISOString().split('T')[0], due_date: '', value: 0, discount: 0, payment_date: '', status: 'pending', notes: '' },
+    defaultValues: { number: '', contract_id: '', issue_date: new Date().toISOString().split('T')[0], due_date: '', value: 0, monthly_value: 0, discount: 0, payment_date: '', status: 'pending', notes: '' },
   });
+
+  const contractId = useWatch({ control: form.control, name: 'contract_id' });
+  const monthlyValue = useWatch({ control: form.control, name: 'monthly_value' });
+  const contractValue = useWatch({ control: form.control, name: 'value' });
+
+  // Auto-fill contract value when contract is selected
+  useEffect(() => {
+    if (contractId && !initialData) {
+      const selectedContract = contracts.find(c => c.id === contractId);
+      if (selectedContract && selectedContract.value) {
+        form.setValue('value', Number(selectedContract.value));
+      }
+    }
+  }, [contractId, contracts, form, initialData]);
+
+  // Auto-calculate discount/addition based on contract value and monthly value
+  useEffect(() => {
+    const contractVal = Number(contractValue) || 0;
+    const monthlyVal = Number(monthlyValue) || 0;
+    
+    if (contractVal > 0 && monthlyVal > 0) {
+      const difference = monthlyVal - contractVal;
+      form.setValue('discount', difference);
+    }
+  }, [monthlyValue, contractValue, form]);
 
   useEffect(() => {
     if (initialData) {
@@ -42,13 +68,14 @@ export function InvoiceForm({ open, onOpenChange, onSubmit, initialData, loading
         issue_date: initialData.issue_date,
         due_date: initialData.due_date || '',
         value: Number(initialData.value),
+        monthly_value: Number(initialData.monthly_value) || 0,
         discount: Number(initialData.discount) || 0,
         payment_date: initialData.payment_date || '',
         status: (initialData.status as 'pending' | 'paid' | 'overdue' | 'cancelled') || 'pending',
         notes: initialData.notes || '',
       });
     } else {
-      form.reset({ number: '', contract_id: '', issue_date: new Date().toISOString().split('T')[0], due_date: '', value: 0, discount: 0, payment_date: '', status: 'pending', notes: '' });
+      form.reset({ number: '', contract_id: '', issue_date: new Date().toISOString().split('T')[0], due_date: '', value: 0, monthly_value: 0, discount: 0, payment_date: '', status: 'pending', notes: '' });
     }
   }, [initialData, form]);
 
@@ -96,12 +123,29 @@ export function InvoiceForm({ open, onOpenChange, onSubmit, initialData, loading
                 <FormItem><FormLabel>Vencimento</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>
               )} />
             </div>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               <FormField control={form.control} name="value" render={({ field }) => (
-                <FormItem><FormLabel>Valor (R$)</FormLabel><FormControl><Input type="number" step="0.01" {...field} /></FormControl><FormMessage /></FormItem>
+                <FormItem>
+                  <FormLabel>Valor do Contrato (R$)</FormLabel>
+                  <FormControl><Input type="number" step="0.01" {...field} readOnly className="bg-muted" /></FormControl>
+                  <FormMessage />
+                </FormItem>
               )} />
+              <FormField control={form.control} name="monthly_value" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Valor do Mês (R$)</FormLabel>
+                  <FormControl><Input type="number" step="0.01" placeholder="0.00" {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
               <FormField control={form.control} name="discount" render={({ field }) => (
-                <FormItem><FormLabel>Desconto (R$)</FormLabel><FormControl><Input type="number" step="0.01" {...field} /></FormControl><FormMessage /></FormItem>
+                <FormItem>
+                  <FormLabel>Desconto/Acréscimo (R$)</FormLabel>
+                  <FormControl><Input type="number" step="0.01" {...field} readOnly className="bg-muted" /></FormControl>
+                  <FormMessage />
+                </FormItem>
               )} />
               <FormField control={form.control} name="payment_date" render={({ field }) => (
                 <FormItem><FormLabel>Data Pagamento</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>

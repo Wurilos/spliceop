@@ -20,8 +20,14 @@ const columns: Column<Invoice>[] = [
   { key: 'contracts.client_name', label: 'Cliente', render: (_, row) => row.contracts?.client_name || '-' },
   { key: 'issue_date', label: 'Emissão', render: (v) => format(new Date(String(v)), 'dd/MM/yyyy') },
   { key: 'due_date', label: 'Vencimento', render: (v) => v ? format(new Date(String(v)), 'dd/MM/yyyy') : '-' },
-  { key: 'value', label: 'Valor', render: (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(v)) },
-  { key: 'discount', label: 'Desconto', render: (v) => v ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(v)) : '-' },
+  { key: 'value', label: 'Valor Contrato', render: (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(v)) },
+  { key: 'monthly_value', label: 'Valor do Mês', render: (v) => v ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(v)) : '-' },
+  { key: 'discount', label: 'Desc./Acrés.', render: (v) => {
+    const val = Number(v);
+    if (val === 0) return '-';
+    const formatted = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Math.abs(val));
+    return val > 0 ? `+${formatted}` : `-${formatted}`;
+  }},
   { key: 'status', label: 'Status', render: (v) => <StatusBadge status={String(v || 'pending')} /> },
 ];
 

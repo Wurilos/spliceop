@@ -742,6 +742,7 @@ export type Database = {
           due_date: string | null
           id: string
           issue_date: string
+          monthly_value: number | null
           notes: string | null
           number: string
           payment_date: string | null
@@ -755,6 +756,7 @@ export type Database = {
           due_date?: string | null
           id?: string
           issue_date: string
+          monthly_value?: number | null
           notes?: string | null
           number: string
           payment_date?: string | null
@@ -768,6 +770,7 @@ export type Database = {
           due_date?: string | null
           id?: string
           issue_date?: string
+          monthly_value?: number | null
           notes?: string | null
           number?: string
           payment_date?: string | null
