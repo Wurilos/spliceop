@@ -7,12 +7,14 @@ import { DataTable } from '@/components/shared/DataTable';
 import { DeleteDialog } from '@/components/shared/DeleteDialog';
 import { ImportDialog } from '@/components/shared/ImportDialog';
 import { MileageForm } from '@/components/mileage/MileageForm';
+import { MileageDashboard } from '@/components/mileage/MileageDashboard';
 import { useMileageRecords } from '@/hooks/useMileageRecords';
 import { useVehicles } from '@/hooks/useVehicles';
 import { useEmployees } from '@/hooks/useEmployees';
 import { exportToPDF, exportToExcel, exportToCSV } from '@/lib/export';
 import { mileageImportConfig } from '@/lib/importConfigs';
 import { supabase } from '@/integrations/supabase/client';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function Mileage() {
   const { records: mileageRecords, loading: isLoading, delete: deleteMileageRecord } = useMileageRecords();
@@ -34,6 +36,11 @@ export default function Mileage() {
     return employee?.full_name || '-';
   };
 
+  const formatTime = (time: string | null | undefined) => {
+    if (!time) return '-';
+    return time.substring(0, 5);
+  };
+
   const columns = [
     {
       key: 'date',
@@ -46,16 +53,26 @@ export default function Mileage() {
       render: (value: string) => getVehiclePlate(value),
     },
     {
+      key: 'start_time',
+      label: 'Hora Início',
+      render: (value: string | null) => formatTime(value),
+    },
+    { key: 'initial_km', label: 'KM Início' },
+    {
+      key: 'end_time',
+      label: 'Hora Término',
+      render: (value: string | null) => formatTime(value),
+    },
+    { key: 'final_km', label: 'KM Término' },
+    {
+      key: 'total',
+      label: 'KM Rodado',
+      render: (_: unknown, row: any) => row.final_km - row.initial_km,
+    },
+    {
       key: 'employee_id',
       label: 'Colaborador',
       render: (value: string | null) => getEmployeeName(value),
-    },
-    { key: 'initial_km', label: 'Km Inicial' },
-    { key: 'final_km', label: 'Km Final' },
-    {
-      key: 'total',
-      label: 'Total (km)',
-      render: (_: unknown, row: any) => row.final_km - row.initial_km,
     },
   ];
 
@@ -80,20 +97,24 @@ export default function Mileage() {
   const exportColumns = [
     { key: 'Data', label: 'Data' },
     { key: 'Veículo', label: 'Veículo' },
+    { key: 'Hora Início', label: 'Hora Início' },
+    { key: 'Km Início', label: 'Km Início' },
+    { key: 'Hora Término', label: 'Hora Término' },
+    { key: 'Km Término', label: 'Km Término' },
+    { key: 'KM Rodado', label: 'KM Rodado' },
     { key: 'Colaborador', label: 'Colaborador' },
-    { key: 'Km Inicial', label: 'Km Inicial' },
-    { key: 'Km Final', label: 'Km Final' },
-    { key: 'Total (km)', label: 'Total (km)' },
   ];
 
   const handleExport = (type: 'pdf' | 'excel' | 'csv') => {
-    const data = mileageRecords.map((r) => ({
+    const data = mileageRecords.map((r: any) => ({
       Data: format(new Date(r.date), 'dd/MM/yyyy'),
       Veículo: getVehiclePlate(r.vehicle_id),
+      'Hora Início': formatTime(r.start_time),
+      'Km Início': r.initial_km,
+      'Hora Término': formatTime(r.end_time),
+      'Km Término': r.final_km,
+      'KM Rodado': r.final_km - r.initial_km,
       Colaborador: getEmployeeName(r.employee_id),
-      'Km Inicial': r.initial_km,
-      'Km Final': r.final_km,
-      'Total (km)': r.final_km - r.initial_km,
     }));
 
     if (type === 'pdf') exportToPDF(data, exportColumns, 'Quilometragem');
@@ -111,50 +132,65 @@ export default function Mileage() {
 
   return (
     <AppLayout>
-      <PageHeader
-        title="Quilometragem"
-        description="Registros de quilometragem dos veículos"
-        onAdd={() => {
-          setSelectedRecord(null);
-          setFormOpen(true);
-        }}
-        onExport={handleExport}
-        onImport={() => setImportOpen(true)}
-      />
+      <div className="space-y-6">
+        <PageHeader
+          title="Quilometragem"
+          description="Registros de quilometragem dos veículos"
+          onAdd={() => {
+            setSelectedRecord(null);
+            setFormOpen(true);
+          }}
+          onExport={handleExport}
+          onImport={() => setImportOpen(true)}
+        />
 
-      <DataTable
-        data={mileageRecords}
-        columns={columns}
-        loading={isLoading}
-        searchPlaceholder="Buscar por veículo..."
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-      />
+        <Tabs defaultValue="dashboard" className="w-full">
+          <TabsList>
+            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+            <TabsTrigger value="listagem">Listagem</TabsTrigger>
+          </TabsList>
 
-      <MileageForm
-        open={formOpen}
-        onOpenChange={setFormOpen}
-        record={selectedRecord}
-      />
+          <TabsContent value="dashboard">
+            <MileageDashboard records={mileageRecords} />
+          </TabsContent>
 
-      <DeleteDialog
-        open={deleteOpen}
-        onOpenChange={setDeleteOpen}
-        onConfirm={confirmDelete}
-        title="Excluir Registro"
-        description="Tem certeza que deseja excluir este registro de quilometragem?"
-      />
+          <TabsContent value="listagem">
+            <DataTable
+              data={mileageRecords}
+              columns={columns}
+              loading={isLoading}
+              searchPlaceholder="Buscar por veículo..."
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+            />
+          </TabsContent>
+        </Tabs>
 
-      <ImportDialog
-        open={importOpen}
-        onOpenChange={setImportOpen}
-        title="Importar Quilometragem"
-        description="Importe registros de quilometragem a partir de uma planilha Excel"
-        columnMappings={mileageImportConfig.mappings}
-        templateColumns={mileageImportConfig.templateColumns}
-        templateFilename="quilometragem"
-        onImport={handleImport}
-      />
+        <MileageForm
+          open={formOpen}
+          onOpenChange={setFormOpen}
+          record={selectedRecord}
+        />
+
+        <DeleteDialog
+          open={deleteOpen}
+          onOpenChange={setDeleteOpen}
+          onConfirm={confirmDelete}
+          title="Excluir Registro"
+          description="Tem certeza que deseja excluir este registro de quilometragem?"
+        />
+
+        <ImportDialog
+          open={importOpen}
+          onOpenChange={setImportOpen}
+          title="Importar Quilometragem"
+          description="Importe registros de quilometragem a partir de uma planilha Excel"
+          columnMappings={mileageImportConfig.mappings}
+          templateColumns={mileageImportConfig.templateColumns}
+          templateFilename="quilometragem"
+          onImport={handleImport}
+        />
+      </div>
     </AppLayout>
   );
 }
