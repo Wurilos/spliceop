@@ -1,7 +1,6 @@
 import { useState, useMemo } from 'react';
 import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { Plus, Search, LayoutDashboard, Tag, FileText, Wrench } from 'lucide-react';
+import { Plus, Search, LayoutDashboard, Tag, Wrench, FileDown } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { DeleteDialog } from '@/components/shared/DeleteDialog';
 import { ImportDialog } from '@/components/shared/ImportDialog';
@@ -9,6 +8,7 @@ import { SealForm } from '@/components/seals/SealForm';
 import { SealCard } from '@/components/seals/SealCard';
 import { ServiceOrderForm } from '@/components/seals/ServiceOrderForm';
 import { ServiceOrderCard } from '@/components/seals/ServiceOrderCard';
+import { SealsDashboard } from '@/components/seals/SealsDashboard';
 import { useSeals, Seal } from '@/hooks/useSeals';
 import { useSealServiceOrders, SealServiceOrder } from '@/hooks/useSealServiceOrders';
 import { exportToPDF, exportToExcel, exportToCSV } from '@/lib/export';
@@ -25,7 +25,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { FileDown } from 'lucide-react';
 
 const STATUS_LABELS: Record<string, string> = {
   available: 'Disponível',
@@ -175,20 +174,7 @@ export default function Seals() {
 
           {/* Dashboard Tab */}
           <TabsContent value="dashboard" className="mt-6">
-            <div className="grid gap-4 md:grid-cols-3">
-              <div className="border rounded-lg p-6 bg-card">
-                <h3 className="font-semibold text-lg mb-2">Total de Lacres</h3>
-                <p className="text-3xl font-bold text-primary">{seals.length}</p>
-              </div>
-              <div className="border rounded-lg p-6 bg-card">
-                <h3 className="font-semibold text-lg mb-2">Disponíveis</h3>
-                <p className="text-3xl font-bold text-green-600">{receivedCount}</p>
-              </div>
-              <div className="border rounded-lg p-6 bg-card">
-                <h3 className="font-semibold text-lg mb-2">Instalados</h3>
-                <p className="text-3xl font-bold text-blue-600">{serviceOrdersCount}</p>
-              </div>
-            </div>
+            <SealsDashboard seals={seals} serviceOrders={serviceOrders} />
           </TabsContent>
 
           {/* Lacres Recebidos Tab */}
