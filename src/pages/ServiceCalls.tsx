@@ -6,11 +6,14 @@ import { DeleteDialog } from '@/components/shared/DeleteDialog';
 import { ImportDialog } from '@/components/shared/ImportDialog';
 import { useServiceCalls } from '@/hooks/useServiceCalls';
 import { ServiceCallForm } from '@/components/service-calls/ServiceCallForm';
+import { ServiceCallsDashboard } from '@/components/service-calls/ServiceCallsDashboard';
 import { Tables } from '@/integrations/supabase/types';
 import { format } from 'date-fns';
 import { exportToPDF, exportToExcel, exportToCSV } from '@/lib/export';
 import { serviceCallImportConfig } from '@/lib/importConfigs';
 import { supabase } from '@/integrations/supabase/client';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { BarChart3, List } from 'lucide-react';
 
 type ServiceCall = Tables<'service_calls'> & { 
   contracts?: { number: string; client_name: string } | null;
@@ -34,6 +37,7 @@ export default function ServiceCalls() {
   const [importOpen, setImportOpen] = useState(false);
   const [editing, setEditing] = useState<ServiceCall | null>(null);
   const [deleting, setDeleting] = useState<ServiceCall | null>(null);
+  const [activeTab, setActiveTab] = useState('dashboard');
 
   const handleExport = (format: 'pdf' | 'excel' | 'csv') => {
     const exportColumns = columns.map(c => ({ key: String(c.key), label: c.label }));
@@ -58,9 +62,56 @@ export default function ServiceCalls() {
           onExport={handleExport}
           onImport={() => setImportOpen(true)}
         />
-        <DataTable data={serviceCalls} columns={columns} loading={loading} searchPlaceholder="Buscar..." onEdit={(r) => { setEditing(r); setFormOpen(true); }} onDelete={setDeleting} />
-        <ServiceCallForm open={formOpen} onOpenChange={setFormOpen} onSubmit={(data) => { editing ? update({ id: editing.id, ...data }) : create(data as any); setFormOpen(false); }} initialData={editing} loading={isCreating || isUpdating} />
-        <DeleteDialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)} onConfirm={() => { if (deleting) { deleteRecord(deleting.id); setDeleting(null); } }} loading={isDeleting} />
+
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList>
+            <TabsTrigger value="dashboard" className="flex items-center gap-2">
+              <BarChart3 className="h-4 w-4" />
+              Dashboard
+            </TabsTrigger>
+            <TabsTrigger value="list" className="flex items-center gap-2">
+              <List className="h-4 w-4" />
+              Listagem
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="dashboard" className="mt-6">
+            <ServiceCallsDashboard />
+          </TabsContent>
+
+          <TabsContent value="list" className="mt-6">
+            <DataTable
+              data={serviceCalls}
+              columns={columns}
+              loading={loading}
+              searchPlaceholder="Buscar..."
+              onEdit={(r) => { setEditing(r); setFormOpen(true); }}
+              onDelete={setDeleting}
+            />
+          </TabsContent>
+        </Tabs>
+
+        <ServiceCallForm
+          open={formOpen}
+          onOpenChange={setFormOpen}
+          onSubmit={(data) => {
+            editing ? update({ id: editing.id, ...data }) : create(data as any);
+            setFormOpen(false);
+          }}
+          initialData={editing}
+          loading={isCreating || isUpdating}
+        />
+        <DeleteDialog
+          open={!!deleting}
+          onOpenChange={(o) => !o && setDeleting(null)}
+          onConfirm={() => {
+            if (deleting) {
+              deleteRecord(deleting.id);
+              setDeleting(null);
+            }
+          }}
+          loading={isDeleting}
+        />
         <ImportDialog
           open={importOpen}
           onOpenChange={setImportOpen}
