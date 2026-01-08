@@ -19,7 +19,8 @@ import {
   Package,
   Radar,
   Zap,
-  Wifi
+  Wifi,
+  Gauge
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -35,6 +36,7 @@ const categoryIcons: Record<string, React.ElementType> = {
   energy: Zap,
   internet: Wifi,
   maintenance: AlertTriangle,
+  mileage: Gauge,
 };
 
 const categoryLabels: Record<string, string> = {
@@ -46,6 +48,7 @@ const categoryLabels: Record<string, string> = {
   energy: 'Energia',
   internet: 'Internet',
   maintenance: 'Manutenções',
+  mileage: 'Quilometragem',
 };
 
 const categoryRoutes: Record<string, string> = {
@@ -57,6 +60,7 @@ const categoryRoutes: Record<string, string> = {
   energy: '/energy',
   internet: '/internet',
   maintenance: '/maintenance',
+  mileage: '/mileage',
 };
 
 const alertTypeStyles: Record<string, { bg: string; text: string; border: string; icon: React.ElementType }> = {
