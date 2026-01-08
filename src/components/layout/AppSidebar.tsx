@@ -53,6 +53,8 @@ import {
   LogOut,
   Settings,
   ChevronUp,
+  Kanban,
+  List,
 } from 'lucide-react';
 
 const menuGroups = [
@@ -60,6 +62,8 @@ const menuGroups = [
     label: 'Principal',
     items: [
       { title: 'Dashboard', href: '/', icon: LayoutDashboard },
+      { title: 'Kanban', href: '/kanban', icon: Kanban },
+      { title: 'Itens Kanban', href: '/kanban-items', icon: List },
       { title: 'Alertas', href: '/alerts', icon: AlertCircle },
       { title: 'Mapa', href: '/map', icon: Map },
     ],
