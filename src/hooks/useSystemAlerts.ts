@@ -1,13 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { format, differenceInDays, parseISO, isAfter, isBefore, addDays } from 'date-fns';
+import { format, differenceInDays, parseISO, isAfter, isBefore, addDays, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 export interface SystemAlert {
   id: string;
   type: 'critical' | 'high' | 'medium' | 'low';
-  category: 'contracts' | 'calibrations' | 'invoices' | 'maintenance' | 'inventory' | 'equipment' | 'energy' | 'internet';
+  category: 'contracts' | 'calibrations' | 'invoices' | 'maintenance' | 'inventory' | 'equipment' | 'energy' | 'internet' | 'mileage';
   title: string;
   description: string;
   suggestion: string;
@@ -25,11 +25,22 @@ const ALERT_THRESHOLDS = {
   low: 60,       // Within 60 days
 };
 
+const MILEAGE_THRESHOLDS = {
+  monthlyLimit: 3000,
+  warningLimit: 2000,
+};
+
 function getAlertType(daysUntil: number): SystemAlert['type'] {
   if (daysUntil <= ALERT_THRESHOLDS.critical) return 'critical';
   if (daysUntil <= ALERT_THRESHOLDS.high) return 'high';
   if (daysUntil <= ALERT_THRESHOLDS.medium) return 'medium';
   return 'low';
+}
+
+function getMileageAlertType(totalKm: number): SystemAlert['type'] {
+  if (totalKm >= MILEAGE_THRESHOLDS.monthlyLimit) return 'critical';
+  if (totalKm >= MILEAGE_THRESHOLDS.warningLimit + 500) return 'high';
+  return 'medium';
 }
 
 function formatDate(date: string): string {
@@ -246,6 +257,70 @@ export function useSystemAlerts() {
             detectedAt,
             entityId: bill.id,
             entityType: 'internet_bills',
+          });
+        }
+      });
+
+      // 8. Check monthly mileage per vehicle
+      const monthStart = format(startOfMonth(today), 'yyyy-MM-dd');
+      const monthEnd = format(endOfMonth(today), 'yyyy-MM-dd');
+      
+      const { data: mileageRecords } = await supabase
+        .from('mileage_records')
+        .select('id, vehicle_id, initial_km, final_km, date, vehicles!fk_mileage_records_vehicle(plate, brand, model)')
+        .gte('date', monthStart)
+        .lte('date', monthEnd);
+
+      // Group mileage by vehicle
+      const vehicleMileage: Record<string, { 
+        vehicleId: string; 
+        plate: string; 
+        brand: string; 
+        model: string; 
+        totalKm: number; 
+        records: string[];
+      }> = {};
+
+      mileageRecords?.forEach(record => {
+        if (!record.vehicle_id) return;
+        const kmRodado = (record.final_km || 0) - (record.initial_km || 0);
+        const vehicleInfo = record.vehicles as any;
+        
+        if (!vehicleMileage[record.vehicle_id]) {
+          vehicleMileage[record.vehicle_id] = {
+            vehicleId: record.vehicle_id,
+            plate: vehicleInfo?.plate || 'N/A',
+            brand: vehicleInfo?.brand || '',
+            model: vehicleInfo?.model || '',
+            totalKm: 0,
+            records: [],
+          };
+        }
+        
+        vehicleMileage[record.vehicle_id].totalKm += kmRodado;
+        vehicleMileage[record.vehicle_id].records.push(record.id);
+      });
+
+      // Create alerts for vehicles exceeding 2000 km
+      Object.values(vehicleMileage).forEach(vehicle => {
+        if (vehicle.totalKm >= MILEAGE_THRESHOLDS.warningLimit) {
+          const remaining = MILEAGE_THRESHOLDS.monthlyLimit - vehicle.totalKm;
+          const exceeded = vehicle.totalKm >= MILEAGE_THRESHOLDS.monthlyLimit;
+          
+          allAlerts.push({
+            id: `mileage-${vehicle.vehicleId}`,
+            type: getMileageAlertType(vehicle.totalKm),
+            category: 'mileage',
+            title: exceeded ? 'Limite de Km Mensal Excedido' : 'Km Mensal Próximo do Limite',
+            description: exceeded 
+              ? `O veículo ${vehicle.plate} (${vehicle.brand} ${vehicle.model}) excedeu o limite mensal de ${MILEAGE_THRESHOLDS.monthlyLimit.toLocaleString('pt-BR')} km. Total: ${vehicle.totalKm.toLocaleString('pt-BR')} km.`
+              : `O veículo ${vehicle.plate} (${vehicle.brand} ${vehicle.model}) atingiu ${vehicle.totalKm.toLocaleString('pt-BR')} km este mês. Restam ${remaining.toLocaleString('pt-BR')} km do limite mensal.`,
+            suggestion: exceeded 
+              ? 'Verificar necessidade de uso e avaliar redistribuição de veículos.'
+              : 'Monitorar uso do veículo para não exceder o limite mensal.',
+            detectedAt,
+            entityId: vehicle.vehicleId,
+            entityType: 'vehicles',
           });
         }
       });
