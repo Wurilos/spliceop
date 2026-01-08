@@ -625,34 +625,40 @@ export type Database = {
       }
       infractions: {
         Row: {
+          contract_id: string | null
           created_at: string | null
-          date: string
+          datacheck_lane: string | null
+          date: string | null
           equipment_id: string
           id: string
-          limit_speed: number | null
-          plate: string | null
-          speed: number | null
-          status: string | null
+          image_count: number | null
+          month: string | null
+          physical_lane: string | null
+          year: number | null
         }
         Insert: {
+          contract_id?: string | null
           created_at?: string | null
-          date: string
+          datacheck_lane?: string | null
+          date?: string | null
           equipment_id: string
           id?: string
-          limit_speed?: number | null
-          plate?: string | null
-          speed?: number | null
-          status?: string | null
+          image_count?: number | null
+          month?: string | null
+          physical_lane?: string | null
+          year?: number | null
         }
         Update: {
+          contract_id?: string | null
           created_at?: string | null
-          date?: string
+          datacheck_lane?: string | null
+          date?: string | null
           equipment_id?: string
           id?: string
-          limit_speed?: number | null
-          plate?: string | null
-          speed?: number | null
-          status?: string | null
+          image_count?: number | null
+          month?: string | null
+          physical_lane?: string | null
+          year?: number | null
         }
         Relationships: [
           {
@@ -660,6 +666,13 @@ export type Database = {
             columns: ["equipment_id"]
             isOneToOne: false
             referencedRelation: "equipment"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "infractions_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
             referencedColumns: ["id"]
           },
           {

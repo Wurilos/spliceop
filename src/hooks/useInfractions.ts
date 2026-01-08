@@ -1,17 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
 import { toast } from 'sonner';
 
-export interface Infraction {
-  id: string;
-  equipment_id: string;
-  date: string;
-  plate: string | null;
-  speed: number | null;
-  limit_speed: number | null;
-  status: string | null;
-  created_at: string | null;
-}
+type Infraction = Tables<'infractions'>;
+type InfractionInsert = TablesInsert<'infractions'>;
+type InfractionUpdate = TablesUpdate<'infractions'>;
 
 export function useInfractions() {
   const queryClient = useQueryClient();
@@ -29,7 +23,7 @@ export function useInfractions() {
   });
 
   const createMutation = useMutation({
-    mutationFn: async (infraction: Omit<Infraction, 'id' | 'created_at'>) => {
+    mutationFn: async (infraction: InfractionInsert) => {
       const { data, error } = await supabase.from('infractions').insert(infraction).select().single();
       if (error) throw error;
       return data;
@@ -42,7 +36,7 @@ export function useInfractions() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, ...infraction }: Partial<Infraction> & { id: string }) => {
+    mutationFn: async ({ id, ...infraction }: InfractionUpdate & { id: string }) => {
       const { data, error } = await supabase.from('infractions').update(infraction).eq('id', id).select().single();
       if (error) throw error;
       return data;

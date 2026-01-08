@@ -180,18 +180,20 @@ export const infrastructureImportConfig = {
 // Infractions import config
 export const infractionImportConfig = {
   mappings: [
-    { excelColumn: 'Data/Hora', dbColumn: 'date', required: true, transform: toDateTime },
-    { excelColumn: 'Placa', dbColumn: 'plate', transform: toString },
-    { excelColumn: 'Velocidade', dbColumn: 'speed', transform: toNumber },
-    { excelColumn: 'Limite', dbColumn: 'limit_speed', transform: toNumber },
-    { excelColumn: 'Status', dbColumn: 'status', transform: (v: string) => v?.toLowerCase() || 'pending' },
+    { excelColumn: 'Data/Hora', dbColumn: 'date', transform: toDateTime },
+    { excelColumn: 'Mês', dbColumn: 'month', transform: toString },
+    { excelColumn: 'Ano', dbColumn: 'year', transform: toInteger },
+    { excelColumn: 'Faixa Datacheck', dbColumn: 'datacheck_lane', transform: toString },
+    { excelColumn: 'Faixa Física', dbColumn: 'physical_lane', transform: toString },
+    { excelColumn: 'Qtd Imagens', dbColumn: 'image_count', transform: toInteger },
   ] as ColumnMapping[],
   templateColumns: [
     { key: 'date', label: 'Data/Hora' },
-    { key: 'plate', label: 'Placa' },
-    { key: 'speed', label: 'Velocidade' },
-    { key: 'limit_speed', label: 'Limite' },
-    { key: 'status', label: 'Status' },
+    { key: 'month', label: 'Mês' },
+    { key: 'year', label: 'Ano' },
+    { key: 'datacheck_lane', label: 'Faixa Datacheck' },
+    { key: 'physical_lane', label: 'Faixa Física' },
+    { key: 'image_count', label: 'Qtd Imagens' },
   ],
 };
 
