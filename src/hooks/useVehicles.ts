@@ -76,6 +76,20 @@ export function useVehicles() {
     },
   });
 
+  const deleteManyMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase.from('vehicles').delete().in('id', ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+      toast({ title: 'Veículos excluídos com sucesso!' });
+    },
+    onError: (error) => {
+      toast({ title: 'Erro ao excluir veículos', description: error.message, variant: 'destructive' });
+    },
+  });
+
   return {
     vehicles: query.data || [],
     loading: query.isLoading,
@@ -83,8 +97,9 @@ export function useVehicles() {
     create: createMutation.mutate,
     update: updateMutation.mutate,
     delete: deleteMutation.mutate,
+    deleteMany: deleteManyMutation.mutate,
     isCreating: createMutation.isPending,
     isUpdating: updateMutation.isPending,
-    isDeleting: deleteMutation.isPending,
+    isDeleting: deleteMutation.isPending || deleteManyMutation.isPending,
   };
 }

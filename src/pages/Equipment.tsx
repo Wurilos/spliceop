@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { DataTable, Column, StatusBadge } from '@/components/shared/DataTable';
-import { DeleteDialog } from '@/components/shared/DeleteDialog';
 import { ImportDialog } from '@/components/shared/ImportDialog';
 import { useEquipment } from '@/hooks/useEquipment';
 import { EquipmentForm } from '@/components/equipment/EquipmentForm';
@@ -50,11 +49,10 @@ const exportColumns = [
 ];
 
 export default function EquipmentPage() {
-  const { equipment, loading, create, update, delete: deleteEquipment, isCreating, isUpdating, isDeleting } = useEquipment();
+  const { equipment, loading, create, update, delete: deleteEquipment, deleteMany, isCreating, isUpdating } = useEquipment();
   const [formOpen, setFormOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [editingEquipment, setEditingEquipment] = useState<Equipment | null>(null);
-  const [deletingEquipment, setDeletingEquipment] = useState<Equipment | null>(null);
 
   const handleAdd = () => {
     setEditingEquipment(null);
@@ -66,10 +64,6 @@ export default function EquipmentPage() {
     setFormOpen(true);
   };
 
-  const handleDelete = (eq: Equipment) => {
-    setDeletingEquipment(eq);
-  };
-
   const handleFormSubmit = (data: Partial<Equipment>) => {
     if (editingEquipment) {
       update({ id: editingEquipment.id, ...data });
@@ -78,13 +72,6 @@ export default function EquipmentPage() {
     }
     setFormOpen(false);
     setEditingEquipment(null);
-  };
-
-  const handleConfirmDelete = () => {
-    if (deletingEquipment) {
-      deleteEquipment(deletingEquipment.id);
-      setDeletingEquipment(null);
-    }
   };
 
   const handleImport = async (data: any[]) => {
@@ -141,7 +128,9 @@ export default function EquipmentPage() {
               loading={loading}
               searchPlaceholder="Buscar equipamentos..."
               onEdit={handleEdit}
-              onDelete={handleDelete}
+              onDelete={(eq) => deleteEquipment(eq.id)}
+              onDeleteMany={deleteMany}
+              entityName="equipamento"
             />
           </TabsContent>
         </Tabs>
@@ -152,15 +141,6 @@ export default function EquipmentPage() {
           onSubmit={handleFormSubmit}
           initialData={editingEquipment}
           loading={isCreating || isUpdating}
-        />
-
-        <DeleteDialog
-          open={!!deletingEquipment}
-          onOpenChange={(open) => !open && setDeletingEquipment(null)}
-          onConfirm={handleConfirmDelete}
-          loading={isDeleting}
-          tableName="equipment"
-          recordId={deletingEquipment?.id}
         />
 
         <ImportDialog

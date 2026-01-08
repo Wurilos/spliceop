@@ -9,15 +9,18 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Search, MoreHorizontal, Edit, Trash2, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { 
+  Search, 
+  Edit, 
+  Trash2, 
+  ChevronLeft, 
+  ChevronRight,
+  X
+} from 'lucide-react';
+import { DeleteDialog } from './DeleteDialog';
 
 export interface Column<T> {
   key: keyof T | string;
@@ -33,8 +36,10 @@ interface DataTableProps<T> {
   searchPlaceholder?: string;
   onEdit?: (row: T) => void;
   onDelete?: (row: T) => void;
+  onDeleteMany?: (ids: string[]) => void;
   onView?: (row: T) => void;
   pageSize?: number;
+  entityName?: string;
 }
 
 export function DataTable<T extends { id: string }>({
@@ -44,11 +49,17 @@ export function DataTable<T extends { id: string }>({
   searchPlaceholder = 'Buscar...',
   onEdit,
   onDelete,
+  onDeleteMany,
   onView,
   pageSize = 10,
+  entityName = 'registro',
 }: DataTableProps<T>) {
   const [search, setSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteAllDialogOpen, setDeleteAllDialogOpen] = useState(false);
+  const [rowToDelete, setRowToDelete] = useState<T | null>(null);
 
   const filteredData = data.filter((row) =>
     Object.values(row).some(
@@ -77,6 +88,60 @@ export function DataTable<T extends { id: string }>({
     return value;
   };
 
+  const allPageSelected = paginatedData.length > 0 && paginatedData.every(row => selectedIds.has(row.id));
+  const somePageSelected = paginatedData.some(row => selectedIds.has(row.id));
+
+  const handleSelectAll = (checked: boolean) => {
+    const newSelected = new Set(selectedIds);
+    if (checked) {
+      paginatedData.forEach(row => newSelected.add(row.id));
+    } else {
+      paginatedData.forEach(row => newSelected.delete(row.id));
+    }
+    setSelectedIds(newSelected);
+  };
+
+  const handleSelectRow = (id: string, checked: boolean) => {
+    const newSelected = new Set(selectedIds);
+    if (checked) {
+      newSelected.add(id);
+    } else {
+      newSelected.delete(id);
+    }
+    setSelectedIds(newSelected);
+  };
+
+  const clearSelection = () => {
+    setSelectedIds(new Set());
+  };
+
+  const handleDeleteSelected = () => {
+    if (onDeleteMany && selectedIds.size > 0) {
+      onDeleteMany(Array.from(selectedIds));
+      clearSelection();
+    }
+    setDeleteDialogOpen(false);
+  };
+
+  const handleDeleteAll = () => {
+    if (onDeleteMany) {
+      onDeleteMany(filteredData.map(row => row.id));
+      clearSelection();
+    }
+    setDeleteAllDialogOpen(false);
+  };
+
+  const handleDeleteRow = (row: T) => {
+    setRowToDelete(row);
+  };
+
+  const confirmDeleteRow = () => {
+    if (rowToDelete && onDelete) {
+      onDelete(rowToDelete);
+      setRowToDelete(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="space-y-4">
@@ -85,22 +150,24 @@ export function DataTable<T extends { id: string }>({
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-[50px]"></TableHead>
                 {columns.map((col) => (
                   <TableHead key={String(col.key)}>{col.label}</TableHead>
                 ))}
-                <TableHead className="w-[70px]"></TableHead>
+                <TableHead className="w-[100px]">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {Array.from({ length: 5 }).map((_, i) => (
                 <TableRow key={i}>
+                  <TableCell><Skeleton className="h-4 w-4" /></TableCell>
                   {columns.map((col) => (
                     <TableCell key={String(col.key)}>
                       <Skeleton className="h-4 w-full" />
                     </TableCell>
                   ))}
                   <TableCell>
-                    <Skeleton className="h-8 w-8" />
+                    <Skeleton className="h-8 w-16" />
                   </TableCell>
                 </TableRow>
               ))}
@@ -113,33 +180,82 @@ export function DataTable<T extends { id: string }>({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-4">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder={searchPlaceholder}
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="pl-9"
-          />
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4 flex-1">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder={searchPlaceholder}
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="pl-9"
+            />
+          </div>
+          <div className="text-sm text-muted-foreground">
+            {filteredData.length} {entityName}(s)
+          </div>
         </div>
-        <div className="text-sm text-muted-foreground">
-          {filteredData.length} registro(s)
-        </div>
+        {onDeleteMany && (
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => setDeleteAllDialogOpen(true)}
+            disabled={filteredData.length === 0}
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Apagar Todos
+          </Button>
+        )}
       </div>
+
+      {selectedIds.size > 0 && (
+        <div className="flex items-center justify-between bg-muted/50 px-4 py-2 rounded-md">
+          <span className="text-sm text-muted-foreground">
+            {selectedIds.size} {entityName}(s) selecionado(s)
+          </span>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={clearSelection}
+            >
+              <X className="h-4 w-4 mr-2" />
+              Limpar seleção
+            </Button>
+            {onDeleteMany && (
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => setDeleteDialogOpen(true)}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Excluir selecionados
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-[50px]">
+                <Checkbox
+                  checked={allPageSelected}
+                  onCheckedChange={handleSelectAll}
+                  aria-label="Selecionar todos"
+                  className={somePageSelected && !allPageSelected ? "opacity-50" : ""}
+                />
+              </TableHead>
               {columns.map((col) => (
                 <TableHead key={String(col.key)}>{col.label}</TableHead>
               ))}
               {(onEdit || onDelete || onView) && (
-                <TableHead className="w-[70px]"></TableHead>
+                <TableHead className="w-[100px] text-center">Ações</TableHead>
               )}
             </TableRow>
           </TableHeader>
@@ -147,7 +263,7 @@ export function DataTable<T extends { id: string }>({
             {paginatedData.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={columns.length + 1}
+                  colSpan={columns.length + 2}
                   className="h-24 text-center text-muted-foreground"
                 >
                   Nenhum registro encontrado.
@@ -155,7 +271,14 @@ export function DataTable<T extends { id: string }>({
               </TableRow>
             ) : (
               paginatedData.map((row) => (
-                <TableRow key={row.id}>
+                <TableRow key={row.id} data-state={selectedIds.has(row.id) ? "selected" : undefined}>
+                  <TableCell>
+                    <Checkbox
+                      checked={selectedIds.has(row.id)}
+                      onCheckedChange={(checked) => handleSelectRow(row.id, !!checked)}
+                      aria-label="Selecionar linha"
+                    />
+                  </TableCell>
                   {columns.map((col) => {
                     const value = getValue(row, String(col.key));
                     return (
@@ -166,36 +289,30 @@ export function DataTable<T extends { id: string }>({
                   })}
                   {(onEdit || onDelete || onView) && (
                     <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <MoreHorizontal className="h-4 w-4" />
+                      <div className="flex items-center justify-center gap-1">
+                        {onEdit && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => onEdit(row)}
+                            title="Editar"
+                          >
+                            <Edit className="h-4 w-4" />
                           </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          {onView && (
-                            <DropdownMenuItem onClick={() => onView(row)}>
-                              <Eye className="mr-2 h-4 w-4" />
-                              Visualizar
-                            </DropdownMenuItem>
-                          )}
-                          {onEdit && (
-                            <DropdownMenuItem onClick={() => onEdit(row)}>
-                              <Edit className="mr-2 h-4 w-4" />
-                              Editar
-                            </DropdownMenuItem>
-                          )}
-                          {onDelete && (
-                            <DropdownMenuItem
-                              onClick={() => onDelete(row)}
-                              className="text-destructive"
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Excluir
-                            </DropdownMenuItem>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                        )}
+                        {onDelete && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive hover:text-destructive"
+                            onClick={() => handleDeleteRow(row)}
+                            title="Excluir"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
                     </TableCell>
                   )}
                 </TableRow>
@@ -230,6 +347,33 @@ export function DataTable<T extends { id: string }>({
           </div>
         </div>
       )}
+
+      {/* Delete Selected Dialog */}
+      <DeleteDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={handleDeleteSelected}
+        title="Excluir Selecionados"
+        description={`Tem certeza que deseja excluir ${selectedIds.size} ${entityName}(s) selecionado(s)? Esta ação não pode ser desfeita.`}
+      />
+
+      {/* Delete All Dialog */}
+      <DeleteDialog
+        open={deleteAllDialogOpen}
+        onOpenChange={setDeleteAllDialogOpen}
+        onConfirm={handleDeleteAll}
+        title="Apagar Todos"
+        description={`Tem certeza que deseja excluir todos os ${filteredData.length} ${entityName}(s)? Esta ação não pode ser desfeita.`}
+      />
+
+      {/* Delete Single Row Dialog */}
+      <DeleteDialog
+        open={!!rowToDelete}
+        onOpenChange={(open) => !open && setRowToDelete(null)}
+        onConfirm={confirmDeleteRow}
+        title="Excluir Registro"
+        description={`Tem certeza que deseja excluir este ${entityName}? Esta ação não pode ser desfeita.`}
+      />
     </div>
   );
 }

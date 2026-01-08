@@ -76,6 +76,20 @@ export function useContracts() {
     },
   });
 
+  const deleteManyMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase.from('contracts').delete().in('id', ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contracts'] });
+      toast({ title: 'Contratos excluídos com sucesso!' });
+    },
+    onError: (error) => {
+      toast({ title: 'Erro ao excluir contratos', description: error.message, variant: 'destructive' });
+    },
+  });
+
   return {
     contracts: query.data || [],
     loading: query.isLoading,
@@ -83,8 +97,9 @@ export function useContracts() {
     create: createMutation.mutate,
     update: updateMutation.mutate,
     delete: deleteMutation.mutate,
+    deleteMany: deleteManyMutation.mutate,
     isCreating: createMutation.isPending,
     isUpdating: updateMutation.isPending,
-    isDeleting: deleteMutation.isPending,
+    isDeleting: deleteMutation.isPending || deleteManyMutation.isPending,
   };
 }
