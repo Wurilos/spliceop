@@ -127,20 +127,20 @@ export default function Auth() {
 
   if (authLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-purple-500 via-purple-600 to-blue-600">
+        <Loader2 className="h-8 w-8 animate-spin text-white" />
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen">
-      {/* Left side - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-purple-600 via-purple-700 to-indigo-800 items-center justify-center p-12">
-        <div className="max-w-md text-left">
+    <div className="min-h-screen bg-gradient-to-br from-purple-500 via-purple-600 to-blue-600 flex items-center justify-center p-6">
+      <div className="w-full max-w-6xl flex flex-col lg:flex-row items-center justify-center gap-12">
+        {/* Left side - Branding */}
+        <div className="flex-1 text-left max-w-md">
           {/* Logo Box */}
           <div className="flex items-center gap-4 mb-8">
-            <div className="bg-white rounded-lg px-4 py-2">
+            <div className="bg-white rounded-lg px-4 py-3 shadow-lg">
               <img 
                 src={grupoSpliceLogo} 
                 alt="Splice" 
@@ -158,64 +158,67 @@ export default function Auth() {
           </div>
 
           {/* Title */}
-          <h2 className="text-2xl font-bold text-white mb-6">
-            Plataforma completa para gestão operacional
+          <h2 className="text-xl font-bold text-white mb-6">
+            Plataforma completa para gestão empresarial
           </h2>
 
           {/* Features List */}
           <ul className="space-y-3">
             <li className="flex items-center gap-3 text-white/90">
-              <Check className="h-4 w-4 text-white" />
+              <span className="h-2 w-2 rounded-full bg-yellow-400" />
               <span>19 módulos integrados de gestão</span>
             </li>
             <li className="flex items-center gap-3 text-white/90">
-              <Check className="h-4 w-4 text-white" />
+              <span className="h-2 w-2 rounded-full bg-yellow-400" />
               <span>Controle de contratos e centro de custos</span>
             </li>
             <li className="flex items-center gap-3 text-white/90">
-              <Check className="h-4 w-4 text-white" />
+              <span className="h-2 w-2 rounded-full bg-yellow-400" />
               <span>Gestão de equipamentos e manutenções</span>
             </li>
             <li className="flex items-center gap-3 text-white/90">
-              <Check className="h-4 w-4 text-white" />
+              <span className="h-2 w-2 rounded-full bg-yellow-400" />
               <span>Relatórios e análises em tempo real</span>
             </li>
             <li className="flex items-center gap-3 text-white/90">
-              <Check className="h-4 w-4 text-white" />
+              <span className="h-2 w-2 rounded-full bg-yellow-400" />
               <span>Importação de planilhas Excel</span>
             </li>
           </ul>
         </div>
-      </div>
 
-      {/* Right side - Auth forms */}
-      <div className="flex w-full lg:w-1/2 items-center justify-center p-6">
-        <Card className="w-full max-w-md border-0 shadow-lg">
+        {/* Right side - Auth forms */}
+        <Card className="w-full max-w-md border-0 shadow-2xl">
           <CardHeader className="text-center pb-2">
             <div className="flex items-center justify-center gap-2 mb-4 lg:hidden">
-              <img 
-                src={grupoSpliceLogo} 
-                alt="Grupo Splice" 
-                className="h-10 w-auto"
-              />
-              <span className="text-xl font-bold">Splice OP</span>
+              <div className="bg-white rounded-lg px-3 py-2 border">
+                <img 
+                  src={grupoSpliceLogo} 
+                  alt="Splice" 
+                  className="h-6 w-auto"
+                />
+              </div>
             </div>
-            <CardTitle className="text-2xl">Acessar Sistema</CardTitle>
+            <CardTitle className="text-2xl">Acesse sua conta</CardTitle>
             <CardDescription>
-              Entre com sua conta ou crie uma nova
+              Entre com suas credenciais ou crie uma nova conta
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="login" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-6">
-                <TabsTrigger value="login">Entrar</TabsTrigger>
-                <TabsTrigger value="signup">Cadastrar</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-2 mb-6 bg-muted/50">
+                <TabsTrigger value="login" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                  Entrar
+                </TabsTrigger>
+                <TabsTrigger value="signup" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                  Cadastrar
+                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="login">
                 <form onSubmit={handleLogin} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="login-email">E-mail</Label>
+                    <Label htmlFor="login-email">Usuário ou Email</Label>
                     <Input
                       id="login-email"
                       type="email"
@@ -223,6 +226,7 @@ export default function Auth() {
                       value={loginEmail}
                       onChange={(e) => setLoginEmail(e.target.value)}
                       required
+                      className="bg-blue-50/50 border-blue-100 focus:border-blue-300"
                     />
                   </div>
                   <div className="space-y-2">
@@ -234,12 +238,29 @@ export default function Auth() {
                       value={loginPassword}
                       onChange={(e) => setLoginPassword(e.target.value)}
                       required
+                      className="bg-blue-50/50 border-blue-100 focus:border-blue-300"
                     />
                   </div>
-                  <Button type="submit" className="w-full" disabled={isLoading}>
+                  <Button 
+                    type="submit" 
+                    className="w-full bg-blue-500 hover:bg-blue-600 text-white" 
+                    disabled={isLoading}
+                  >
                     {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Entrar
                   </Button>
+                  <div className="text-center">
+                    <button 
+                      type="button"
+                      className="text-sm text-blue-500 hover:text-blue-600 hover:underline"
+                      onClick={() => toast({
+                        title: 'Recuperação de senha',
+                        description: 'Funcionalidade em desenvolvimento.',
+                      })}
+                    >
+                      Esqueci minha senha
+                    </button>
+                  </div>
                 </form>
               </TabsContent>
 
@@ -254,6 +275,7 @@ export default function Auth() {
                       value={signupName}
                       onChange={(e) => setSignupName(e.target.value)}
                       required
+                      className="bg-blue-50/50 border-blue-100 focus:border-blue-300"
                     />
                   </div>
                   <div className="space-y-2">
@@ -265,6 +287,7 @@ export default function Auth() {
                       value={signupEmail}
                       onChange={(e) => setSignupEmail(e.target.value)}
                       required
+                      className="bg-blue-50/50 border-blue-100 focus:border-blue-300"
                     />
                   </div>
                   <div className="space-y-2">
@@ -276,6 +299,7 @@ export default function Auth() {
                       value={signupPassword}
                       onChange={(e) => setSignupPassword(e.target.value)}
                       required
+                      className="bg-blue-50/50 border-blue-100 focus:border-blue-300"
                     />
                   </div>
                   <div className="space-y-2">
@@ -287,9 +311,14 @@ export default function Auth() {
                       value={signupConfirmPassword}
                       onChange={(e) => setSignupConfirmPassword(e.target.value)}
                       required
+                      className="bg-blue-50/50 border-blue-100 focus:border-blue-300"
                     />
                   </div>
-                  <Button type="submit" className="w-full" disabled={isLoading}>
+                  <Button 
+                    type="submit" 
+                    className="w-full bg-blue-500 hover:bg-blue-600 text-white" 
+                    disabled={isLoading}
+                  >
                     {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Criar conta
                   </Button>
