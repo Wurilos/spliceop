@@ -7,12 +7,15 @@ import { DataTable, StatusBadge } from '@/components/shared/DataTable';
 import { DeleteDialog } from '@/components/shared/DeleteDialog';
 import { ImportDialog } from '@/components/shared/ImportDialog';
 import { AdvanceForm } from '@/components/advances/AdvanceForm';
+import { AdvancesDashboard } from '@/components/advances/AdvancesDashboard';
 import { useAdvances } from '@/hooks/useAdvances';
 import { useEmployees } from '@/hooks/useEmployees';
 import { exportToPDF, exportToExcel, exportToCSV } from '@/lib/export';
 import { advanceImportConfig } from '@/lib/importConfigs';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { LayoutDashboard, List } from 'lucide-react';
 
 export default function Advances() {
   const { advances, isLoading, deleteAdvance } = useAdvances();
@@ -21,6 +24,7 @@ export default function Advances() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [selectedAdvance, setSelectedAdvance] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState('dashboard');
 
   const getEmployeeName = (employeeId: string) => {
     const employee = employees.find((e) => e.id === employeeId);
@@ -111,14 +115,33 @@ export default function Advances() {
         onImport={() => setImportOpen(true)}
       />
 
-      <DataTable
-        data={advances}
-        columns={columns}
-        loading={isLoading}
-        searchPlaceholder="Buscar por colaborador..."
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-      />
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="dashboard" className="gap-2">
+            <LayoutDashboard className="h-4 w-4" />
+            Dashboard
+          </TabsTrigger>
+          <TabsTrigger value="list" className="gap-2">
+            <List className="h-4 w-4" />
+            Listagem
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="dashboard">
+          <AdvancesDashboard />
+        </TabsContent>
+
+        <TabsContent value="list">
+          <DataTable
+            data={advances}
+            columns={columns}
+            loading={isLoading}
+            searchPlaceholder="Buscar por colaborador..."
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+          />
+        </TabsContent>
+      </Tabs>
 
       <AdvanceForm
         open={formOpen}
