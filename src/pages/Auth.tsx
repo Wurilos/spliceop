@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Check } from 'lucide-react';
 import { z } from 'zod';
-import grupoSpliceLogo from '@/assets/grupo-splice-logo.png';
+import spliceLogo from '@/assets/splice-logo.png';
 
 const emailSchema = z.string().email('E-mail inválido');
 const passwordSchema = z.string().min(6, 'Senha deve ter pelo menos 6 caracteres');
@@ -140,13 +140,11 @@ export default function Auth() {
         <div className="flex-1 text-left max-w-md">
           {/* Logo Box */}
           <div className="flex items-center gap-4 mb-8">
-            <div className="bg-white rounded-lg px-4 py-3 shadow-lg">
-              <img 
-                src={grupoSpliceLogo} 
-                alt="Splice" 
-                className="h-8 w-auto"
-              />
-            </div>
+            <img 
+              src={spliceLogo} 
+              alt="Splice" 
+              className="h-12 w-auto"
+            />
             <div>
               <h1 className="text-2xl font-bold text-white">
                 Sistema Splice
@@ -191,13 +189,11 @@ export default function Auth() {
         <Card className="w-full max-w-md border-0 shadow-2xl">
           <CardHeader className="text-center pb-2">
             <div className="flex items-center justify-center gap-2 mb-4 lg:hidden">
-              <div className="bg-white rounded-lg px-3 py-2 border">
-                <img 
-                  src={grupoSpliceLogo} 
-                  alt="Splice" 
-                  className="h-6 w-auto"
-                />
-              </div>
+              <img 
+                src={spliceLogo} 
+                alt="Splice" 
+                className="h-8 w-auto"
+              />
             </div>
             <CardTitle className="text-2xl">Acesse sua conta</CardTitle>
             <CardDescription>
