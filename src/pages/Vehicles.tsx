@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { DataTable, Column, StatusBadge } from '@/components/shared/DataTable';
-import { DeleteDialog } from '@/components/shared/DeleteDialog';
 import { ImportDialog } from '@/components/shared/ImportDialog';
 import { useVehicles } from '@/hooks/useVehicles';
 import { VehicleForm } from '@/components/vehicles/VehicleForm';
@@ -42,11 +41,10 @@ const exportColumns = [
 ];
 
 export default function Vehicles() {
-  const { vehicles, loading, create, update, delete: deleteVehicle, isCreating, isUpdating, isDeleting } = useVehicles();
+  const { vehicles, loading, create, update, delete: deleteVehicle, deleteMany, isCreating, isUpdating } = useVehicles();
   const [formOpen, setFormOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
-  const [deletingVehicle, setDeletingVehicle] = useState<Vehicle | null>(null);
 
   const handleAdd = () => {
     setEditingVehicle(null);
@@ -58,10 +56,6 @@ export default function Vehicles() {
     setFormOpen(true);
   };
 
-  const handleDelete = (vehicle: Vehicle) => {
-    setDeletingVehicle(vehicle);
-  };
-
   const handleFormSubmit = (data: Partial<Vehicle>) => {
     if (editingVehicle) {
       update({ id: editingVehicle.id, ...data });
@@ -70,13 +64,6 @@ export default function Vehicles() {
     }
     setFormOpen(false);
     setEditingVehicle(null);
-  };
-
-  const handleConfirmDelete = () => {
-    if (deletingVehicle) {
-      deleteVehicle(deletingVehicle.id);
-      setDeletingVehicle(null);
-    }
   };
 
   const handleImport = async (data: any[]) => {
@@ -116,7 +103,9 @@ export default function Vehicles() {
           loading={loading}
           searchPlaceholder="Buscar veículos..."
           onEdit={handleEdit}
-          onDelete={handleDelete}
+          onDelete={(vehicle) => deleteVehicle(vehicle.id)}
+          onDeleteMany={deleteMany}
+          entityName="veículo"
         />
 
         <VehicleForm
@@ -125,15 +114,6 @@ export default function Vehicles() {
           onSubmit={handleFormSubmit}
           initialData={editingVehicle}
           loading={isCreating || isUpdating}
-        />
-
-        <DeleteDialog
-          open={!!deletingVehicle}
-          onOpenChange={(open) => !open && setDeletingVehicle(null)}
-          onConfirm={handleConfirmDelete}
-          loading={isDeleting}
-          tableName="vehicles"
-          recordId={deletingVehicle?.id}
         />
 
         <ImportDialog

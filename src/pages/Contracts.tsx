@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { DataTable, Column, StatusBadge } from '@/components/shared/DataTable';
-import { DeleteDialog } from '@/components/shared/DeleteDialog';
 import { ImportDialog } from '@/components/shared/ImportDialog';
 import { useContracts } from '@/hooks/useContracts';
 import { ContractForm } from '@/components/contracts/ContractForm';
@@ -56,11 +55,10 @@ const exportColumns = [
 ];
 
 export default function Contracts() {
-  const { contracts, loading, create, update, delete: deleteContract, isCreating, isUpdating, isDeleting } = useContracts();
+  const { contracts, loading, create, update, delete: deleteContract, deleteMany, isCreating, isUpdating, isDeleting } = useContracts();
   const [formOpen, setFormOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [editingContract, setEditingContract] = useState<Contract | null>(null);
-  const [deletingContract, setDeletingContract] = useState<Contract | null>(null);
 
   const handleAdd = () => {
     setEditingContract(null);
@@ -72,10 +70,6 @@ export default function Contracts() {
     setFormOpen(true);
   };
 
-  const handleDelete = (contract: Contract) => {
-    setDeletingContract(contract);
-  };
-
   const handleFormSubmit = (data: Partial<Contract>) => {
     if (editingContract) {
       update({ id: editingContract.id, ...data });
@@ -84,13 +78,6 @@ export default function Contracts() {
     }
     setFormOpen(false);
     setEditingContract(null);
-  };
-
-  const handleConfirmDelete = () => {
-    if (deletingContract) {
-      deleteContract(deletingContract.id);
-      setDeletingContract(null);
-    }
   };
 
   const handleImport = async (data: any[]) => {
@@ -141,7 +128,9 @@ export default function Contracts() {
               loading={loading}
               searchPlaceholder="Buscar contratos..."
               onEdit={handleEdit}
-              onDelete={handleDelete}
+              onDelete={(contract) => deleteContract(contract.id)}
+              onDeleteMany={deleteMany}
+              entityName="contrato"
             />
           </TabsContent>
         </Tabs>
@@ -152,15 +141,6 @@ export default function Contracts() {
           onSubmit={handleFormSubmit}
           initialData={editingContract}
           loading={isCreating || isUpdating}
-        />
-
-        <DeleteDialog
-          open={!!deletingContract}
-          onOpenChange={(open) => !open && setDeletingContract(null)}
-          onConfirm={handleConfirmDelete}
-          loading={isDeleting}
-          tableName="contracts"
-          recordId={deletingContract?.id}
         />
 
         <ImportDialog

@@ -76,6 +76,20 @@ export function useEmployees() {
     },
   });
 
+  const deleteManyMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase.from('employees').delete().in('id', ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
+      toast({ title: 'Colaboradores excluídos com sucesso!' });
+    },
+    onError: (error) => {
+      toast({ title: 'Erro ao excluir colaboradores', description: error.message, variant: 'destructive' });
+    },
+  });
+
   return {
     employees: query.data || [],
     loading: query.isLoading,
@@ -83,8 +97,9 @@ export function useEmployees() {
     create: createMutation.mutate,
     update: updateMutation.mutate,
     delete: deleteMutation.mutate,
+    deleteMany: deleteManyMutation.mutate,
     isCreating: createMutation.isPending,
     isUpdating: updateMutation.isPending,
-    isDeleting: deleteMutation.isPending,
+    isDeleting: deleteMutation.isPending || deleteManyMutation.isPending,
   };
 }

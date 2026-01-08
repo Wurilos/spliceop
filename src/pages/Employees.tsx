@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { DataTable, Column, StatusBadge } from '@/components/shared/DataTable';
-import { DeleteDialog } from '@/components/shared/DeleteDialog';
 import { ImportDialog } from '@/components/shared/ImportDialog';
 import { useEmployees } from '@/hooks/useEmployees';
 import { EmployeeForm } from '@/components/employees/EmployeeForm';
@@ -43,11 +42,10 @@ const exportColumns = [
 ];
 
 export default function Employees() {
-  const { employees, loading, create, update, delete: deleteEmployee, isCreating, isUpdating, isDeleting } = useEmployees();
+  const { employees, loading, create, update, delete: deleteEmployee, deleteMany, isCreating, isUpdating } = useEmployees();
   const [formOpen, setFormOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
-  const [deletingEmployee, setDeletingEmployee] = useState<Employee | null>(null);
 
   const handleAdd = () => {
     setEditingEmployee(null);
@@ -59,10 +57,6 @@ export default function Employees() {
     setFormOpen(true);
   };
 
-  const handleDelete = (employee: Employee) => {
-    setDeletingEmployee(employee);
-  };
-
   const handleFormSubmit = (data: Partial<Employee>) => {
     if (editingEmployee) {
       update({ id: editingEmployee.id, ...data });
@@ -71,13 +65,6 @@ export default function Employees() {
     }
     setFormOpen(false);
     setEditingEmployee(null);
-  };
-
-  const handleConfirmDelete = () => {
-    if (deletingEmployee) {
-      deleteEmployee(deletingEmployee.id);
-      setDeletingEmployee(null);
-    }
   };
 
   const handleImport = async (data: any[]) => {
@@ -128,7 +115,9 @@ export default function Employees() {
               loading={loading}
               searchPlaceholder="Buscar colaboradores..."
               onEdit={handleEdit}
-              onDelete={handleDelete}
+              onDelete={(employee) => deleteEmployee(employee.id)}
+              onDeleteMany={deleteMany}
+              entityName="colaborador"
             />
           </TabsContent>
         </Tabs>
@@ -139,15 +128,6 @@ export default function Employees() {
           onSubmit={handleFormSubmit}
           initialData={editingEmployee}
           loading={isCreating || isUpdating}
-        />
-
-        <DeleteDialog
-          open={!!deletingEmployee}
-          onOpenChange={(open) => !open && setDeletingEmployee(null)}
-          onConfirm={handleConfirmDelete}
-          loading={isDeleting}
-          tableName="employees"
-          recordId={deletingEmployee?.id}
         />
 
         <ImportDialog
