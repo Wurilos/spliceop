@@ -25,22 +25,31 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import { Tables } from '@/integrations/supabase/types';
 import { useContracts } from '@/hooks/useContracts';
 
 type Vehicle = Tables<'vehicles'>;
 
 const schema = z.object({
+  contract_id: z.string().min(1, 'Contrato é obrigatório'),
   plate: z.string().min(1, 'Placa é obrigatória'),
-  brand: z.string().optional(),
-  model: z.string().optional(),
-  year: z.coerce.number().min(1900).max(2100).optional(),
-  color: z.string().optional(),
-  renavam: z.string().optional(),
-  chassis: z.string().optional(),
+  model: z.string().min(1, 'Modelo é obrigatório'),
+  brand: z.string().min(1, 'Marca é obrigatória'),
+  year: z.coerce.number().min(1900, 'Ano é obrigatório').max(2100),
+  fuel_type: z.string().min(1, 'Combustível é obrigatório'),
+  current_km: z.coerce.number().min(0, 'KM Atual é obrigatório'),
+  renavam: z.string().min(1, 'RENAVAM é obrigatório'),
+  chassis: z.string().min(1, 'Chassi é obrigatório'),
+  availability_date: z.string().min(1, 'Data da Disponibilização é obrigatória'),
   fuel_card: z.string().optional(),
-  contract_id: z.string().optional(),
-  status: z.enum(['active', 'inactive', 'maintenance']).optional(),
+  monthly_balance: z.coerce.number().optional(),
+  tag_number: z.string().optional(),
+  insurance_company: z.string().optional(),
+  rental_company: z.string().optional(),
+  insurance_contact: z.string().optional(),
+  status: z.enum(['active', 'inactive', 'maintenance']),
+  notes: z.string().optional(),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -53,15 +62,14 @@ interface VehicleFormProps {
   loading?: boolean;
 }
 
-const brands = [
-  'Fiat', 'Volkswagen', 'Chevrolet', 'Ford', 'Toyota', 'Honda', 'Hyundai',
-  'Renault', 'Nissan', 'Jeep', 'Peugeot', 'Citroen', 'Mitsubishi', 'Mercedes-Benz',
-  'BMW', 'Audi', 'Kia', 'Outro',
-];
-
-const colors = [
-  'Branco', 'Preto', 'Prata', 'Cinza', 'Vermelho', 'Azul', 'Verde',
-  'Amarelo', 'Marrom', 'Bege', 'Outro',
+const fuelTypes = [
+  'Gasolina',
+  'Etanol',
+  'Flex',
+  'Diesel',
+  'GNV',
+  'Elétrico',
+  'Híbrido',
 ];
 
 export function VehicleForm({
@@ -76,45 +84,69 @@ export function VehicleForm({
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
+      contract_id: '',
       plate: '',
-      brand: '',
       model: '',
+      brand: '',
       year: new Date().getFullYear(),
-      color: '',
+      fuel_type: '',
+      current_km: 0,
       renavam: '',
       chassis: '',
+      availability_date: '',
       fuel_card: '',
-      contract_id: '',
+      monthly_balance: 0,
+      tag_number: '',
+      insurance_company: '',
+      rental_company: '',
+      insurance_contact: '',
       status: 'active',
+      notes: '',
     },
   });
 
   useEffect(() => {
     if (initialData) {
       form.reset({
+        contract_id: initialData.contract_id || '',
         plate: initialData.plate || '',
-        brand: initialData.brand || '',
         model: initialData.model || '',
+        brand: initialData.brand || '',
         year: initialData.year || new Date().getFullYear(),
-        color: initialData.color || '',
+        fuel_type: (initialData as any).fuel_type || '',
+        current_km: (initialData as any).current_km || 0,
         renavam: initialData.renavam || '',
         chassis: initialData.chassis || '',
+        availability_date: (initialData as any).availability_date || '',
         fuel_card: initialData.fuel_card || '',
-        contract_id: initialData.contract_id || '',
+        monthly_balance: (initialData as any).monthly_balance || 0,
+        tag_number: (initialData as any).tag_number || '',
+        insurance_company: (initialData as any).insurance_company || '',
+        rental_company: (initialData as any).rental_company || '',
+        insurance_contact: (initialData as any).insurance_contact || '',
         status: initialData.status || 'active',
+        notes: (initialData as any).notes || '',
       });
     } else {
       form.reset({
+        contract_id: '',
         plate: '',
-        brand: '',
         model: '',
+        brand: '',
         year: new Date().getFullYear(),
-        color: '',
+        fuel_type: '',
+        current_km: 0,
         renavam: '',
         chassis: '',
+        availability_date: '',
         fuel_card: '',
-        contract_id: '',
+        monthly_balance: 0,
+        tag_number: '',
+        insurance_company: '',
+        rental_company: '',
+        insurance_contact: '',
         status: 'active',
+        notes: '',
       });
     }
   }, [initialData, form]);
@@ -123,16 +155,17 @@ export function VehicleForm({
     const cleanData = {
       ...data,
       contract_id: data.contract_id || null,
+      monthly_balance: data.monthly_balance || 0,
     };
     onSubmit(cleanData as any);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {initialData ? 'Editar Veículo' : 'Novo Veículo'}
+            {initialData ? 'Editar Veículo' : 'Criar Veículo'}
           </DialogTitle>
         </DialogHeader>
 
@@ -141,59 +174,20 @@ export function VehicleForm({
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="plate"
+                name="contract_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Placa</FormLabel>
-                    <FormControl>
-                      <Input placeholder="ABC-1234" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Status</FormLabel>
+                    <FormLabel className="text-destructive">Contrato *</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Selecione" />
+                          <SelectValue placeholder="Selecione contrato" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="active">Ativo</SelectItem>
-                        <SelectItem value="inactive">Inativo</SelectItem>
-                        <SelectItem value="maintenance">Manutenção</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="grid grid-cols-3 gap-4">
-              <FormField
-                control={form.control}
-                name="brand"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Marca</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {brands.map((brand) => (
-                          <SelectItem key={brand} value={brand}>
-                            {brand}
+                        {contracts.map((contract) => (
+                          <SelectItem key={contract.id} value={contract.id}>
+                            {contract.number} - {contract.client_name}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -205,10 +199,26 @@ export function VehicleForm({
 
               <FormField
                 control={form.control}
+                name="plate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-destructive">Placa *</FormLabel>
+                    <FormControl>
+                      <Input placeholder="ABC-1234" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
                 name="model"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Modelo</FormLabel>
+                    <FormLabel className="text-destructive">Modelo *</FormLabel>
                     <FormControl>
                       <Input placeholder="Strada" {...field} />
                     </FormControl>
@@ -219,12 +229,12 @@ export function VehicleForm({
 
               <FormField
                 control={form.control}
-                name="year"
+                name="brand"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Ano</FormLabel>
+                    <FormLabel className="text-destructive">Marca *</FormLabel>
                     <FormControl>
-                      <Input type="number" min="1900" max="2100" {...field} />
+                      <Input placeholder="Fiat" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -235,20 +245,34 @@ export function VehicleForm({
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="color"
+                name="year"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Cor</FormLabel>
+                    <FormLabel className="text-destructive">Ano *</FormLabel>
+                    <FormControl>
+                      <Input type="number" min="1900" max="2100" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="fuel_type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-destructive">Combustível *</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Selecione" />
+                          <SelectValue placeholder="Selecione combustível" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {colors.map((color) => (
-                          <SelectItem key={color} value={color}>
-                            {color}
+                        {fuelTypes.map((type) => (
+                          <SelectItem key={type} value={type}>
+                            {type}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -257,15 +281,31 @@ export function VehicleForm({
                   </FormItem>
                 )}
               />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="current_km"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-destructive">KM Atual *</FormLabel>
+                    <FormControl>
+                      <Input type="number" min="0" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <FormField
                 control={form.control}
-                name="fuel_card"
+                name="renavam"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Cartão Combustível</FormLabel>
+                    <FormLabel className="text-destructive">RENAVAM *</FormLabel>
                     <FormControl>
-                      <Input placeholder="1234-5678-9012" {...field} />
+                      <Input placeholder="00000000000" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -276,12 +316,12 @@ export function VehicleForm({
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="renavam"
+                name="chassis"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>RENAVAM</FormLabel>
+                    <FormLabel className="text-destructive">Chassi *</FormLabel>
                     <FormControl>
-                      <Input placeholder="00000000000" {...field} />
+                      <Input placeholder="9BWZZZ377VT004251" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -290,12 +330,108 @@ export function VehicleForm({
 
               <FormField
                 control={form.control}
-                name="chassis"
+                name="availability_date"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Chassi</FormLabel>
+                    <FormLabel className="text-destructive">Data da Disponibilização *</FormLabel>
                     <FormControl>
-                      <Input placeholder="9BWZZZ377VT004251" {...field} />
+                      <Input type="datetime-local" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="fuel_card"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Número do Cartão</FormLabel>
+                    <FormControl>
+                      <Input placeholder="1234-5678-9012" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="monthly_balance"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Saldo Mensal</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        step="0.01" 
+                        min="0" 
+                        placeholder="R$ 0,00"
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="tag_number"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Número da TAG</FormLabel>
+                    <FormControl>
+                      <Input placeholder="TAG-123456" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="insurance_company"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Seguradora</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Nome da seguradora" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="rental_company"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Locadora</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Nome da locadora" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="insurance_contact"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Contato Seguradora</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Telefone ou email" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -305,24 +441,40 @@ export function VehicleForm({
 
             <FormField
               control={form.control}
-              name="contract_id"
+              name="status"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Contrato</FormLabel>
+                  <FormLabel className="text-destructive">Status *</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecione um contrato" />
+                        <SelectValue placeholder="Selecione status" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {contracts.map((contract) => (
-                        <SelectItem key={contract.id} value={contract.id}>
-                          {contract.number} - {contract.client_name}
-                        </SelectItem>
-                      ))}
+                      <SelectItem value="active">Ativo</SelectItem>
+                      <SelectItem value="inactive">Inativo</SelectItem>
+                      <SelectItem value="maintenance">Manutenção</SelectItem>
                     </SelectContent>
                   </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="notes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Observações</FormLabel>
+                  <FormControl>
+                    <Textarea 
+                      placeholder="Observações adicionais sobre o veículo"
+                      rows={3}
+                      {...field} 
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}

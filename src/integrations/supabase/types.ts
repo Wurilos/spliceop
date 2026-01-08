@@ -1875,47 +1875,74 @@ export type Database = {
       }
       vehicles: {
         Row: {
+          availability_date: string | null
           brand: string | null
           chassis: string | null
           color: string | null
           contract_id: string | null
           created_at: string | null
+          current_km: number | null
           fuel_card: string | null
+          fuel_type: string | null
           id: string
+          insurance_company: string | null
+          insurance_contact: string | null
           model: string | null
+          monthly_balance: number | null
+          notes: string | null
           plate: string
           renavam: string | null
+          rental_company: string | null
           status: Database["public"]["Enums"]["vehicle_status"] | null
+          tag_number: string | null
           updated_at: string | null
           year: number | null
         }
         Insert: {
+          availability_date?: string | null
           brand?: string | null
           chassis?: string | null
           color?: string | null
           contract_id?: string | null
           created_at?: string | null
+          current_km?: number | null
           fuel_card?: string | null
+          fuel_type?: string | null
           id?: string
+          insurance_company?: string | null
+          insurance_contact?: string | null
           model?: string | null
+          monthly_balance?: number | null
+          notes?: string | null
           plate: string
           renavam?: string | null
+          rental_company?: string | null
           status?: Database["public"]["Enums"]["vehicle_status"] | null
+          tag_number?: string | null
           updated_at?: string | null
           year?: number | null
         }
         Update: {
+          availability_date?: string | null
           brand?: string | null
           chassis?: string | null
           color?: string | null
           contract_id?: string | null
           created_at?: string | null
+          current_km?: number | null
           fuel_card?: string | null
+          fuel_type?: string | null
           id?: string
+          insurance_company?: string | null
+          insurance_contact?: string | null
           model?: string | null
+          monthly_balance?: number | null
+          notes?: string | null
           plate?: string
           renavam?: string | null
+          rental_company?: string | null
           status?: Database["public"]["Enums"]["vehicle_status"] | null
+          tag_number?: string | null
           updated_at?: string | null
           year?: number | null
         }
