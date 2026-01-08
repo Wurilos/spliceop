@@ -773,6 +773,42 @@ export type Database = {
           },
         ]
       }
+      kanban_columns: {
+        Row: {
+          color: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          is_system: boolean
+          key: string
+          order_index: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_system?: boolean
+          key: string
+          order_index?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_system?: boolean
+          key?: string
+          order_index?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       maintenance_records: {
         Row: {
           cost: number | null
@@ -888,39 +924,54 @@ export type Database = {
       }
       pending_issues: {
         Row: {
+          address: string | null
           assigned_to: string | null
+          column_key: string | null
           contract_id: string | null
           created_at: string | null
           description: string | null
+          due_date: string | null
           equipment_id: string | null
           id: string
           priority: string | null
           status: string | null
+          team: string | null
           title: string
+          type: string | null
           updated_at: string | null
         }
         Insert: {
+          address?: string | null
           assigned_to?: string | null
+          column_key?: string | null
           contract_id?: string | null
           created_at?: string | null
           description?: string | null
+          due_date?: string | null
           equipment_id?: string | null
           id?: string
           priority?: string | null
           status?: string | null
+          team?: string | null
           title: string
+          type?: string | null
           updated_at?: string | null
         }
         Update: {
+          address?: string | null
           assigned_to?: string | null
+          column_key?: string | null
           contract_id?: string | null
           created_at?: string | null
           description?: string | null
+          due_date?: string | null
           equipment_id?: string | null
           id?: string
           priority?: string | null
           status?: string | null
+          team?: string | null
           title?: string
+          type?: string | null
           updated_at?: string | null
         }
         Relationships: [
