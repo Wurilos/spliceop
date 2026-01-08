@@ -55,6 +55,7 @@ import {
   ChevronUp,
   Kanban,
   List,
+  Smartphone,
 } from 'lucide-react';
 
 const menuGroups = [
@@ -112,6 +113,7 @@ const menuGroups = [
   {
     label: 'Suporte',
     items: [
+      { title: 'Linhas / Chip', href: '/phone-lines', icon: Smartphone },
       { title: 'Lacres e OS', href: '/seals', icon: Tag },
       { title: 'Estoque', href: '/inventory', icon: Package },
       { title: 'Audit Log', href: '/audit', icon: History },

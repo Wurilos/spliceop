@@ -35,6 +35,7 @@ import Infrastructure from "./pages/Infrastructure";
 import Alerts from "./pages/Alerts";
 import Kanban from "./pages/Kanban";
 import KanbanItems from "./pages/KanbanItems";
+import PhoneLines from "./pages/PhoneLines";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -77,6 +78,7 @@ const App = () => (
             <Route path="/issues" element={<ProtectedRoute><Issues /></ProtectedRoute>} />
             <Route path="/seals" element={<ProtectedRoute><Seals /></ProtectedRoute>} />
             <Route path="/audit" element={<ProtectedRoute><AuditLog /></ProtectedRoute>} />
+            <Route path="/phone-lines" element={<ProtectedRoute><PhoneLines /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
