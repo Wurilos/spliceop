@@ -964,30 +964,36 @@ export type Database = {
           created_at: string | null
           date: string
           employee_id: string | null
+          end_time: string | null
           final_km: number
           id: string
           initial_km: number
           notes: string | null
+          start_time: string | null
           vehicle_id: string
         }
         Insert: {
           created_at?: string | null
           date: string
           employee_id?: string | null
+          end_time?: string | null
           final_km: number
           id?: string
           initial_km: number
           notes?: string | null
+          start_time?: string | null
           vehicle_id: string
         }
         Update: {
           created_at?: string | null
           date?: string
           employee_id?: string | null
+          end_time?: string | null
           final_km?: number
           id?: string
           initial_km?: number
           notes?: string | null
+          start_time?: string | null
           vehicle_id?: string
         }
         Relationships: [
