@@ -8,9 +8,10 @@ export interface EnergyBill {
   consumer_unit: string;
   reference_month: string;
   value: number | null;
-  consumption_kwh: number | null;
   due_date: string | null;
   status: string | null;
+  supplier_id: string | null;
+  equipment_id: string | null;
   created_at: string | null;
 }
 

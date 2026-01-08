@@ -311,35 +311,38 @@ export type Database = {
       energy_bills: {
         Row: {
           consumer_unit: string
-          consumption_kwh: number | null
           contract_id: string | null
           created_at: string | null
           due_date: string | null
+          equipment_id: string | null
           id: string
           reference_month: string
           status: string | null
+          supplier_id: string | null
           value: number | null
         }
         Insert: {
           consumer_unit: string
-          consumption_kwh?: number | null
           contract_id?: string | null
           created_at?: string | null
           due_date?: string | null
+          equipment_id?: string | null
           id?: string
           reference_month: string
           status?: string | null
+          supplier_id?: string | null
           value?: number | null
         }
         Update: {
           consumer_unit?: string
-          consumption_kwh?: number | null
           contract_id?: string | null
           created_at?: string | null
           due_date?: string | null
+          equipment_id?: string | null
           id?: string
           reference_month?: string
           status?: string | null
+          supplier_id?: string | null
           value?: number | null
         }
         Relationships: [
@@ -351,6 +354,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "energy_bills_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "energy_suppliers"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "fk_energy_bills_contract"
             columns: ["contract_id"]
             isOneToOne: false
@@ -358,6 +368,74 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      energy_consumer_units: {
+        Row: {
+          consumer_unit: string
+          contract_id: string | null
+          created_at: string | null
+          equipment_id: string | null
+          id: string
+          supplier_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          consumer_unit: string
+          contract_id?: string | null
+          created_at?: string | null
+          equipment_id?: string | null
+          id?: string
+          supplier_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          consumer_unit?: string
+          contract_id?: string | null
+          created_at?: string | null
+          equipment_id?: string | null
+          id?: string
+          supplier_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "energy_consumer_units_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "energy_suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      energy_suppliers: {
+        Row: {
+          address: string | null
+          city: string | null
+          contact: string | null
+          created_at: string | null
+          id: string
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          contact?: string | null
+          created_at?: string | null
+          id?: string
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          contact?: string | null
+          created_at?: string | null
+          id?: string
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       equipment: {
         Row: {

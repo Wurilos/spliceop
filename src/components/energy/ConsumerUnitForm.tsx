@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -25,80 +25,79 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useEnergyBills } from '@/hooks/useEnergyBills';
+import { useEnergyConsumerUnits, EnergyConsumerUnit } from '@/hooks/useEnergyConsumerUnits';
+import { useEnergySuppliers } from '@/hooks/useEnergySuppliers';
 import { useContracts } from '@/hooks/useContracts';
+import { useEquipment } from '@/hooks/useEquipment';
 
 const formSchema = z.object({
+  supplier_id: z.string().optional(),
   consumer_unit: z.string().min(1, 'Unidade consumidora é obrigatória'),
-  reference_month: z.string().min(1, 'Mês de referência é obrigatório'),
-  contract_id: z.string().nullable().optional(),
-  value: z.coerce.number().nullable().optional(),
-  due_date: z.string().nullable().optional(),
-  status: z.string().nullable().optional().default('pending'),
+  contract_id: z.string().optional(),
+  equipment_id: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
-interface EnergyFormProps {
+interface ConsumerUnitFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  bill?: any;
+  unit?: EnergyConsumerUnit | null;
 }
 
-export function EnergyForm({ open, onOpenChange, bill }: EnergyFormProps) {
-  const { createEnergyBill, updateEnergyBill } = useEnergyBills();
+export function ConsumerUnitForm({ open, onOpenChange, unit }: ConsumerUnitFormProps) {
+  const { createConsumerUnit, updateConsumerUnit } = useEnergyConsumerUnits();
+  const { suppliers } = useEnergySuppliers();
   const { contracts } = useContracts();
+  const { equipment } = useEquipment();
+  const [selectedContractId, setSelectedContractId] = useState<string>('');
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      supplier_id: '',
       consumer_unit: '',
-      reference_month: new Date().toISOString().slice(0, 7) + '-01',
       contract_id: '',
-      value: 0,
-      due_date: '',
-      status: 'pending',
+      equipment_id: '',
     },
   });
 
   useEffect(() => {
-    if (bill) {
+    if (unit) {
       form.reset({
-        consumer_unit: bill.consumer_unit,
-        reference_month: bill.reference_month,
-        contract_id: bill.contract_id || '',
-        value: bill.value || 0,
-        due_date: bill.due_date || '',
-        status: bill.status || 'pending',
+        supplier_id: unit.supplier_id || '',
+        consumer_unit: unit.consumer_unit,
+        contract_id: unit.contract_id || '',
+        equipment_id: unit.equipment_id || '',
       });
+      setSelectedContractId(unit.contract_id || '');
     } else {
       form.reset({
+        supplier_id: '',
         consumer_unit: '',
-        reference_month: new Date().toISOString().slice(0, 7) + '-01',
         contract_id: '',
-        value: 0,
-        due_date: '',
-        status: 'pending',
+        equipment_id: '',
       });
+      setSelectedContractId('');
     }
-  }, [bill, form]);
+  }, [unit, form]);
+
+  const filteredEquipment = selectedContractId
+    ? equipment.filter((e) => e.contract_id === selectedContractId)
+    : equipment;
 
   const onSubmit = (values: FormValues) => {
     const data = {
+      supplier_id: values.supplier_id || null,
       consumer_unit: values.consumer_unit,
-      reference_month: values.reference_month,
       contract_id: values.contract_id || null,
-      value: values.value || null,
-      due_date: values.due_date || null,
-      status: values.status || 'pending',
-      supplier_id: null,
-      equipment_id: null,
+      equipment_id: values.equipment_id || null,
     };
 
-    if (bill) {
-      updateEnergyBill({ id: bill.id, ...data });
+    if (unit) {
+      updateConsumerUnit({ id: unit.id, ...data });
     } else {
-      createEnergyBill(data);
+      createConsumerUnit(data);
     }
     onOpenChange(false);
   };
@@ -108,12 +107,37 @@ export function EnergyForm({ open, onOpenChange, bill }: EnergyFormProps) {
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>
-            {bill ? 'Editar Conta de Energia' : 'Nova Conta de Energia'}
+            {unit ? 'Editar Unidade Consumidora' : 'Nova Unidade Consumidora'}
           </DialogTitle>
         </DialogHeader>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="supplier_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Fornecedor</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione um fornecedor" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {suppliers.map((s) => (
+                        <SelectItem key={s.id} value={s.id}>
+                          {s.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <FormField
               control={form.control}
               name="consumer_unit"
@@ -130,25 +154,18 @@ export function EnergyForm({ open, onOpenChange, bill }: EnergyFormProps) {
 
             <FormField
               control={form.control}
-              name="reference_month"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Mês de Referência</FormLabel>
-                  <FormControl>
-                    <Input type="date" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
               name="contract_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Contrato (opcional)</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
+                  <FormLabel>Contrato</FormLabel>
+                  <Select
+                    onValueChange={(value) => {
+                      field.onChange(value);
+                      setSelectedContractId(value);
+                      form.setValue('equipment_id', '');
+                    }}
+                    value={field.value}
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione um contrato" />
@@ -169,48 +186,22 @@ export function EnergyForm({ open, onOpenChange, bill }: EnergyFormProps) {
 
             <FormField
               control={form.control}
-              name="value"
+              name="equipment_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Valor (R$)</FormLabel>
-                  <FormControl>
-                    <Input type="number" step="0.01" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="due_date"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Data de Vencimento</FormLabel>
-                  <FormControl>
-                    <Input type="date" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="status"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Status</FormLabel>
+                  <FormLabel>Equipamento</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue />
+                        <SelectValue placeholder="Selecione um equipamento" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="pending">Pendente</SelectItem>
-                      <SelectItem value="paid">Pago</SelectItem>
-                      <SelectItem value="overdue">Vencido</SelectItem>
+                      {filteredEquipment.map((e) => (
+                        <SelectItem key={e.id} value={e.id}>
+                          {e.serial_number} - {e.type || e.model}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -222,7 +213,7 @@ export function EnergyForm({ open, onOpenChange, bill }: EnergyFormProps) {
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancelar
               </Button>
-              <Button type="submit">{bill ? 'Salvar' : 'Criar'}</Button>
+              <Button type="submit">{unit ? 'Salvar' : 'Criar'}</Button>
             </div>
           </form>
         </Form>
