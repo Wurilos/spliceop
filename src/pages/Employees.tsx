@@ -6,10 +6,12 @@ import { DeleteDialog } from '@/components/shared/DeleteDialog';
 import { ImportDialog } from '@/components/shared/ImportDialog';
 import { useEmployees } from '@/hooks/useEmployees';
 import { EmployeeForm } from '@/components/employees/EmployeeForm';
+import { EmployeesDashboard } from '@/components/employees/EmployeesDashboard';
 import { Tables } from '@/integrations/supabase/types';
 import { employeeImportConfig } from '@/lib/importConfigs';
 import { supabase } from '@/integrations/supabase/client';
 import { exportToPDF, exportToExcel, exportToCSV } from '@/lib/export';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 type Employee = Tables<'employees'> & { contracts?: { number: string; client_name: string } | null };
 
@@ -109,14 +111,27 @@ export default function Employees() {
           onExport={handleExport}
         />
 
-        <DataTable
-          data={employees}
-          columns={columns}
-          loading={loading}
-          searchPlaceholder="Buscar colaboradores..."
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-        />
+        <Tabs defaultValue="dashboard" className="w-full">
+          <TabsList>
+            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+            <TabsTrigger value="listagem">Listagem</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="dashboard">
+            <EmployeesDashboard />
+          </TabsContent>
+
+          <TabsContent value="listagem">
+            <DataTable
+              data={employees}
+              columns={columns}
+              loading={loading}
+              searchPlaceholder="Buscar colaboradores..."
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+            />
+          </TabsContent>
+        </Tabs>
 
         <EmployeeForm
           open={formOpen}
