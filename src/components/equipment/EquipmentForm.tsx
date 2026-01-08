@@ -39,7 +39,6 @@ const schema = z.object({
   lanes_qty: z.coerce.number().optional(),
   speed_limit: z.coerce.number().optional(),
   communication_type: z.string().optional(),
-  modem_number: z.string().optional(),
   energy_type: z.string().optional(),
   brand: z.string().optional(),
   type: z.string().optional(),
@@ -94,7 +93,6 @@ export function EquipmentForm({
       lanes_qty: undefined,
       speed_limit: undefined,
       communication_type: '',
-      modem_number: '',
       energy_type: '',
       brand: '',
       type: '',
@@ -116,7 +114,6 @@ export function EquipmentForm({
         lanes_qty: (initialData as any).lanes_qty || undefined,
         speed_limit: (initialData as any).speed_limit || undefined,
         communication_type: (initialData as any).communication_type || '',
-        modem_number: (initialData as any).modem_number || '',
         energy_type: (initialData as any).energy_type || '',
         brand: initialData.brand || '',
         type: initialData.type || '',
@@ -135,7 +132,6 @@ export function EquipmentForm({
         lanes_qty: undefined,
         speed_limit: undefined,
         communication_type: '',
-        modem_number: '',
         energy_type: '',
         brand: '',
         type: '',
@@ -157,7 +153,6 @@ export function EquipmentForm({
       speed_limit: data.speed_limit || null,
       direction: data.direction || null,
       communication_type: data.communication_type || null,
-      modem_number: data.modem_number || null,
       energy_type: data.energy_type || null,
     };
     onSubmit(cleanData as any);
@@ -206,7 +201,7 @@ export function EquipmentForm({
                 name="serial_number"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Nº Série *</FormLabel>
+                    <FormLabel>Número de Série *</FormLabel>
                     <FormControl>
                       <Input placeholder="SN-00001" {...field} />
                     </FormControl>
@@ -216,60 +211,7 @@ export function EquipmentForm({
               />
             </div>
 
-            {/* Row 2: Tipo, Marca */}
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="type"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tipo</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {equipmentTypes.map((type) => (
-                          <SelectItem key={type} value={type}>
-                            {type}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="brand"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Marca</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {brands.map((brand) => (
-                          <SelectItem key={brand} value={brand}>
-                            {brand}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            {/* Row 3: Modelo, Endereço */}
+            {/* Row 2: Modelo, Endereço */}
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -300,7 +242,7 @@ export function EquipmentForm({
               />
             </div>
 
-            {/* Row 4: Sentido, Qtd Faixas */}
+            {/* Row 3: Sentido, Qtd Faixas */}
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -331,7 +273,7 @@ export function EquipmentForm({
               />
             </div>
 
-            {/* Row 5: Velocidade, Meio de Comunicação */}
+            {/* Row 4: Velocidade, Meio de Comunicação */}
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -373,22 +315,8 @@ export function EquipmentForm({
               />
             </div>
 
-            {/* Row 6: Nº Modem, Tipo de Energia */}
+            {/* Row 5: Tipo de Energia, Marca */}
             <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="modem_number"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nº Modem</FormLabel>
-                    <FormControl>
-                      <Input placeholder="MDM-12345" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
               <FormField
                 control={form.control}
                 name="energy_type"
@@ -413,41 +341,25 @@ export function EquipmentForm({
                   </FormItem>
                 )}
               />
-            </div>
-
-            {/* Row 7: Data de Instalação, Status */}
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="installation_date"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Data de Instalação</FormLabel>
-                    <FormControl>
-                      <Input type="date" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
 
               <FormField
                 control={form.control}
-                name="status"
+                name="brand"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Status *</FormLabel>
+                    <FormLabel>Marca</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Selecione status" />
+                          <SelectValue placeholder="Selecione" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="active">Ativo</SelectItem>
-                        <SelectItem value="inactive">Inativo</SelectItem>
-                        <SelectItem value="maintenance">Manutenção</SelectItem>
-                        <SelectItem value="decommissioned">Desativado</SelectItem>
+                        {brands.map((brand) => (
+                          <SelectItem key={brand} value={brand}>
+                            {brand}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -456,7 +368,49 @@ export function EquipmentForm({
               />
             </div>
 
-            {/* Row 8: Latitude, Longitude */}
+            {/* Row 6: Tipo, Início das Atividades */}
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tipo</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {equipmentTypes.map((type) => (
+                          <SelectItem key={type} value={type}>
+                            {type}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="installation_date"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Início das Atividades</FormLabel>
+                    <FormControl>
+                      <Input type="datetime-local" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            {/* Row 7: Latitude, Longitude */}
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -481,6 +435,34 @@ export function EquipmentForm({
                     <FormControl>
                       <Input type="number" step="any" placeholder="Ex: -46.633309" {...field} />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            {/* Row 8: Status */}
+            <div className="grid grid-cols-2 gap-4">
+              <div></div>
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Status *</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione status" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="active">Ativo</SelectItem>
+                        <SelectItem value="inactive">Inativo</SelectItem>
+                        <SelectItem value="maintenance">Manutenção</SelectItem>
+                        <SelectItem value="decommissioned">Desativado</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
