@@ -6,12 +6,13 @@ import { DeleteDialog } from '@/components/shared/DeleteDialog';
 import { ImportDialog } from '@/components/shared/ImportDialog';
 import { useContracts } from '@/hooks/useContracts';
 import { ContractForm } from '@/components/contracts/ContractForm';
+import { ContractsDashboard } from '@/components/contracts/ContractsDashboard';
 import { Tables } from '@/integrations/supabase/types';
 import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import { contractImportConfig } from '@/lib/importConfigs';
 import { supabase } from '@/integrations/supabase/client';
 import { exportToPDF, exportToExcel, exportToCSV } from '@/lib/export';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 type Contract = Tables<'contracts'>;
 
@@ -123,14 +124,27 @@ export default function Contracts() {
           onExport={handleExport}
         />
 
-        <DataTable
-          data={contracts}
-          columns={columns}
-          loading={loading}
-          searchPlaceholder="Buscar contratos..."
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-        />
+        <Tabs defaultValue="dashboard" className="w-full">
+          <TabsList>
+            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+            <TabsTrigger value="listagem">Listagem</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="dashboard" className="mt-4">
+            <ContractsDashboard />
+          </TabsContent>
+
+          <TabsContent value="listagem" className="mt-4">
+            <DataTable
+              data={contracts}
+              columns={columns}
+              loading={loading}
+              searchPlaceholder="Buscar contratos..."
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+            />
+          </TabsContent>
+        </Tabs>
 
         <ContractForm
           open={formOpen}
