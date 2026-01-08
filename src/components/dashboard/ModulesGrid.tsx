@@ -16,6 +16,18 @@ import {
   Package,
   Map,
   BarChart3,
+  Wifi,
+  AlertTriangle,
+  Shield,
+  Target,
+  Smile,
+  Kanban,
+  Settings,
+  DollarSign,
+  Bell,
+  History,
+  Building2,
+  Lock,
 } from 'lucide-react';
 
 interface Module {
@@ -38,9 +50,23 @@ const modules: Module[] = [
   { title: 'Atendimentos', description: 'Chamados técnicos', href: '/service-calls', icon: Headphones, color: 'bg-info/10 text-info' },
   { title: 'Faturamento', description: 'Notas e pagamentos', href: '/invoices', icon: Receipt, color: 'bg-destructive/10 text-destructive' },
   { title: 'Energia', description: 'Contas de luz', href: '/energy', icon: Zap, color: 'bg-warning/10 text-warning' },
+  { title: 'Internet', description: 'Contas de internet', href: '/internet', icon: Wifi, color: 'bg-info/10 text-info' },
   { title: 'Estoque', description: 'Componentes', href: '/inventory', icon: Package, color: 'bg-primary/10 text-primary' },
   { title: 'Mapa', description: 'Visualização geográfica', href: '/map', icon: Map, color: 'bg-success/10 text-success' },
   { title: 'Métricas', description: 'Aproveitamento', href: '/image-metrics', icon: BarChart3, color: 'bg-info/10 text-info' },
+  { title: 'SLA', description: 'Indicadores de nível', href: '/sla', icon: Target, color: 'bg-primary/10 text-primary' },
+  { title: 'Metas', description: 'Metas de atendimento', href: '/goals', icon: Shield, color: 'bg-success/10 text-success' },
+  { title: 'Satisfação', description: 'Pesquisa de clientes', href: '/satisfaction', icon: Smile, color: 'bg-warning/10 text-warning' },
+  { title: 'Infrações', description: 'Registro de infrações', href: '/infractions', icon: AlertTriangle, color: 'bg-destructive/10 text-destructive' },
+  { title: 'Pedágios', description: 'Tags e passagens', href: '/tolls', icon: DollarSign, color: 'bg-info/10 text-info' },
+  { title: 'Infraestrutura', description: 'Serviços de campo', href: '/infrastructure', icon: Building2, color: 'bg-primary/10 text-primary' },
+  { title: 'Lacres', description: 'Controle de lacres', href: '/seals', icon: Lock, color: 'bg-success/10 text-success' },
+  { title: 'Adiantamentos', description: 'Controle financeiro', href: '/advances', icon: DollarSign, color: 'bg-warning/10 text-warning' },
+  { title: 'Kanban', description: 'Gestão de demandas', href: '/kanban', icon: Kanban, color: 'bg-info/10 text-info' },
+  { title: 'Colunas Kanban', description: 'Configurar colunas', href: '/kanban-items', icon: Settings, color: 'bg-primary/10 text-primary' },
+  { title: 'Pendências', description: 'Issues abertas', href: '/issues', icon: AlertTriangle, color: 'bg-destructive/10 text-destructive' },
+  { title: 'Alertas', description: 'Alertas do sistema', href: '/alerts', icon: Bell, color: 'bg-warning/10 text-warning' },
+  { title: 'Auditoria', description: 'Log de ações', href: '/audit-log', icon: History, color: 'bg-muted-foreground/10 text-muted-foreground' },
 ];
 
 export function ModulesGrid() {
