@@ -174,7 +174,7 @@ export function EquipmentForm({
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-            {/* Row 1: Contrato, Número de Série */}
+            {/* Row 1: Contrato, Nº Série */}
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -206,7 +206,7 @@ export function EquipmentForm({
                 name="serial_number"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Número de Série *</FormLabel>
+                    <FormLabel>Nº Série *</FormLabel>
                     <FormControl>
                       <Input placeholder="SN-00001" {...field} />
                     </FormControl>
@@ -216,7 +216,60 @@ export function EquipmentForm({
               />
             </div>
 
-            {/* Row 2: Modelo, Endereço */}
+            {/* Row 2: Tipo, Marca */}
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tipo</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {equipmentTypes.map((type) => (
+                          <SelectItem key={type} value={type}>
+                            {type}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="brand"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Marca</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {brands.map((brand) => (
+                          <SelectItem key={brand} value={brand}>
+                            {brand}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            {/* Row 3: Modelo, Endereço */}
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -247,7 +300,7 @@ export function EquipmentForm({
               />
             </div>
 
-            {/* Row 3: Sentido, Qtd Faixas */}
+            {/* Row 4: Sentido, Qtd Faixas */}
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -278,7 +331,7 @@ export function EquipmentForm({
               />
             </div>
 
-            {/* Row 4: Velocidade, Meio de Comunicação */}
+            {/* Row 5: Velocidade, Meio de Comunicação */}
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -320,7 +373,7 @@ export function EquipmentForm({
               />
             </div>
 
-            {/* Row 5: Nº Modem, Tipo de Energia */}
+            {/* Row 6: Nº Modem, Tipo de Energia */}
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -362,100 +415,16 @@ export function EquipmentForm({
               />
             </div>
 
-            {/* Row 6: Marca, Tipo */}
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="brand"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Marca</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {brands.map((brand) => (
-                          <SelectItem key={brand} value={brand}>
-                            {brand}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="type"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tipo</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {equipmentTypes.map((type) => (
-                          <SelectItem key={type} value={type}>
-                            {type}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            {/* Row 7: Início das Atividades, Latitude */}
+            {/* Row 7: Data de Instalação, Status */}
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="installation_date"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Início das Atividades</FormLabel>
+                    <FormLabel>Data de Instalação</FormLabel>
                     <FormControl>
                       <Input type="date" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="latitude"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Latitude</FormLabel>
-                    <FormControl>
-                      <Input type="number" step="any" placeholder="Ex: -23.550520" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            {/* Row 8: Longitude, Status */}
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="longitude"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Longitude</FormLabel>
-                    <FormControl>
-                      <Input type="number" step="any" placeholder="Ex: -46.633309" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -481,6 +450,37 @@ export function EquipmentForm({
                         <SelectItem value="decommissioned">Desativado</SelectItem>
                       </SelectContent>
                     </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            {/* Row 8: Latitude, Longitude */}
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="latitude"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Latitude</FormLabel>
+                    <FormControl>
+                      <Input type="number" step="any" placeholder="Ex: -23.550520" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="longitude"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Longitude</FormLabel>
+                    <FormControl>
+                      <Input type="number" step="any" placeholder="Ex: -46.633309" {...field} />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
