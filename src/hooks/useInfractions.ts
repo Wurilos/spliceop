@@ -15,10 +15,14 @@ export function useInfractions() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('infractions')
-        .select('*')
+        .select(`
+          *,
+          equipment:equipment!fk_infractions_equipment(serial_number, type),
+          contracts(number, client_name)
+        `)
         .order('date', { ascending: false });
       if (error) throw error;
-      return data as Infraction[];
+      return data;
     },
   });
 

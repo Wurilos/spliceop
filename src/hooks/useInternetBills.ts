@@ -21,10 +21,14 @@ export function useInternetBills() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('internet_bills')
-        .select('*')
+        .select(`
+          *,
+          contracts:contracts!fk_internet_bills_contract(number, client_name),
+          connections:internet_connections(serial_number)
+        `)
         .order('reference_month', { ascending: false });
       if (error) throw error;
-      return data as InternetBill[];
+      return data;
     },
   });
 

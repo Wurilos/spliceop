@@ -20,10 +20,13 @@ export function useImageMetrics() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('image_metrics')
-        .select('*')
+        .select(`
+          *,
+          equipment:equipment!fk_image_metrics_equipment(serial_number, type, address)
+        `)
         .order('date', { ascending: false });
       if (error) throw error;
-      return data as ImageMetric[];
+      return data;
     },
   });
 

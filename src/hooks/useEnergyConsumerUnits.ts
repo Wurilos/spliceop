@@ -20,10 +20,15 @@ export function useEnergyConsumerUnits() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('energy_consumer_units')
-        .select('*')
+        .select(`
+          *,
+          suppliers:energy_suppliers(name),
+          contracts(number, client_name),
+          equipment(serial_number)
+        `)
         .order('consumer_unit', { ascending: true });
       if (error) throw error;
-      return data as EnergyConsumerUnit[];
+      return data;
     },
   });
 

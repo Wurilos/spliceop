@@ -20,10 +20,13 @@ export function useServiceGoals() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('service_goals')
-        .select('*')
+        .select(`
+          *,
+          contracts:contracts!fk_service_goals_contract(number, client_name)
+        `)
         .order('month', { ascending: false });
       if (error) throw error;
-      return data as ServiceGoal[];
+      return data;
     },
   });
 

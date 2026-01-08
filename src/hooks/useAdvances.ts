@@ -20,10 +20,13 @@ export function useAdvances() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('advances')
-        .select('*')
+        .select(`
+          *,
+          employees:employees!fk_advances_employee(full_name, role)
+        `)
         .order('date', { ascending: false });
       if (error) throw error;
-      return data as Advance[];
+      return data;
     },
   });
 
