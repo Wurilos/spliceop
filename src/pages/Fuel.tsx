@@ -6,14 +6,16 @@ import { DeleteDialog } from '@/components/shared/DeleteDialog';
 import { ImportDialog } from '@/components/shared/ImportDialog';
 import { useFuelRecords } from '@/hooks/useFuelRecords';
 import { FuelForm } from '@/components/fuel/FuelForm';
+import { FuelDashboard } from '@/components/fuel/FuelDashboard';
 import { Tables } from '@/integrations/supabase/types';
 import { format } from 'date-fns';
 import { exportToPDF, exportToExcel, exportToCSV } from '@/lib/export';
 import { fuelImportConfig } from '@/lib/importConfigs';
 import { supabase } from '@/integrations/supabase/client';
 import { useVehicles } from '@/hooks/useVehicles';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-type FuelRecord = Tables<'fuel_records'> & { vehicles?: { plate: string; brand: string | null; model: string | null } | null };
+type FuelRecord = Tables<'fuel_records'> & { vehicles?: { plate: string; brand: string | null; model: string | null; contract_id: string | null } | null };
 
 const columns: Column<FuelRecord>[] = [
   { key: 'date', label: 'Data', render: (v) => format(new Date(String(v)), 'dd/MM/yyyy') },
@@ -42,8 +44,6 @@ export default function Fuel() {
   };
 
   const handleImport = async (data: any[]) => {
-    // Fuel records need vehicle_id - for import we'll skip vehicle mapping
-    // In a real scenario, you'd map by plate
     const firstVehicle = vehicles[0];
     if (!firstVehicle) throw new Error('Cadastre um veículo primeiro');
     const dataWithVehicle = data.map(d => ({ ...d, vehicle_id: firstVehicle.id }));
@@ -62,7 +62,29 @@ export default function Fuel() {
           onExport={handleExport}
           onImport={() => setImportOpen(true)}
         />
-        <DataTable data={records} columns={columns} loading={loading} searchPlaceholder="Buscar..." onEdit={(r) => { setEditing(r); setFormOpen(true); }} onDelete={setDeleting} />
+
+        <Tabs defaultValue="dashboard" className="w-full">
+          <TabsList>
+            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+            <TabsTrigger value="listagem">Listagem</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="dashboard">
+            <FuelDashboard records={records} />
+          </TabsContent>
+
+          <TabsContent value="listagem">
+            <DataTable 
+              data={records} 
+              columns={columns} 
+              loading={loading} 
+              searchPlaceholder="Buscar..." 
+              onEdit={(r) => { setEditing(r); setFormOpen(true); }} 
+              onDelete={setDeleting} 
+            />
+          </TabsContent>
+        </Tabs>
+
         <FuelForm open={formOpen} onOpenChange={setFormOpen} onSubmit={(data) => { editing ? update({ id: editing.id, ...data }) : create(data as any); setFormOpen(false); }} initialData={editing} loading={isCreating || isUpdating} />
         <DeleteDialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)} onConfirm={() => { if (deleting) { deleteRecord(deleting.id); setDeleting(null); } }} loading={isDeleting} />
         <ImportDialog
