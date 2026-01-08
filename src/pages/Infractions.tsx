@@ -3,20 +3,25 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/shared/PageHeader';
-import { DataTable, StatusBadge } from '@/components/shared/DataTable';
+import { DataTable } from '@/components/shared/DataTable';
 import { DeleteDialog } from '@/components/shared/DeleteDialog';
 import { ImportDialog } from '@/components/shared/ImportDialog';
 import { InfractionForm } from '@/components/infractions/InfractionForm';
+import { InfractionsDashboard } from '@/components/infractions/InfractionsDashboard';
 import { useInfractions } from '@/hooks/useInfractions';
 import { useEquipment } from '@/hooks/useEquipment';
+import { useContracts } from '@/hooks/useContracts';
 import { exportToPDF, exportToExcel, exportToCSV } from '@/lib/export';
 import { infractionImportConfig } from '@/lib/importConfigs';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { LayoutDashboard, List } from 'lucide-react';
 
 export default function Infractions() {
   const { infractions, isLoading, deleteInfraction } = useInfractions();
   const { equipment } = useEquipment();
+  const { contracts } = useContracts();
   const [formOpen, setFormOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
@@ -27,32 +32,36 @@ export default function Infractions() {
     return eq?.serial_number || '-';
   };
 
+  const getContractName = (contractId: string | null) => {
+    if (!contractId) return '-';
+    const contract = contracts.find((c) => c.id === contractId);
+    return contract ? `${contract.number} - ${contract.client_name}` : '-';
+  };
+
   const columns = [
     {
-      key: 'date',
-      label: 'Data/Hora',
-      render: (value: string) => format(new Date(value), 'dd/MM/yyyy HH:mm', { locale: ptBR }),
+      key: 'contract_id',
+      label: 'Contrato',
+      render: (value: string | null) => getContractName(value),
     },
     {
       key: 'equipment_id',
       label: 'Equipamento',
       render: (value: string) => getEquipmentSerial(value),
     },
-    { key: 'plate', label: 'Placa' },
     {
-      key: 'speed',
-      label: 'Velocidade',
-      render: (value: number | null) => (value ? `${value} km/h` : '-'),
+      key: 'date',
+      label: 'Data/Hora',
+      render: (value: string | null) => value ? format(new Date(value), 'dd/MM/yyyy HH:mm', { locale: ptBR }) : '-',
     },
+    { key: 'month', label: 'Mês' },
+    { key: 'year', label: 'Ano' },
+    { key: 'datacheck_lane', label: 'Faixa Datacheck' },
+    { key: 'physical_lane', label: 'Faixa Física' },
     {
-      key: 'limit_speed',
-      label: 'Limite',
-      render: (value: number | null) => (value ? `${value} km/h` : '-'),
-    },
-    {
-      key: 'status',
-      label: 'Status',
-      render: (value: string) => <StatusBadge status={value} />,
+      key: 'image_count',
+      label: 'Qtd Imagens',
+      render: (value: number | null) => value?.toLocaleString('pt-BR') || '0',
     },
   ];
 
@@ -75,22 +84,26 @@ export default function Infractions() {
   };
 
   const exportColumns = [
-    { key: 'Data/Hora', label: 'Data/Hora' },
+    { key: 'Contrato', label: 'Contrato' },
     { key: 'Equipamento', label: 'Equipamento' },
-    { key: 'Placa', label: 'Placa' },
-    { key: 'Velocidade', label: 'Velocidade' },
-    { key: 'Limite', label: 'Limite' },
-    { key: 'Status', label: 'Status' },
+    { key: 'Data/Hora', label: 'Data/Hora' },
+    { key: 'Mês', label: 'Mês' },
+    { key: 'Ano', label: 'Ano' },
+    { key: 'Faixa Datacheck', label: 'Faixa Datacheck' },
+    { key: 'Faixa Física', label: 'Faixa Física' },
+    { key: 'Qtd Imagens', label: 'Qtd Imagens' },
   ];
 
   const handleExport = (type: 'pdf' | 'excel' | 'csv') => {
     const data = infractions.map((i) => ({
-      'Data/Hora': format(new Date(i.date), 'dd/MM/yyyy HH:mm'),
-      Equipamento: getEquipmentSerial(i.equipment_id),
-      Placa: i.plate || '',
-      Velocidade: i.speed || '',
-      Limite: i.limit_speed || '',
-      Status: i.status || '',
+      'Contrato': getContractName(i.contract_id),
+      'Equipamento': getEquipmentSerial(i.equipment_id),
+      'Data/Hora': i.date ? format(new Date(i.date), 'dd/MM/yyyy HH:mm') : '',
+      'Mês': i.month || '',
+      'Ano': i.year || '',
+      'Faixa Datacheck': i.datacheck_lane || '',
+      'Faixa Física': i.physical_lane || '',
+      'Qtd Imagens': i.image_count || 0,
     }));
 
     if (type === 'pdf') exportToPDF(data, exportColumns, 'Infrações');
@@ -117,14 +130,33 @@ export default function Infractions() {
         onImport={() => setImportOpen(true)}
       />
 
-      <DataTable
-        data={infractions}
-        columns={columns}
-        loading={isLoading}
-        searchPlaceholder="Buscar por placa..."
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-      />
+      <Tabs defaultValue="dashboard" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="dashboard" className="flex items-center gap-2">
+            <LayoutDashboard className="h-4 w-4" />
+            Dashboard
+          </TabsTrigger>
+          <TabsTrigger value="list" className="flex items-center gap-2">
+            <List className="h-4 w-4" />
+            Listagem
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="dashboard">
+          <InfractionsDashboard />
+        </TabsContent>
+
+        <TabsContent value="list">
+          <DataTable
+            data={infractions}
+            columns={columns}
+            loading={isLoading}
+            searchPlaceholder="Buscar por equipamento..."
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+          />
+        </TabsContent>
+      </Tabs>
 
       <InfractionForm
         open={formOpen}

@@ -27,14 +27,17 @@ import {
 } from '@/components/ui/select';
 import { useInfractions } from '@/hooks/useInfractions';
 import { useEquipment } from '@/hooks/useEquipment';
+import { useContracts } from '@/hooks/useContracts';
 
 const formSchema = z.object({
+  contract_id: z.string().nullable().optional(),
   equipment_id: z.string().min(1, 'Selecione um equipamento'),
-  date: z.string().min(1, 'Data/hora é obrigatória'),
-  plate: z.string().nullable().optional(),
-  speed: z.coerce.number().nullable().optional(),
-  limit_speed: z.coerce.number().nullable().optional(),
-  status: z.string().nullable().optional().default('pending'),
+  date: z.string().nullable().optional(),
+  month: z.string().nullable().optional(),
+  year: z.coerce.number().nullable().optional(),
+  datacheck_lane: z.string().nullable().optional(),
+  physical_lane: z.string().nullable().optional(),
+  image_count: z.coerce.number().nullable().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -48,49 +51,58 @@ interface InfractionFormProps {
 export function InfractionForm({ open, onOpenChange, infraction }: InfractionFormProps) {
   const { createInfraction, updateInfraction } = useInfractions();
   const { equipment } = useEquipment();
+  const { contracts } = useContracts();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      contract_id: '',
       equipment_id: '',
-      date: new Date().toISOString().slice(0, 16),
-      plate: '',
-      speed: 0,
-      limit_speed: 0,
-      status: 'pending',
+      date: '',
+      month: '',
+      year: new Date().getFullYear(),
+      datacheck_lane: '',
+      physical_lane: '',
+      image_count: 0,
     },
   });
 
   useEffect(() => {
     if (infraction) {
       form.reset({
+        contract_id: infraction.contract_id || '',
         equipment_id: infraction.equipment_id,
-        date: infraction.date.slice(0, 16),
-        plate: infraction.plate || '',
-        speed: infraction.speed || 0,
-        limit_speed: infraction.limit_speed || 0,
-        status: infraction.status || 'pending',
+        date: infraction.date ? infraction.date.slice(0, 16) : '',
+        month: infraction.month || '',
+        year: infraction.year || new Date().getFullYear(),
+        datacheck_lane: infraction.datacheck_lane || '',
+        physical_lane: infraction.physical_lane || '',
+        image_count: infraction.image_count || 0,
       });
     } else {
       form.reset({
+        contract_id: '',
         equipment_id: '',
-        date: new Date().toISOString().slice(0, 16),
-        plate: '',
-        speed: 0,
-        limit_speed: 0,
-        status: 'pending',
+        date: '',
+        month: '',
+        year: new Date().getFullYear(),
+        datacheck_lane: '',
+        physical_lane: '',
+        image_count: 0,
       });
     }
   }, [infraction, form]);
 
   const onSubmit = (values: FormValues) => {
     const data = {
+      contract_id: values.contract_id || null,
       equipment_id: values.equipment_id,
-      date: values.date,
-      plate: values.plate || null,
-      speed: values.speed || null,
-      limit_speed: values.limit_speed || null,
-      status: values.status || 'pending',
+      date: values.date || null,
+      month: values.month || null,
+      year: values.year || null,
+      datacheck_lane: values.datacheck_lane || null,
+      physical_lane: values.physical_lane || null,
+      image_count: values.image_count || 0,
     };
 
     if (infraction) {
@@ -101,9 +113,14 @@ export function InfractionForm({ open, onOpenChange, infraction }: InfractionFor
     onOpenChange(false);
   };
 
+  const months = [
+    'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+  ];
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>
             {infraction ? 'Editar Infração' : 'Nova Infração'}
@@ -112,6 +129,31 @@ export function InfractionForm({ open, onOpenChange, infraction }: InfractionFor
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="contract_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Contrato</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value || ''}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione um contrato" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {contracts.map((c) => (
+                        <SelectItem key={c.id} value={c.id}>
+                          {c.number} - {c.client_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <FormField
               control={form.control}
               name="equipment_id"
@@ -144,21 +186,7 @@ export function InfractionForm({ open, onOpenChange, infraction }: InfractionFor
                 <FormItem>
                   <FormLabel>Data/Hora</FormLabel>
                   <FormControl>
-                    <Input type="datetime-local" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="plate"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Placa</FormLabel>
-                  <FormControl>
-                    <Input placeholder="ABC-1234" {...field} />
+                    <Input type="datetime-local" {...field} value={field.value || ''} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -168,13 +196,24 @@ export function InfractionForm({ open, onOpenChange, infraction }: InfractionFor
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="speed"
+                name="month"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Velocidade (km/h)</FormLabel>
-                    <FormControl>
-                      <Input type="number" {...field} />
-                    </FormControl>
+                    <FormLabel>Mês</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value || ''}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {months.map((m) => (
+                          <SelectItem key={m} value={m}>
+                            {m}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -182,10 +221,10 @@ export function InfractionForm({ open, onOpenChange, infraction }: InfractionFor
 
               <FormField
                 control={form.control}
-                name="limit_speed"
+                name="year"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Limite (km/h)</FormLabel>
+                    <FormLabel>Ano</FormLabel>
                     <FormControl>
                       <Input type="number" {...field} />
                     </FormControl>
@@ -195,24 +234,45 @@ export function InfractionForm({ open, onOpenChange, infraction }: InfractionFor
               />
             </div>
 
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="datacheck_lane"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Faixa Datacheck</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Ex: F1" {...field} value={field.value || ''} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="physical_lane"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Faixa Física</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Ex: 1" {...field} value={field.value || ''} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
             <FormField
               control={form.control}
-              name="status"
+              name="image_count"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Status</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="pending">Pendente</SelectItem>
-                      <SelectItem value="validated">Validada</SelectItem>
-                      <SelectItem value="rejected">Rejeitada</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormLabel>Quantidade de Imagens</FormLabel>
+                  <FormControl>
+                    <Input type="number" {...field} />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
