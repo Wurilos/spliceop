@@ -142,11 +142,11 @@ export default function Auth() {
               <Radio className="h-8 w-8 text-primary-foreground" />
             </div>
             <h1 className="text-4xl font-bold text-sidebar-foreground">
-              SpliceStream
+              Splice OP
             </h1>
           </div>
           <p className="text-xl text-sidebar-foreground/80 mb-6">
-            Sistema de Gestão para Fiscalização de Trânsito
+            Sistema de Gestão Operacional
           </p>
           <div className="flex items-center justify-center gap-2 text-sidebar-foreground/60">
             <Shield className="h-5 w-5" />
@@ -163,7 +163,7 @@ export default function Auth() {
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
                 <Radio className="h-5 w-5 text-primary-foreground" />
               </div>
-              <span className="text-xl font-bold">SpliceStream</span>
+              <span className="text-xl font-bold">Splice OP</span>
             </div>
             <CardTitle className="text-2xl">Acessar Sistema</CardTitle>
             <CardDescription>

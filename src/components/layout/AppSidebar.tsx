@@ -140,8 +140,8 @@ export function AppSidebar() {
             <Radio className="h-5 w-5 text-primary-foreground" />
           </div>
           <div>
-            <h1 className="text-lg font-bold text-sidebar-foreground">SpliceStream</h1>
-            <p className="text-xs text-sidebar-foreground/60">ERP de Fiscalização</p>
+            <h1 className="text-lg font-bold text-sidebar-foreground">Splice OP</h1>
+            <p className="text-xs text-sidebar-foreground/60">Sistema de Gestão Operacional</p>
           </div>
         </div>
       </SidebarHeader>
