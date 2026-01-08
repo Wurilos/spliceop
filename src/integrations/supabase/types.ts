@@ -1100,32 +1100,44 @@ export type Database = {
       seals: {
         Row: {
           created_at: string | null
-          equipment_id: string
+          equipment_id: string | null
           id: string
           installation_date: string
+          memo_number: string | null
           notes: string | null
+          received_date: string | null
           seal_number: string
+          seal_type: string | null
           service_order: string | null
+          status: string
           technician_id: string | null
         }
         Insert: {
           created_at?: string | null
-          equipment_id: string
+          equipment_id?: string | null
           id?: string
           installation_date: string
+          memo_number?: string | null
           notes?: string | null
+          received_date?: string | null
           seal_number: string
+          seal_type?: string | null
           service_order?: string | null
+          status?: string
           technician_id?: string | null
         }
         Update: {
           created_at?: string | null
-          equipment_id?: string
+          equipment_id?: string | null
           id?: string
           installation_date?: string
+          memo_number?: string | null
           notes?: string | null
+          received_date?: string | null
           seal_number?: string
+          seal_type?: string | null
           service_order?: string | null
+          status?: string
           technician_id?: string | null
         }
         Relationships: [
