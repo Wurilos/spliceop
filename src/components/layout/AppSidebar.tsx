@@ -1,7 +1,7 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
-import grupoSpliceLogo from '@/assets/grupo-splice-logo.png';
+import spliceLogo from '@/assets/splice-logo.png';
 import {
   Sidebar,
   SidebarContent,
@@ -137,9 +137,9 @@ export function AppSidebar() {
       <SidebarHeader className="border-b border-sidebar-border p-4">
         <div className="flex items-center gap-3">
           <img 
-            src={grupoSpliceLogo} 
-            alt="Grupo Splice" 
-            className="h-10 w-auto"
+            src={spliceLogo} 
+            alt="Splice" 
+            className="h-8 w-auto"
           />
           <div>
             <h1 className="text-lg font-bold text-sidebar-foreground">Splice OP</h1>
