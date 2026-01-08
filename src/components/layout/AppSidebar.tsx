@@ -116,7 +116,7 @@ const menuGroups = [
       { title: 'Linhas / Chip', href: '/phone-lines', icon: Smartphone },
       { title: 'Lacres e OS', href: '/seals', icon: Tag },
       { title: 'Estoque', href: '/inventory', icon: Package },
-      { title: 'Audit Log', href: '/audit', icon: History },
+      { title: 'Administração', href: '/audit', icon: History },
     ],
   },
 ];
