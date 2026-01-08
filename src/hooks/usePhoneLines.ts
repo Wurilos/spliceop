@@ -9,6 +9,7 @@ export interface PhoneLine {
   line_number: string;
   carrier: string;
   sub_carrier: string | null;
+  status: string;
   created_at: string | null;
   updated_at: string | null;
   contracts?: { number: string; client_name: string } | null;
