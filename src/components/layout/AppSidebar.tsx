@@ -60,6 +60,7 @@ const menuGroups = [
     label: 'Principal',
     items: [
       { title: 'Dashboard', href: '/', icon: LayoutDashboard },
+      { title: 'Alertas', href: '/alerts', icon: AlertCircle },
       { title: 'Mapa', href: '/map', icon: Map },
     ],
   },
