@@ -7,9 +7,11 @@ import { DataTable } from '@/components/shared/DataTable';
 import { DeleteDialog } from '@/components/shared/DeleteDialog';
 import { ImportDialog } from '@/components/shared/ImportDialog';
 import { SlaForm } from '@/components/sla/SlaForm';
+import { SlaDashboard } from '@/components/sla/SlaDashboard';
 import { useSlaMetrics } from '@/hooks/useSlaMetrics';
 import { useContracts } from '@/hooks/useContracts';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { exportToPDF, exportToExcel, exportToCSV } from '@/lib/export';
 import { slaImportConfig } from '@/lib/importConfigs';
 import { supabase } from '@/integrations/supabase/client';
@@ -126,14 +128,27 @@ export default function Sla() {
         onImport={() => setImportOpen(true)}
       />
 
-      <DataTable
-        data={slaMetrics}
-        columns={columns}
-        loading={isLoading}
-        searchPlaceholder="Buscar por contrato..."
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-      />
+      <Tabs defaultValue="dashboard" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+          <TabsTrigger value="list">Listagem</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="dashboard">
+          <SlaDashboard />
+        </TabsContent>
+
+        <TabsContent value="list">
+          <DataTable
+            data={slaMetrics}
+            columns={columns}
+            loading={isLoading}
+            searchPlaceholder="Buscar por contrato..."
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+          />
+        </TabsContent>
+      </Tabs>
 
       <SlaForm
         open={formOpen}
