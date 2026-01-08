@@ -112,6 +112,12 @@ export function AdvancesDashboard() {
     return { total, totalValue, approvedValue, pendingValue, uniqueContracts };
   }, [filteredAdvances, employees]);
 
+  // Get contract name for display
+  const getContractName = (contractId: string) => {
+    const contract = contracts.find(c => c.id === contractId);
+    return contract ? `${contract.number} - ${contract.client_name}` : contractId;
+  };
+
   // Chart: Advances over time
   const timeChartData = useMemo(() => {
     const grouped: Record<string, { date: string; count: number; value: number }> = {};
@@ -213,13 +219,13 @@ export function AdvancesDashboard() {
 
             {/* Contract */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Centro de Custo</label>
+              <label className="text-sm font-medium">Contrato</label>
               <Select value={selectedContract} onValueChange={setSelectedContract}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Todos os centros" />
+                  <SelectValue placeholder="Todos os contratos" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos os centros</SelectItem>
+                  <SelectItem value="all">Todos os contratos</SelectItem>
                   {contracts.map(contract => (
                     <SelectItem key={contract.id} value={contract.id}>
                       {contract.number} - {contract.client_name}
@@ -283,7 +289,7 @@ export function AdvancesDashboard() {
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Total de Adiantamentos</p>
                 <p className="text-3xl font-bold">{stats.total}</p>
-                <p className="text-xs text-muted-foreground">{stats.uniqueContracts} centros de custo</p>
+                <p className="text-xs text-muted-foreground">{stats.uniqueContracts} contratos</p>
               </div>
               <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
                 <FileText className="h-5 w-5 text-primary" />
@@ -494,7 +500,7 @@ export function AdvancesDashboard() {
             </Badge>
             {selectedContract !== 'all' && (
               <Badge variant="outline">
-                Centro de Custo: {contracts.find(c => c.id === selectedContract)?.client_name || selectedContract}
+                Contrato: {getContractName(selectedContract)}
               </Badge>
             )}
             {selectedEmployee !== 'all' && (
