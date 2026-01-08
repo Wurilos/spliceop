@@ -16,7 +16,7 @@ export function useMileageRecords() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('mileage_records')
-        .select('*, vehicles(plate, brand, model), employees(full_name)')
+        .select('*, vehicles!fk_mileage_records_vehicle(plate, brand, model), employees!fk_mileage_records_employee(full_name)')
         .order('date', { ascending: false });
       if (error) throw error;
       return data;

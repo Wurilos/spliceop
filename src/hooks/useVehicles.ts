@@ -16,7 +16,7 @@ export function useVehicles() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('vehicles')
-        .select('*, contracts(number, client_name)')
+        .select('*, contracts!fk_vehicles_contract(number, client_name)')
         .order('created_at', { ascending: false });
       if (error) throw error;
       return data;
