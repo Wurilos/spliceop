@@ -1,6 +1,7 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
+import grupoSpliceLogo from '@/assets/grupo-splice-logo.png';
 import {
   Sidebar,
   SidebarContent,
@@ -23,7 +24,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
-  Radio,
   LayoutDashboard,
   FileText,
   Users,
@@ -136,9 +136,11 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarHeader className="border-b border-sidebar-border p-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
-            <Radio className="h-5 w-5 text-primary-foreground" />
-          </div>
+          <img 
+            src={grupoSpliceLogo} 
+            alt="Grupo Splice" 
+            className="h-10 w-auto"
+          />
           <div>
             <h1 className="text-lg font-bold text-sidebar-foreground">Splice OP</h1>
             <p className="text-xs text-sidebar-foreground/60">Sistema de Gestão Operacional</p>
