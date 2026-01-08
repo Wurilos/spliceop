@@ -70,11 +70,24 @@ export function useEnergyConsumerUnits() {
     onError: () => toast.error('Erro ao excluir unidade consumidora'),
   });
 
+  const deleteManyMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase.from('energy_consumer_units').delete().in('id', ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['energy_consumer_units'] });
+      toast.success('Unidades excluídas!');
+    },
+    onError: () => toast.error('Erro ao excluir unidades'),
+  });
+
   return {
     consumerUnits,
     isLoading,
     createConsumerUnit: createMutation.mutate,
     updateConsumerUnit: updateMutation.mutate,
     deleteConsumerUnit: deleteMutation.mutate,
+    deleteMany: deleteManyMutation.mutate,
   };
 }

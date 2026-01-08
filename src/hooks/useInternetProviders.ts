@@ -64,11 +64,24 @@ export function useInternetProviders() {
     onError: () => toast.error('Erro ao excluir provedor'),
   });
 
+  const deleteManyMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase.from('internet_providers').delete().in('id', ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['internet_providers'] });
+      toast.success('Provedores excluídos!');
+    },
+    onError: () => toast.error('Erro ao excluir provedores'),
+  });
+
   return {
     providers,
     isLoading,
     createProvider: createMutation.mutate,
     updateProvider: updateMutation.mutate,
     deleteProvider: deleteMutation.mutate,
+    deleteMany: deleteManyMutation.mutate,
   };
 }

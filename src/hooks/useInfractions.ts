@@ -64,11 +64,24 @@ export function useInfractions() {
     onError: () => toast.error('Erro ao excluir infração'),
   });
 
+  const deleteManyMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase.from('infractions').delete().in('id', ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['infractions'] });
+      toast.success('Infrações excluídas!');
+    },
+    onError: () => toast.error('Erro ao excluir infrações'),
+  });
+
   return {
     infractions,
     isLoading,
     createInfraction: createMutation.mutate,
     updateInfraction: updateMutation.mutate,
     deleteInfraction: deleteMutation.mutate,
+    deleteMany: deleteManyMutation.mutate,
   };
 }

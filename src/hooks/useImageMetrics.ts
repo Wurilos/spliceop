@@ -68,11 +68,24 @@ export function useImageMetrics() {
     onError: () => toast.error('Erro ao excluir métrica'),
   });
 
+  const deleteManyMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase.from('image_metrics').delete().in('id', ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['image_metrics'] });
+      toast.success('Métricas excluídas!');
+    },
+    onError: () => toast.error('Erro ao excluir métricas'),
+  });
+
   return {
     imageMetrics,
     isLoading,
     createImageMetric: createMutation.mutate,
     updateImageMetric: updateMutation.mutate,
     deleteImageMetric: deleteMutation.mutate,
+    deleteMany: deleteManyMutation.mutate,
   };
 }

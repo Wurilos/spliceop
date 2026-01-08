@@ -69,11 +69,24 @@ export function useSlaMetrics() {
     onError: () => toast.error('Erro ao excluir métrica SLA'),
   });
 
+  const deleteManyMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase.from('sla_metrics').delete().in('id', ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sla_metrics'] });
+      toast.success('Métricas SLA excluídas!');
+    },
+    onError: () => toast.error('Erro ao excluir métricas SLA'),
+  });
+
   return {
     slaMetrics,
     isLoading,
     createSlaMetric: createMutation.mutate,
     updateSlaMetric: updateMutation.mutate,
     deleteSlaMetric: deleteMutation.mutate,
+    deleteMany: deleteManyMutation.mutate,
   };
 }

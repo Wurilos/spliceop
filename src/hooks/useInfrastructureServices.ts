@@ -73,12 +73,27 @@ export function useInfrastructureServices() {
     },
   });
 
+  const deleteManyMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase.from('infrastructure_services').delete().in('id', ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['infrastructure_services'] });
+      toast({ title: 'Serviços excluídos com sucesso!' });
+    },
+    onError: () => {
+      toast({ title: 'Erro ao excluir serviços', variant: 'destructive' });
+    },
+  });
+
   return {
     services,
     isLoading,
     create: createMutation.mutate,
     update: updateMutation.mutate,
     delete: deleteMutation.mutate,
+    deleteMany: deleteManyMutation.mutate,
     isCreating: createMutation.isPending,
     isUpdating: updateMutation.isPending,
     isDeleting: deleteMutation.isPending,

@@ -72,11 +72,24 @@ export function useEnergyBills() {
     onError: () => toast.error('Erro ao excluir conta de energia'),
   });
 
+  const deleteManyMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase.from('energy_bills').delete().in('id', ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['energy_bills'] });
+      toast.success('Contas de energia excluídas!');
+    },
+    onError: () => toast.error('Erro ao excluir contas de energia'),
+  });
+
   return {
     energyBills,
     isLoading,
     createEnergyBill: createMutation.mutate,
     updateEnergyBill: updateMutation.mutate,
     deleteEnergyBill: deleteMutation.mutate,
+    deleteMany: deleteManyMutation.mutate,
   };
 }

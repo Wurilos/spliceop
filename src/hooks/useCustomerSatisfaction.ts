@@ -68,11 +68,24 @@ export function useCustomerSatisfaction() {
     onError: () => toast.error('Erro ao excluir pesquisa de satisfação'),
   });
 
+  const deleteManyMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase.from('customer_satisfaction').delete().in('id', ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['customer_satisfaction'] });
+      toast.success('Pesquisas excluídas!');
+    },
+    onError: () => toast.error('Erro ao excluir pesquisas'),
+  });
+
   return {
     satisfactionRecords,
     isLoading,
     createSatisfaction: createMutation.mutate,
     updateSatisfaction: updateMutation.mutate,
     deleteSatisfaction: deleteMutation.mutate,
+    deleteMany: deleteManyMutation.mutate,
   };
 }

@@ -73,11 +73,24 @@ export function usePendingIssues() {
     onError: () => toast.error('Erro ao excluir pendência'),
   });
 
+  const deleteManyMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase.from('pending_issues').delete().in('id', ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pending_issues'] });
+      toast.success('Pendências excluídas!');
+    },
+    onError: () => toast.error('Erro ao excluir pendências'),
+  });
+
   return {
     pendingIssues,
     isLoading,
     createPendingIssue: createMutation.mutate,
     updatePendingIssue: updateMutation.mutate,
     deletePendingIssue: deleteMutation.mutate,
+    deleteMany: deleteManyMutation.mutate,
   };
 }

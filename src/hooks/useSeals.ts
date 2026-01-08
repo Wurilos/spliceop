@@ -74,11 +74,24 @@ export function useSeals() {
     onError: () => toast.error('Erro ao excluir lacre'),
   });
 
+  const deleteManyMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase.from('seals').delete().in('id', ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['seals'] });
+      toast.success('Lacres excluídos!');
+    },
+    onError: () => toast.error('Erro ao excluir lacres'),
+  });
+
   return {
     seals,
     isLoading,
     createSeal: createMutation.mutate,
     updateSeal: updateMutation.mutate,
     deleteSeal: deleteMutation.mutate,
+    deleteMany: deleteManyMutation.mutate,
   };
 }

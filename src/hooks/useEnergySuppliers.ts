@@ -65,11 +65,24 @@ export function useEnergySuppliers() {
     onError: () => toast.error('Erro ao excluir fornecedor'),
   });
 
+  const deleteManyMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase.from('energy_suppliers').delete().in('id', ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['energy_suppliers'] });
+      toast.success('Fornecedores excluídos!');
+    },
+    onError: () => toast.error('Erro ao excluir fornecedores'),
+  });
+
   return {
     suppliers,
     isLoading,
     createSupplier: createMutation.mutate,
     updateSupplier: updateMutation.mutate,
     deleteSupplier: deleteMutation.mutate,
+    deleteMany: deleteManyMutation.mutate,
   };
 }

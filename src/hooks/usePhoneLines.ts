@@ -98,6 +98,24 @@ export function usePhoneLines() {
     },
   });
 
+  const deleteManyMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase
+        .from('phone_lines')
+        .delete()
+        .in('id', ids);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['phone_lines'] });
+      toast({ title: 'Linhas excluídas com sucesso!' });
+    },
+    onError: (error) => {
+      toast({ title: 'Erro ao excluir linhas', description: error.message, variant: 'destructive' });
+    },
+  });
+
   return {
     phoneLines,
     loading,
@@ -105,6 +123,7 @@ export function usePhoneLines() {
     createPhoneLine: createMutation.mutate,
     updatePhoneLine: updateMutation.mutate,
     deletePhoneLine: deleteMutation.mutate,
+    deleteMany: deleteManyMutation.mutate,
     isCreating: createMutation.isPending,
     isUpdating: updateMutation.isPending,
     isDeleting: deleteMutation.isPending,
