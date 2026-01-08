@@ -32,6 +32,7 @@ import Issues from "./pages/Issues";
 import Seals from "./pages/Seals";
 import AuditLog from "./pages/AuditLog";
 import Infrastructure from "./pages/Infrastructure";
+import Alerts from "./pages/Alerts";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -46,6 +47,7 @@ const App = () => (
           <Routes>
             <Route path="/auth" element={<Auth />} />
             <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+            <Route path="/alerts" element={<ProtectedRoute><Alerts /></ProtectedRoute>} />
             <Route path="/contracts" element={<ProtectedRoute><Contracts /></ProtectedRoute>} />
             <Route path="/employees" element={<ProtectedRoute><Employees /></ProtectedRoute>} />
             <Route path="/equipment" element={<ProtectedRoute><Equipment /></ProtectedRoute>} />
