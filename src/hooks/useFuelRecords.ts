@@ -16,9 +16,10 @@ export function useFuelRecords() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('fuel_records')
-        .select('*, vehicles!fk_fuel_records_vehicle(plate, brand, model)')
+        .select('*, vehicles!fk_fuel_records_vehicle(plate, brand, model, contract_id)')
         .order('date', { ascending: false });
       if (error) throw error;
+      return data;
       return data;
     },
   });
