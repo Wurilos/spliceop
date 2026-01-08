@@ -767,6 +767,7 @@ export type Database = {
       }
       internet_bills: {
         Row: {
+          connection_id: string | null
           contract_id: string | null
           created_at: string | null
           due_date: string | null
@@ -777,6 +778,7 @@ export type Database = {
           value: number | null
         }
         Insert: {
+          connection_id?: string | null
           contract_id?: string | null
           created_at?: string | null
           due_date?: string | null
@@ -787,6 +789,7 @@ export type Database = {
           value?: number | null
         }
         Update: {
+          connection_id?: string | null
           contract_id?: string | null
           created_at?: string | null
           due_date?: string | null
@@ -805,6 +808,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "internet_bills_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "internet_connections"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "internet_bills_contract_id_fkey"
             columns: ["contract_id"]
             isOneToOne: false
@@ -812,6 +822,78 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      internet_connections: {
+        Row: {
+          client_code: string | null
+          contract_id: string | null
+          created_at: string | null
+          id: string
+          provider_id: string | null
+          serial_number: string
+          updated_at: string | null
+        }
+        Insert: {
+          client_code?: string | null
+          contract_id?: string | null
+          created_at?: string | null
+          id?: string
+          provider_id?: string | null
+          serial_number: string
+          updated_at?: string | null
+        }
+        Update: {
+          client_code?: string | null
+          contract_id?: string | null
+          created_at?: string | null
+          id?: string
+          provider_id?: string | null
+          serial_number?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "internet_connections_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "internet_connections_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "internet_providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      internet_providers: {
+        Row: {
+          address: string | null
+          city: string | null
+          created_at: string | null
+          id: string
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          created_at?: string | null
+          id?: string
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          created_at?: string | null
+          id?: string
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       inventory: {
         Row: {
