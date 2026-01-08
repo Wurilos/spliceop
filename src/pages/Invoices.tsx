@@ -6,12 +6,15 @@ import { DeleteDialog } from '@/components/shared/DeleteDialog';
 import { ImportDialog } from '@/components/shared/ImportDialog';
 import { useInvoices } from '@/hooks/useInvoices';
 import { InvoiceForm } from '@/components/invoices/InvoiceForm';
+import { InvoicingDashboard } from '@/components/invoices/InvoicingDashboard';
 import { Tables } from '@/integrations/supabase/types';
 import { format } from 'date-fns';
 import { exportToPDF, exportToExcel, exportToCSV } from '@/lib/export';
 import { invoiceImportConfig } from '@/lib/importConfigs';
 import { supabase } from '@/integrations/supabase/client';
 import { useContracts } from '@/hooks/useContracts';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { BarChart3, List } from 'lucide-react';
 
 type Invoice = Tables<'invoices'> & { contracts?: { number: string; client_name: string } | null };
 
@@ -57,15 +60,43 @@ export default function Invoices() {
   return (
     <AppLayout title="Faturamento">
       <div className="space-y-6">
-        <PageHeader 
-          title="Faturamento" 
-          description="Notas fiscais e pagamentos" 
-          onAdd={() => { setEditing(null); setFormOpen(true); }} 
-          addLabel="Nova Nota" 
-          onExport={handleExport}
-          onImport={() => setImportOpen(true)}
-        />
-        <DataTable data={invoices} columns={columns} loading={loading} searchPlaceholder="Buscar..." onEdit={(r) => { setEditing(r); setFormOpen(true); }} onDelete={setDeleting} />
+        <Tabs defaultValue="dashboard" className="w-full">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight">Faturamento</h1>
+              <p className="text-muted-foreground">Notas fiscais e pagamentos</p>
+            </div>
+            <TabsList>
+              <TabsTrigger value="dashboard" className="flex items-center gap-2">
+                <BarChart3 className="h-4 w-4" />
+                Dashboard
+              </TabsTrigger>
+              <TabsTrigger value="list" className="flex items-center gap-2">
+                <List className="h-4 w-4" />
+                Listagem
+              </TabsTrigger>
+            </TabsList>
+          </div>
+
+          <TabsContent value="dashboard">
+            <InvoicingDashboard />
+          </TabsContent>
+
+          <TabsContent value="list">
+            <div className="space-y-4">
+              <PageHeader 
+                title="" 
+                description="" 
+                onAdd={() => { setEditing(null); setFormOpen(true); }} 
+                addLabel="Nova Nota" 
+                onExport={handleExport}
+                onImport={() => setImportOpen(true)}
+              />
+              <DataTable data={invoices} columns={columns} loading={loading} searchPlaceholder="Buscar..." onEdit={(r) => { setEditing(r); setFormOpen(true); }} onDelete={setDeleting} />
+            </div>
+          </TabsContent>
+        </Tabs>
+
         <InvoiceForm open={formOpen} onOpenChange={setFormOpen} onSubmit={(data) => { editing ? update({ id: editing.id, ...data }) : create(data as any); setFormOpen(false); }} initialData={editing} loading={isCreating || isUpdating} />
         <DeleteDialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)} onConfirm={() => { if (deleting) { deleteRecord(deleting.id); setDeleting(null); } }} loading={isDeleting} />
         <ImportDialog
