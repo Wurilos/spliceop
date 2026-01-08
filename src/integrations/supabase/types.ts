@@ -363,16 +363,22 @@ export type Database = {
         Row: {
           address: string | null
           brand: string | null
+          communication_type: string | null
           contract_id: string | null
           created_at: string | null
+          direction: string | null
+          energy_type: string | null
           id: string
           installation_date: string | null
+          lanes_qty: number | null
           last_calibration_date: string | null
           latitude: number | null
           longitude: number | null
           model: string | null
+          modem_number: string | null
           next_calibration_date: string | null
           serial_number: string
+          speed_limit: number | null
           status: Database["public"]["Enums"]["equipment_status"] | null
           type: string | null
           updated_at: string | null
@@ -380,16 +386,22 @@ export type Database = {
         Insert: {
           address?: string | null
           brand?: string | null
+          communication_type?: string | null
           contract_id?: string | null
           created_at?: string | null
+          direction?: string | null
+          energy_type?: string | null
           id?: string
           installation_date?: string | null
+          lanes_qty?: number | null
           last_calibration_date?: string | null
           latitude?: number | null
           longitude?: number | null
           model?: string | null
+          modem_number?: string | null
           next_calibration_date?: string | null
           serial_number: string
+          speed_limit?: number | null
           status?: Database["public"]["Enums"]["equipment_status"] | null
           type?: string | null
           updated_at?: string | null
@@ -397,16 +409,22 @@ export type Database = {
         Update: {
           address?: string | null
           brand?: string | null
+          communication_type?: string | null
           contract_id?: string | null
           created_at?: string | null
+          direction?: string | null
+          energy_type?: string | null
           id?: string
           installation_date?: string | null
+          lanes_qty?: number | null
           last_calibration_date?: string | null
           latitude?: number | null
           longitude?: number | null
           model?: string | null
+          modem_number?: string | null
           next_calibration_date?: string | null
           serial_number?: string
+          speed_limit?: number | null
           status?: Database["public"]["Enums"]["equipment_status"] | null
           type?: string | null
           updated_at?: string | null
