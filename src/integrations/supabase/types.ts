@@ -1019,6 +1019,54 @@ export type Database = {
           },
         ]
       }
+      phone_lines: {
+        Row: {
+          carrier: string
+          contract_id: string | null
+          created_at: string
+          equipment_id: string | null
+          id: string
+          line_number: string
+          sub_carrier: string | null
+          updated_at: string
+        }
+        Insert: {
+          carrier: string
+          contract_id?: string | null
+          created_at?: string
+          equipment_id?: string | null
+          id?: string
+          line_number: string
+          sub_carrier?: string | null
+          updated_at?: string
+        }
+        Update: {
+          carrier?: string
+          contract_id?: string | null
+          created_at?: string
+          equipment_id?: string | null
+          id?: string
+          line_number?: string
+          sub_carrier?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "phone_lines_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "phone_lines_equipment_id_fkey"
+            columns: ["equipment_id"]
+            isOneToOne: false
+            referencedRelation: "equipment"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null

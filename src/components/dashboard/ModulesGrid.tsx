@@ -28,6 +28,7 @@ import {
   History,
   Building2,
   Lock,
+  Smartphone,
 } from 'lucide-react';
 
 interface Module {
@@ -67,6 +68,7 @@ const modules: Module[] = [
   { title: 'Pendências', description: 'Issues abertas', href: '/issues', icon: AlertTriangle, color: 'bg-destructive/10 text-destructive' },
   { title: 'Alertas', description: 'Alertas do sistema', href: '/alerts', icon: Bell, color: 'bg-warning/10 text-warning' },
   { title: 'Auditoria', description: 'Log de ações', href: '/audit-log', icon: History, color: 'bg-muted-foreground/10 text-muted-foreground' },
+  { title: 'Linhas / Chip', description: 'Linhas telefônicas', href: '/phone-lines', icon: Smartphone, color: 'bg-info/10 text-info' },
 ];
 
 export function ModulesGrid() {
