@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Contracts from "./pages/Contracts";
@@ -43,33 +44,33 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
-            <Route path="/contracts" element={<Contracts />} />
-            <Route path="/employees" element={<Employees />} />
-            <Route path="/equipment" element={<Equipment />} />
-            <Route path="/vehicles" element={<Vehicles />} />
-            <Route path="/fuel" element={<Fuel />} />
-            <Route path="/maintenance" element={<Maintenance />} />
-            <Route path="/calibrations" element={<Calibrations />} />
-            <Route path="/service-calls" element={<ServiceCalls />} />
-            <Route path="/infrastructure" element={<Infrastructure />} />
-            <Route path="/invoices" element={<Invoices />} />
-            <Route path="/inventory" element={<Inventory />} />
-            <Route path="/map" element={<MapPage />} />
-            <Route path="/mileage" element={<Mileage />} />
-            <Route path="/energy" element={<Energy />} />
-            <Route path="/internet" element={<Internet />} />
-            <Route path="/advances" element={<Advances />} />
-            <Route path="/tolls" element={<Tolls />} />
-            <Route path="/image-metrics" element={<ImageMetrics />} />
-            <Route path="/infractions" element={<Infractions />} />
-            <Route path="/satisfaction" element={<Satisfaction />} />
-            <Route path="/sla" element={<Sla />} />
-            <Route path="/goals" element={<Goals />} />
-            <Route path="/issues" element={<Issues />} />
-            <Route path="/seals" element={<Seals />} />
-            <Route path="/audit" element={<AuditLog />} />
+            <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+            <Route path="/contracts" element={<ProtectedRoute><Contracts /></ProtectedRoute>} />
+            <Route path="/employees" element={<ProtectedRoute><Employees /></ProtectedRoute>} />
+            <Route path="/equipment" element={<ProtectedRoute><Equipment /></ProtectedRoute>} />
+            <Route path="/vehicles" element={<ProtectedRoute><Vehicles /></ProtectedRoute>} />
+            <Route path="/fuel" element={<ProtectedRoute><Fuel /></ProtectedRoute>} />
+            <Route path="/maintenance" element={<ProtectedRoute><Maintenance /></ProtectedRoute>} />
+            <Route path="/calibrations" element={<ProtectedRoute><Calibrations /></ProtectedRoute>} />
+            <Route path="/service-calls" element={<ProtectedRoute><ServiceCalls /></ProtectedRoute>} />
+            <Route path="/infrastructure" element={<ProtectedRoute><Infrastructure /></ProtectedRoute>} />
+            <Route path="/invoices" element={<ProtectedRoute><Invoices /></ProtectedRoute>} />
+            <Route path="/inventory" element={<ProtectedRoute><Inventory /></ProtectedRoute>} />
+            <Route path="/map" element={<ProtectedRoute><MapPage /></ProtectedRoute>} />
+            <Route path="/mileage" element={<ProtectedRoute><Mileage /></ProtectedRoute>} />
+            <Route path="/energy" element={<ProtectedRoute><Energy /></ProtectedRoute>} />
+            <Route path="/internet" element={<ProtectedRoute><Internet /></ProtectedRoute>} />
+            <Route path="/advances" element={<ProtectedRoute><Advances /></ProtectedRoute>} />
+            <Route path="/tolls" element={<ProtectedRoute><Tolls /></ProtectedRoute>} />
+            <Route path="/image-metrics" element={<ProtectedRoute><ImageMetrics /></ProtectedRoute>} />
+            <Route path="/infractions" element={<ProtectedRoute><Infractions /></ProtectedRoute>} />
+            <Route path="/satisfaction" element={<ProtectedRoute><Satisfaction /></ProtectedRoute>} />
+            <Route path="/sla" element={<ProtectedRoute><Sla /></ProtectedRoute>} />
+            <Route path="/goals" element={<ProtectedRoute><Goals /></ProtectedRoute>} />
+            <Route path="/issues" element={<ProtectedRoute><Issues /></ProtectedRoute>} />
+            <Route path="/seals" element={<ProtectedRoute><Seals /></ProtectedRoute>} />
+            <Route path="/audit" element={<ProtectedRoute><AuditLog /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
