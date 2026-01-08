@@ -5,12 +5,14 @@ import { DataTable } from '@/components/shared/DataTable';
 import { DeleteDialog } from '@/components/shared/DeleteDialog';
 import { ImportDialog } from '@/components/shared/ImportDialog';
 import { SatisfactionForm } from '@/components/satisfaction/SatisfactionForm';
+import { SatisfactionDashboard } from '@/components/satisfaction/SatisfactionDashboard';
 import { useCustomerSatisfaction } from '@/hooks/useCustomerSatisfaction';
 import { useContracts } from '@/hooks/useContracts';
 import { exportToPDF, exportToExcel, exportToCSV } from '@/lib/export';
 import { satisfactionImportConfig } from '@/lib/importConfigs';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function Satisfaction() {
   const { satisfactionRecords, isLoading, deleteSatisfaction } = useCustomerSatisfaction();
@@ -100,14 +102,27 @@ export default function Satisfaction() {
         onImport={() => setImportOpen(true)}
       />
 
-      <DataTable
-        data={satisfactionRecords}
-        columns={columns}
-        loading={isLoading}
-        searchPlaceholder="Buscar por contrato..."
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-      />
+      <Tabs defaultValue="dashboard" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+          <TabsTrigger value="list">Listagem</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="dashboard">
+          <SatisfactionDashboard />
+        </TabsContent>
+
+        <TabsContent value="list">
+          <DataTable
+            data={satisfactionRecords}
+            columns={columns}
+            loading={isLoading}
+            searchPlaceholder="Buscar por contrato..."
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+          />
+        </TabsContent>
+      </Tabs>
 
       <SatisfactionForm
         open={formOpen}
