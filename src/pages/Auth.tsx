@@ -11,7 +11,15 @@ import { Loader2, Check } from 'lucide-react';
 import { z } from 'zod';
 import spliceLogo from '@/assets/splice-logo.png';
 
+const ALLOWED_EMAIL_DOMAIN = '@splice.com.br';
+
 const emailSchema = z.string().email('E-mail inválido');
+const corporateEmailSchema = z.string()
+  .email('E-mail inválido')
+  .refine(
+    (email) => email.toLowerCase().endsWith(ALLOWED_EMAIL_DOMAIN),
+    { message: `Apenas e-mails corporativos ${ALLOWED_EMAIL_DOMAIN} são permitidos` }
+  );
 const passwordSchema = z.string().min(6, 'Senha deve ter pelo menos 6 caracteres');
 const nameSchema = z.string().min(2, 'Nome deve ter pelo menos 2 caracteres');
 
@@ -79,7 +87,7 @@ export default function Auth() {
 
     try {
       nameSchema.parse(signupName);
-      emailSchema.parse(signupEmail);
+      corporateEmailSchema.parse(signupEmail);
       passwordSchema.parse(signupPassword);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -117,9 +125,14 @@ export default function Auth() {
       });
     } else {
       toast({
-        title: 'Conta criada!',
-        description: 'Seu cadastro foi realizado com sucesso.',
+        title: 'Cadastro realizado!',
+        description: 'Um e-mail de confirmação foi enviado para ativar sua conta. Verifique sua caixa de entrada.',
       });
+      // Clear form after successful signup
+      setSignupName('');
+      setSignupEmail('');
+      setSignupPassword('');
+      setSignupConfirmPassword('');
     }
 
     setIsLoading(false);
