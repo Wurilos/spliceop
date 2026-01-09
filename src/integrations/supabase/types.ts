@@ -1166,6 +1166,7 @@ export type Database = {
           title: string
           type: string | null
           updated_at: string | null
+          vehicle_id: string | null
         }
         Insert: {
           address?: string | null
@@ -1183,6 +1184,7 @@ export type Database = {
           title: string
           type?: string | null
           updated_at?: string | null
+          vehicle_id?: string | null
         }
         Update: {
           address?: string | null
@@ -1200,6 +1202,7 @@ export type Database = {
           title?: string
           type?: string | null
           updated_at?: string | null
+          vehicle_id?: string | null
         }
         Relationships: [
           {
@@ -1242,6 +1245,13 @@ export type Database = {
             columns: ["equipment_id"]
             isOneToOne: false
             referencedRelation: "equipment"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pending_issues_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
             referencedColumns: ["id"]
           },
         ]
@@ -1895,6 +1905,7 @@ export type Database = {
           rental_company: string | null
           status: Database["public"]["Enums"]["vehicle_status"] | null
           tag_number: string | null
+          team: string | null
           updated_at: string | null
           year: number | null
         }
@@ -1919,6 +1930,7 @@ export type Database = {
           rental_company?: string | null
           status?: Database["public"]["Enums"]["vehicle_status"] | null
           tag_number?: string | null
+          team?: string | null
           updated_at?: string | null
           year?: number | null
         }
@@ -1943,6 +1955,7 @@ export type Database = {
           rental_company?: string | null
           status?: Database["public"]["Enums"]["vehicle_status"] | null
           tag_number?: string | null
+          team?: string | null
           updated_at?: string | null
           year?: number | null
         }

@@ -11,12 +11,14 @@ import { useKanbanColumns } from '@/hooks/useKanbanColumns';
 import { useKanbanIssues, KanbanIssue } from '@/hooks/useKanbanIssues';
 import { useContracts } from '@/hooks/useContracts';
 import { useEquipment } from '@/hooks/useEquipment';
+import { useVehicles } from '@/hooks/useVehicles';
 
 export default function Kanban() {
   const { activeColumns, isLoading: columnsLoading } = useKanbanColumns();
   const { issues, isLoading: issuesLoading, createIssue, updateIssue, moveIssue, deleteIssue } = useKanbanIssues();
   const { contracts } = useContracts();
   const { equipment } = useEquipment();
+  const { vehicles } = useVehicles();
 
   const [showForm, setShowForm] = useState(false);
   const [draggedId, setDraggedId] = useState<string | null>(null);
@@ -142,6 +144,7 @@ export default function Kanban() {
         columns={activeColumns}
         contracts={contracts.map(c => ({ id: c.id, number: c.number, client_name: c.client_name }))}
         equipment={equipment.map(e => ({ id: e.id, serial_number: e.serial_number }))}
+        vehicles={vehicles.map(v => ({ id: v.id, plate: v.plate, model: v.model }))}
         onSubmit={handleCreateIssue}
       />
 
