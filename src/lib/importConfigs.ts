@@ -124,7 +124,7 @@ export const employeeImportConfig = {
 // Equipment import config
 export const equipmentImportConfig = {
   mappings: [
-    { excelColumn: 'Contrato:', dbColumn: 'contract_number', transform: toString }, // Será resolvido para contract_id no import
+    { excelColumn: 'Contrato', dbColumn: 'contract_number', transform: toString }, // Será resolvido para contract_id no import
     { excelColumn: 'Número de Série', dbColumn: 'serial_number', required: true, transform: toString },
     { excelColumn: 'Modelo', dbColumn: 'model', transform: toString },
     { excelColumn: 'Endereço', dbColumn: 'address', transform: toString },
