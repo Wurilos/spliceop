@@ -287,21 +287,21 @@ export default function EquipmentPage() {
                       <tbody>
                         {paginatedEquipment.map((eq) => (
                           <tr key={eq.id} className="border-b hover:bg-muted/50 transition-colors">
-                            <td className="py-3 px-4 text-muted-foreground">
+                            <td className="py-3 px-4 text-muted-foreground max-w-[120px] truncate" title={eq.contracts?.client_name || ''}>
                               {eq.contracts?.client_name || '-'}
                             </td>
                             <td className="py-3 px-4">
                               <span className="font-medium text-primary">{eq.serial_number}</span>
                             </td>
-                            <td className="py-3 px-4">{eq.model || '-'}</td>
-                            <td className="py-3 px-4">{eq.address || '-'}</td>
-                            <td className="py-3 px-4">{eq.direction || '-'}</td>
-                            <td className="py-3 px-4">{eq.lanes_qty ?? '-'}</td>
-                            <td className="py-3 px-4">{eq.speed_limit ? `${eq.speed_limit} km/h` : '-'}</td>
-                            <td className="py-3 px-4">{eq.communication_type || '-'}</td>
-                            <td className="py-3 px-4">{eq.energy_type || '-'}</td>
-                            <td className="py-3 px-4">{eq.brand || '-'}</td>
-                            <td className="py-3 px-4">
+                            <td className="py-3 px-4 max-w-[80px] truncate" title={eq.model || ''}>{eq.model || '-'}</td>
+                            <td className="py-3 px-4 max-w-[150px] truncate" title={eq.address || ''}>{eq.address || '-'}</td>
+                            <td className="py-3 px-4 max-w-[100px] truncate" title={eq.direction || ''}>{eq.direction || '-'}</td>
+                            <td className="py-3 px-4 text-center">{eq.lanes_qty ?? '-'}</td>
+                            <td className="py-3 px-4 whitespace-nowrap">{eq.speed_limit ? `${eq.speed_limit} km/h` : '-'}</td>
+                            <td className="py-3 px-4 max-w-[80px] truncate" title={eq.communication_type || ''}>{eq.communication_type || '-'}</td>
+                            <td className="py-3 px-4 max-w-[80px] truncate" title={eq.energy_type || ''}>{eq.energy_type || '-'}</td>
+                            <td className="py-3 px-4 max-w-[80px] truncate" title={eq.brand || ''}>{eq.brand || '-'}</td>
+                            <td className="py-3 px-4 max-w-[100px]">
                               <div className="flex items-center gap-2">
                                 {getTypeIcon(eq.type)}
                                 <span>{eq.type || '-'}</span>
