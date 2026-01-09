@@ -110,6 +110,19 @@ export default function EquipmentPage() {
     const contractMap = new Map<string, string>();
     contracts?.forEach((c) => contractMap.set(c.number?.toLowerCase().trim() || '', c.id));
 
+    // Função para normalizar coordenadas (converte valores inteiros para decimal)
+    const normalizeCoordinate = (val: any): number | null => {
+      if (!val) return null;
+      const num = Number(val);
+      if (isNaN(num)) return null;
+      // Se o valor absoluto for maior que 180, provavelmente está sem o ponto decimal
+      // Ex: -20462591 deve ser -20.462591
+      if (Math.abs(num) > 180) {
+        return num / 1000000;
+      }
+      return num;
+    };
+
     const normalized = rows.map((row) => {
       const r: any = { ...row };
       
@@ -120,9 +133,11 @@ export default function EquipmentPage() {
         delete r.contract_number;
       }
       
+      // Normalizar coordenadas
+      r.latitude = normalizeCoordinate(r.latitude);
+      r.longitude = normalizeCoordinate(r.longitude);
+      
       // Garantir nulls em campos opcionais
-      r.latitude = r.latitude || null;
-      r.longitude = r.longitude || null;
       r.lanes_qty = r.lanes_qty || null;
       r.speed_limit = r.speed_limit ? String(r.speed_limit) : null;
       r.direction = r.direction || null;
