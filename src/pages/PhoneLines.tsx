@@ -4,8 +4,10 @@ import { PageHeader } from '@/components/shared/PageHeader';
 import { DataTable } from '@/components/shared/DataTable';
 import { DeleteDialog } from '@/components/shared/DeleteDialog';
 import { PhoneLineForm } from '@/components/phone-lines/PhoneLineForm';
+import { PhoneLinesDashboard } from '@/components/phone-lines/PhoneLinesDashboard';
 import { usePhoneLines, type PhoneLine } from '@/hooks/usePhoneLines';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { exportToExcel, exportToPDF } from '@/lib/export';
 
 const columns = [
@@ -119,13 +121,26 @@ export default function PhoneLines() {
           onExport={handleExport}
         />
 
-        <DataTable
-          data={phoneLines}
-          columns={columns}
-          loading={loading}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-        />
+        <Tabs defaultValue="dashboard" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+            <TabsTrigger value="list">Listagem</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="dashboard">
+            <PhoneLinesDashboard phoneLines={phoneLines} />
+          </TabsContent>
+
+          <TabsContent value="list">
+            <DataTable
+              data={phoneLines}
+              columns={columns}
+              loading={loading}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+            />
+          </TabsContent>
+        </Tabs>
 
         <PhoneLineForm
           open={formOpen}
