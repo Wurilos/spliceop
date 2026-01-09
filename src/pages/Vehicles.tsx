@@ -189,42 +189,62 @@ export default function Vehicles() {
           ) : (
             <>
               <div className="overflow-x-auto">
-                <table className="w-full">
+                <table className="w-full min-w-[1400px]">
                   <thead>
                     <tr className="border-b">
-                      <th className="text-left py-3 px-4 font-medium text-muted-foreground">Contrato</th>
-                      <th className="text-left py-3 px-4 font-medium text-muted-foreground">Placa</th>
-                      <th className="text-left py-3 px-4 font-medium text-muted-foreground">Modelo</th>
-                      <th className="text-left py-3 px-4 font-medium text-muted-foreground">Marca</th>
-                      <th className="text-left py-3 px-4 font-medium text-muted-foreground">Ano</th>
-                      <th className="text-left py-3 px-4 font-medium text-muted-foreground">Combustível</th>
-                      <th className="text-left py-3 px-4 font-medium text-muted-foreground">KM Atual</th>
-                      <th className="text-left py-3 px-4 font-medium text-muted-foreground">Status</th>
-                      <th className="py-3 px-4"></th>
+                      <th className="text-left py-3 px-3 font-medium text-muted-foreground text-xs">Contrato</th>
+                      <th className="text-left py-3 px-3 font-medium text-muted-foreground text-xs">Placa</th>
+                      <th className="text-left py-3 px-3 font-medium text-muted-foreground text-xs">Modelo</th>
+                      <th className="text-left py-3 px-3 font-medium text-muted-foreground text-xs">Marca</th>
+                      <th className="text-left py-3 px-3 font-medium text-muted-foreground text-xs">Ano</th>
+                      <th className="text-left py-3 px-3 font-medium text-muted-foreground text-xs">Combustível</th>
+                      <th className="text-left py-3 px-3 font-medium text-muted-foreground text-xs">KM Atual</th>
+                      <th className="text-left py-3 px-3 font-medium text-muted-foreground text-xs">RENAVAM</th>
+                      <th className="text-left py-3 px-3 font-medium text-muted-foreground text-xs">Chassi</th>
+                      <th className="text-left py-3 px-3 font-medium text-muted-foreground text-xs">Data Disp.</th>
+                      <th className="text-left py-3 px-3 font-medium text-muted-foreground text-xs">Nº Cartão</th>
+                      <th className="text-left py-3 px-3 font-medium text-muted-foreground text-xs">Saldo Mensal</th>
+                      <th className="text-left py-3 px-3 font-medium text-muted-foreground text-xs">Nº TAG</th>
+                      <th className="text-left py-3 px-3 font-medium text-muted-foreground text-xs">Status</th>
+                      <th className="text-left py-3 px-3 font-medium text-muted-foreground text-xs">Observações</th>
+                      <th className="py-3 px-3"></th>
                     </tr>
                   </thead>
                   <tbody>
                     {paginatedVehicles.map((vehicle) => (
                       <tr key={vehicle.id} className="border-b hover:bg-muted/50 transition-colors">
-                        <td className="py-3 px-4">
-                          <span className="text-sm">{(vehicle as any).contracts?.number || '-'}</span>
-                        </td>
-                        <td className="py-3 px-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                              <Car className="h-4 w-4 text-primary" />
+                        <td className="py-2 px-3 text-sm">{(vehicle as any).contracts?.number || '-'}</td>
+                        <td className="py-2 px-3">
+                          <div className="flex items-center gap-2">
+                            <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center">
+                              <Car className="h-3.5 w-3.5 text-primary" />
                             </div>
-                            <span className="font-medium">{vehicle.plate}</span>
+                            <span className="font-medium text-sm">{vehicle.plate}</span>
                           </div>
                         </td>
-                        <td className="py-3 px-4">{vehicle.model || '-'}</td>
-                        <td className="py-3 px-4">{vehicle.brand || '-'}</td>
-                        <td className="py-3 px-4">{vehicle.year || '-'}</td>
-                        <td className="py-3 px-4">{vehicle.fuel_type || '-'}</td>
-                        <td className="py-3 px-4">
+                        <td className="py-2 px-3 text-sm">{vehicle.model || '-'}</td>
+                        <td className="py-2 px-3 text-sm">{vehicle.brand || '-'}</td>
+                        <td className="py-2 px-3 text-sm">{vehicle.year || '-'}</td>
+                        <td className="py-2 px-3 text-sm">{vehicle.fuel_type || '-'}</td>
+                        <td className="py-2 px-3 text-sm">
                           {vehicle.current_km ? `${vehicle.current_km.toLocaleString('pt-BR')} km` : '-'}
                         </td>
-                        <td className="py-3 px-4">{getStatusBadge(vehicle.status)}</td>
+                        <td className="py-2 px-3 text-sm">{vehicle.renavam || '-'}</td>
+                        <td className="py-2 px-3 text-sm max-w-[120px] truncate" title={vehicle.chassis || ''}>
+                          {vehicle.chassis || '-'}
+                        </td>
+                        <td className="py-2 px-3 text-sm">
+                          {vehicle.availability_date ? new Date(vehicle.availability_date).toLocaleDateString('pt-BR') : '-'}
+                        </td>
+                        <td className="py-2 px-3 text-sm">{vehicle.fuel_card || '-'}</td>
+                        <td className="py-2 px-3 text-sm">
+                          {vehicle.monthly_balance ? `R$ ${vehicle.monthly_balance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '-'}
+                        </td>
+                        <td className="py-2 px-3 text-sm">{vehicle.tag_number || '-'}</td>
+                        <td className="py-2 px-3">{getStatusBadge(vehicle.status)}</td>
+                        <td className="py-2 px-3 text-sm max-w-[100px] truncate" title={vehicle.notes || ''}>
+                          {vehicle.notes || '-'}
+                        </td>
                         <td className="py-3 px-4">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
