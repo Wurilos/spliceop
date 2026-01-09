@@ -65,7 +65,7 @@ const modules: Module[] = [
   { title: 'Adiantamentos', description: 'Controle financeiro', href: '/advances', icon: DollarSign, color: 'bg-warning/10 text-warning' },
   { title: 'Kanban', description: 'Gestão de demandas', href: '/kanban', icon: Kanban, color: 'bg-info/10 text-info' },
   { title: 'Colunas Kanban', description: 'Configurar colunas', href: '/kanban-items', icon: Settings, color: 'bg-primary/10 text-primary' },
-  { title: 'Pendências', description: 'Issues abertas', href: '/issues', icon: AlertTriangle, color: 'bg-destructive/10 text-destructive' },
+  
   { title: 'Alertas', description: 'Alertas do sistema', href: '/alerts', icon: Bell, color: 'bg-warning/10 text-warning' },
   { title: 'Auditoria', description: 'Log de ações', href: '/audit-log', icon: History, color: 'bg-muted-foreground/10 text-muted-foreground' },
   { title: 'Linhas / Chip', description: 'Linhas telefônicas', href: '/phone-lines', icon: Smartphone, color: 'bg-info/10 text-info' },

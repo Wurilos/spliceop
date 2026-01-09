@@ -107,7 +107,7 @@ const menuGroups = [
       { title: 'Satisfação', href: '/satisfaction', icon: Star },
       { title: 'SLA', href: '/sla', icon: Target },
       { title: 'Metas', href: '/goals', icon: ClipboardCheck },
-      { title: 'Pendências', href: '/issues', icon: AlertCircle },
+      
     ],
   },
   {

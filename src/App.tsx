@@ -28,7 +28,7 @@ import Infractions from "./pages/Infractions";
 import Satisfaction from "./pages/Satisfaction";
 import Sla from "./pages/Sla";
 import Goals from "./pages/Goals";
-import Issues from "./pages/Issues";
+
 import Seals from "./pages/Seals";
 import AuditLog from "./pages/AuditLog";
 import Infrastructure from "./pages/Infrastructure";
@@ -75,7 +75,7 @@ const App = () => (
             <Route path="/satisfaction" element={<ProtectedRoute><Satisfaction /></ProtectedRoute>} />
             <Route path="/sla" element={<ProtectedRoute><Sla /></ProtectedRoute>} />
             <Route path="/goals" element={<ProtectedRoute><Goals /></ProtectedRoute>} />
-            <Route path="/issues" element={<ProtectedRoute><Issues /></ProtectedRoute>} />
+            
             <Route path="/seals" element={<ProtectedRoute><Seals /></ProtectedRoute>} />
             <Route path="/audit" element={<ProtectedRoute><AuditLog /></ProtectedRoute>} />
             <Route path="/phone-lines" element={<ProtectedRoute><PhoneLines /></ProtectedRoute>} />
