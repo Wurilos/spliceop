@@ -264,6 +264,8 @@ export function KanbanIssueForm({
                       <SelectItem value="Supervisor">Supervisor</SelectItem>
                       <SelectItem value="Administrativo">Administrativo</SelectItem>
                       <SelectItem value="Equipe técnica de Barretos">Equipe técnica de Barretos</SelectItem>
+                      <SelectItem value="Equipe Técnica Ribeirão Preto">Equipe Técnica Ribeirão Preto</SelectItem>
+                      <SelectItem value="Equipe Técnica de Bauru">Equipe Técnica de Bauru</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
