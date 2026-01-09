@@ -51,12 +51,21 @@ const getStatusBadge = (status: string | null) => {
 };
 
 const exportColumns = [
+  { key: 'Contrato', label: 'Contrato' },
   { key: 'Placa', label: 'Placa' },
-  { key: 'Marca', label: 'Marca' },
   { key: 'Modelo', label: 'Modelo' },
+  { key: 'Marca', label: 'Marca' },
   { key: 'Ano', label: 'Ano' },
-  { key: 'Cor', label: 'Cor' },
+  { key: 'Combustível', label: 'Combustível' },
+  { key: 'KM Atual', label: 'KM Atual' },
+  { key: 'RENAVAM', label: 'RENAVAM' },
+  { key: 'Chassi', label: 'Chassi' },
+  { key: 'Data Disponibilização', label: 'Data Disponibilização' },
+  { key: 'Número Cartão', label: 'Número Cartão' },
+  { key: 'Saldo Mensal', label: 'Saldo Mensal' },
+  { key: 'Número TAG', label: 'Número TAG' },
   { key: 'Status', label: 'Status' },
+  { key: 'Observações', label: 'Observações' },
 ];
 
 export default function Vehicles() {
@@ -89,19 +98,54 @@ export default function Vehicles() {
     setEditingVehicle(null);
   };
 
-  const handleImport = async (data: any[]) => {
-    const { error } = await supabase.from('vehicles').insert(data);
+  const handleImport = async (rows: any[]) => {
+    // Buscar contratos para resolver contract_number -> contract_id
+    const { data: contracts } = await supabase.from('contracts').select('id, number, client_name');
+
+    // Aceita tanto "número" quanto "nome do cliente" como identificador do contrato
+    const contractMap = new Map<string, string>();
+    contracts?.forEach((c) => {
+      const numberKey = c.number?.toLowerCase().trim();
+      const nameKey = c.client_name?.toLowerCase().trim();
+      if (numberKey) contractMap.set(numberKey, c.id);
+      if (nameKey) contractMap.set(nameKey, c.id);
+    });
+
+    const normalized = rows.map((row) => {
+      const r: any = { ...row };
+
+      // Resolver contract_number (pode ser número OU nome do cliente) para contract_id
+      if (r.contract_number) {
+        const key = String(r.contract_number).toLowerCase().trim();
+        const contractId = contractMap.get(key);
+        r.contract_id = contractId || null;
+        delete r.contract_number;
+      }
+
+      return r;
+    });
+
+    const { error } = await supabase.from('vehicles').insert(normalized);
     if (error) throw error;
   };
 
   const handleExport = (type: 'pdf' | 'excel' | 'csv') => {
     const data = vehicles.map((v) => ({
+      'Contrato': (v as any).contracts?.number || '',
       'Placa': v.plate,
-      'Marca': v.brand || '',
       'Modelo': v.model || '',
+      'Marca': v.brand || '',
       'Ano': v.year || '',
-      'Cor': v.color || '',
+      'Combustível': v.fuel_type || '',
+      'KM Atual': v.current_km || '',
+      'RENAVAM': v.renavam || '',
+      'Chassi': v.chassis || '',
+      'Data Disponibilização': v.availability_date || '',
+      'Número Cartão': v.fuel_card || '',
+      'Saldo Mensal': v.monthly_balance || '',
+      'Número TAG': v.tag_number || '',
       'Status': v.status || '',
+      'Observações': v.notes || '',
     }));
     if (type === 'pdf') exportToPDF(data, exportColumns, 'Veículos');
     else if (type === 'excel') exportToExcel(data, exportColumns, 'veiculos');
@@ -148,9 +192,13 @@ export default function Vehicles() {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b">
+                      <th className="text-left py-3 px-4 font-medium text-muted-foreground">Contrato</th>
                       <th className="text-left py-3 px-4 font-medium text-muted-foreground">Placa</th>
-                      <th className="text-left py-3 px-4 font-medium text-muted-foreground">Tipo</th>
-                      <th className="text-left py-3 px-4 font-medium text-muted-foreground">Equipe Associada</th>
+                      <th className="text-left py-3 px-4 font-medium text-muted-foreground">Modelo</th>
+                      <th className="text-left py-3 px-4 font-medium text-muted-foreground">Marca</th>
+                      <th className="text-left py-3 px-4 font-medium text-muted-foreground">Ano</th>
+                      <th className="text-left py-3 px-4 font-medium text-muted-foreground">Combustível</th>
+                      <th className="text-left py-3 px-4 font-medium text-muted-foreground">KM Atual</th>
                       <th className="text-left py-3 px-4 font-medium text-muted-foreground">Status</th>
                       <th className="py-3 px-4"></th>
                     </tr>
@@ -159,16 +207,22 @@ export default function Vehicles() {
                     {paginatedVehicles.map((vehicle) => (
                       <tr key={vehicle.id} className="border-b hover:bg-muted/50 transition-colors">
                         <td className="py-3 px-4">
+                          <span className="text-sm">{(vehicle as any).contracts?.number || '-'}</span>
+                        </td>
+                        <td className="py-3 px-4">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                              <Car className="h-5 w-5 text-primary" />
+                            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                              <Car className="h-4 w-4 text-primary" />
                             </div>
                             <span className="font-medium">{vehicle.plate}</span>
                           </div>
                         </td>
                         <td className="py-3 px-4">{vehicle.model || '-'}</td>
-                        <td className="py-3 px-4 text-muted-foreground">
-                          {(vehicle as any).team || '-'}
+                        <td className="py-3 px-4">{vehicle.brand || '-'}</td>
+                        <td className="py-3 px-4">{vehicle.year || '-'}</td>
+                        <td className="py-3 px-4">{vehicle.fuel_type || '-'}</td>
+                        <td className="py-3 px-4">
+                          {vehicle.current_km ? `${vehicle.current_km.toLocaleString('pt-BR')} km` : '-'}
                         </td>
                         <td className="py-3 px-4">{getStatusBadge(vehicle.status)}</td>
                         <td className="py-3 px-4">

@@ -32,16 +32,16 @@ import { useContracts } from '@/hooks/useContracts';
 type Vehicle = Tables<'vehicles'>;
 
 const schema = z.object({
-  contract_id: z.string().min(1, 'Contrato é obrigatório'),
+  contract_id: z.string().optional(),
   plate: z.string().min(1, 'Placa é obrigatória'),
-  model: z.string().min(1, 'Modelo é obrigatório'),
-  brand: z.string().min(1, 'Marca é obrigatória'),
-  year: z.coerce.number().min(1900, 'Ano é obrigatório').max(2100),
-  fuel_type: z.string().min(1, 'Combustível é obrigatório'),
-  current_km: z.coerce.number().min(0, 'KM Atual é obrigatório'),
-  renavam: z.string().min(1, 'RENAVAM é obrigatório'),
-  chassis: z.string().min(1, 'Chassi é obrigatório'),
-  availability_date: z.string().min(1, 'Data da Disponibilização é obrigatória'),
+  model: z.string().optional(),
+  brand: z.string().optional(),
+  year: z.coerce.number().min(1900).max(2100).optional(),
+  fuel_type: z.string().optional(),
+  current_km: z.coerce.number().min(0).optional(),
+  renavam: z.string().optional(),
+  chassis: z.string().optional(),
+  availability_date: z.string().optional(),
   fuel_card: z.string().optional(),
   monthly_balance: z.coerce.number().optional(),
   tag_number: z.string().optional(),
@@ -50,6 +50,8 @@ const schema = z.object({
   insurance_contact: z.string().optional(),
   status: z.enum(['active', 'inactive', 'maintenance']),
   notes: z.string().optional(),
+  color: z.string().optional(),
+  team: z.string().optional(),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -102,6 +104,8 @@ export function VehicleForm({
       insurance_contact: '',
       status: 'active',
       notes: '',
+      color: '',
+      team: '',
     },
   });
 
@@ -113,19 +117,21 @@ export function VehicleForm({
         model: initialData.model || '',
         brand: initialData.brand || '',
         year: initialData.year || new Date().getFullYear(),
-        fuel_type: (initialData as any).fuel_type || '',
-        current_km: (initialData as any).current_km || 0,
+        fuel_type: initialData.fuel_type || '',
+        current_km: initialData.current_km || 0,
         renavam: initialData.renavam || '',
         chassis: initialData.chassis || '',
-        availability_date: (initialData as any).availability_date || '',
+        availability_date: initialData.availability_date || '',
         fuel_card: initialData.fuel_card || '',
-        monthly_balance: (initialData as any).monthly_balance || 0,
-        tag_number: (initialData as any).tag_number || '',
-        insurance_company: (initialData as any).insurance_company || '',
-        rental_company: (initialData as any).rental_company || '',
-        insurance_contact: (initialData as any).insurance_contact || '',
+        monthly_balance: initialData.monthly_balance || 0,
+        tag_number: initialData.tag_number || '',
+        insurance_company: initialData.insurance_company || '',
+        rental_company: initialData.rental_company || '',
+        insurance_contact: initialData.insurance_contact || '',
         status: initialData.status || 'active',
-        notes: (initialData as any).notes || '',
+        notes: initialData.notes || '',
+        color: initialData.color || '',
+        team: initialData.team || '',
       });
     } else {
       form.reset({
@@ -147,6 +153,8 @@ export function VehicleForm({
         insurance_contact: '',
         status: 'active',
         notes: '',
+        color: '',
+        team: '',
       });
     }
   }, [initialData, form]);
@@ -177,7 +185,7 @@ export function VehicleForm({
                 name="contract_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-destructive">Contrato *</FormLabel>
+                    <FormLabel>Contrato</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
@@ -218,7 +226,7 @@ export function VehicleForm({
                 name="model"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-destructive">Modelo *</FormLabel>
+                    <FormLabel>Modelo</FormLabel>
                     <FormControl>
                       <Input placeholder="Strada" {...field} />
                     </FormControl>
@@ -232,7 +240,7 @@ export function VehicleForm({
                 name="brand"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-destructive">Marca *</FormLabel>
+                    <FormLabel>Marca</FormLabel>
                     <FormControl>
                       <Input placeholder="Fiat" {...field} />
                     </FormControl>
@@ -248,7 +256,7 @@ export function VehicleForm({
                 name="year"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-destructive">Ano *</FormLabel>
+                    <FormLabel>Ano</FormLabel>
                     <FormControl>
                       <Input type="number" min="1900" max="2100" {...field} />
                     </FormControl>
@@ -262,7 +270,7 @@ export function VehicleForm({
                 name="fuel_type"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-destructive">Combustível *</FormLabel>
+                    <FormLabel>Combustível</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
@@ -289,7 +297,7 @@ export function VehicleForm({
                 name="current_km"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-destructive">KM Atual *</FormLabel>
+                    <FormLabel>KM Atual</FormLabel>
                     <FormControl>
                       <Input type="number" min="0" {...field} />
                     </FormControl>
@@ -303,7 +311,7 @@ export function VehicleForm({
                 name="renavam"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-destructive">RENAVAM *</FormLabel>
+                    <FormLabel>RENAVAM</FormLabel>
                     <FormControl>
                       <Input placeholder="00000000000" {...field} />
                     </FormControl>
@@ -319,7 +327,7 @@ export function VehicleForm({
                 name="chassis"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-destructive">Chassi *</FormLabel>
+                    <FormLabel>Chassi</FormLabel>
                     <FormControl>
                       <Input placeholder="9BWZZZ377VT004251" {...field} />
                     </FormControl>
@@ -333,9 +341,9 @@ export function VehicleForm({
                 name="availability_date"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-destructive">Data da Disponibilização *</FormLabel>
+                    <FormLabel>Data Disponibilização</FormLabel>
                     <FormControl>
-                      <Input type="datetime-local" {...field} />
+                      <Input type="date" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
