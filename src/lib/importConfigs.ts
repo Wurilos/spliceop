@@ -1,19 +1,46 @@
 import { ColumnMapping } from './import';
 
 // Common transformers
-const toNumber = (v: any) => parseFloat(String(v).replace(',', '.')) || 0;
-const toInteger = (v: any) => parseInt(String(v), 10) || 0;
+const toNumber = (v: any) => {
+  if (!v) return 0;
+  // Remove currency symbols, spaces, and handle Brazilian number format (R$ 23.000,00)
+  const cleaned = String(v)
+    .replace(/[R$\s]/g, '')  // Remove R$, spaces
+    .replace(/\./g, '')       // Remove thousand separators (dots)
+    .replace(',', '.');       // Convert decimal comma to dot
+  return parseFloat(cleaned) || 0;
+};
+const toInteger = (v: any) => parseInt(String(v).replace(/\D/g, ''), 10) || 0;
 const toDate = (v: any) => {
   if (!v) return null;
+  const str = String(v).trim();
+  
+  // Handle Brazilian date format DD/MM/YYYY
+  const brDateMatch = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (brDateMatch) {
+    const [, day, month, year] = brDateMatch;
+    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+  }
+  
+  // Try standard Date parsing
   const date = new Date(v);
   return isNaN(date.getTime()) ? null : date.toISOString().split('T')[0];
 };
 const toDateTime = (v: any) => {
   if (!v) return null;
+  const str = String(v).trim();
+  
+  // Handle Brazilian date format DD/MM/YYYY or DD/MM/YYYY HH:MM
+  const brDateMatch = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2}))?$/);
+  if (brDateMatch) {
+    const [, day, month, year, hour = '00', minute = '00'] = brDateMatch;
+    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${hour.padStart(2, '0')}:${minute.padStart(2, '0')}:00`;
+  }
+  
   const date = new Date(v);
   return isNaN(date.getTime()) ? null : date.toISOString();
 };
-const toString = (v: any) => String(v).trim();
+const toString = (v: any) => v ? String(v).trim() : '';
 
 // Contract import config
 export const contractImportConfig = {
