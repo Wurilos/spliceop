@@ -260,9 +260,10 @@ export function KanbanIssueForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="Equipe de Infraestrutura">Equipe de Infraestrutura</SelectItem>
-                      <SelectItem value="Equipe Técnica Ribeirão Preto">Equipe Técnica Ribeirão Preto</SelectItem>
-                      <SelectItem value="Equipe Técnica Bauru">Equipe Técnica Bauru</SelectItem>
+                      <SelectItem value="Coordenador">Coordenador</SelectItem>
+                      <SelectItem value="Supervisor">Supervisor</SelectItem>
+                      <SelectItem value="Administrativo">Administrativo</SelectItem>
+                      <SelectItem value="Equipe técnica de Barretos">Equipe técnica de Barretos</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
