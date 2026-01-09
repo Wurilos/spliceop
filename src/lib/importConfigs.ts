@@ -124,25 +124,47 @@ export const employeeImportConfig = {
 // Equipment import config
 export const equipmentImportConfig = {
   mappings: [
+    { excelColumn: 'Contrato:', dbColumn: 'contract_number', transform: toString }, // Será resolvido para contract_id no import
     { excelColumn: 'Número de Série', dbColumn: 'serial_number', required: true, transform: toString },
-    { excelColumn: 'Tipo', dbColumn: 'type', transform: toString },
-    { excelColumn: 'Marca', dbColumn: 'brand', transform: toString },
     { excelColumn: 'Modelo', dbColumn: 'model', transform: toString },
     { excelColumn: 'Endereço', dbColumn: 'address', transform: toString },
+    { excelColumn: 'Sentido', dbColumn: 'direction', transform: toString },
+    { excelColumn: 'Qtd Faixas', dbColumn: 'lanes_qty', transform: toInteger },
+    { excelColumn: 'Velocidade', dbColumn: 'speed_limit', transform: toString },
+    { excelColumn: 'Meio Comunicação', dbColumn: 'communication_type', transform: toString },
+    { excelColumn: 'Tipo Energia', dbColumn: 'energy_type', transform: toString },
+    { excelColumn: 'Marca', dbColumn: 'brand', transform: toString },
+    { excelColumn: 'Tipo', dbColumn: 'type', transform: toString },
+    { excelColumn: 'Início Atividades', dbColumn: 'installation_date', transform: toDate },
     { excelColumn: 'Latitude', dbColumn: 'latitude', transform: toNumber },
     { excelColumn: 'Longitude', dbColumn: 'longitude', transform: toNumber },
-    { excelColumn: 'Data Instalação', dbColumn: 'installation_date', transform: toDate },
-    { excelColumn: 'Status', dbColumn: 'status', transform: (v: string) => v?.toLowerCase() || 'active' },
+    { excelColumn: 'Status', dbColumn: 'status', transform: (v: string) => {
+      const statusMap: Record<string, string> = {
+        'ativo': 'active',
+        'inativo': 'inactive',
+        'manutenção': 'maintenance',
+        'manutencao': 'maintenance',
+        'desativado': 'decommissioned',
+      };
+      const normalized = v?.toLowerCase().trim();
+      return statusMap[normalized] || normalized || 'active';
+    }},
   ] as ColumnMapping[],
   templateColumns: [
+    { key: 'contract_number', label: 'Contrato' },
     { key: 'serial_number', label: 'Número de Série' },
-    { key: 'type', label: 'Tipo' },
-    { key: 'brand', label: 'Marca' },
     { key: 'model', label: 'Modelo' },
     { key: 'address', label: 'Endereço' },
+    { key: 'direction', label: 'Sentido' },
+    { key: 'lanes_qty', label: 'Qtd Faixas' },
+    { key: 'speed_limit', label: 'Velocidade' },
+    { key: 'communication_type', label: 'Meio Comunicação' },
+    { key: 'energy_type', label: 'Tipo Energia' },
+    { key: 'brand', label: 'Marca' },
+    { key: 'type', label: 'Tipo' },
+    { key: 'installation_date', label: 'Início Atividades' },
     { key: 'latitude', label: 'Latitude' },
     { key: 'longitude', label: 'Longitude' },
-    { key: 'installation_date', label: 'Data Instalação' },
     { key: 'status', label: 'Status' },
   ],
 };

@@ -104,8 +104,36 @@ export default function EquipmentPage() {
     setEditingEquipment(null);
   };
 
-  const handleImport = async (data: any[]) => {
-    const { error } = await supabase.from('equipment').insert(data);
+  const handleImport = async (rows: any[]) => {
+    // Buscar contratos para resolver contract_number -> contract_id
+    const { data: contracts } = await supabase.from('contracts').select('id, number');
+    const contractMap = new Map<string, string>();
+    contracts?.forEach((c) => contractMap.set(c.number?.toLowerCase().trim() || '', c.id));
+
+    const normalized = rows.map((row) => {
+      const r: any = { ...row };
+      
+      // Resolver contract_number para contract_id
+      if (r.contract_number) {
+        const contractId = contractMap.get(String(r.contract_number).toLowerCase().trim());
+        r.contract_id = contractId || null;
+        delete r.contract_number;
+      }
+      
+      // Garantir nulls em campos opcionais
+      r.latitude = r.latitude || null;
+      r.longitude = r.longitude || null;
+      r.lanes_qty = r.lanes_qty || null;
+      r.speed_limit = r.speed_limit ? String(r.speed_limit) : null;
+      r.direction = r.direction || null;
+      r.communication_type = r.communication_type || null;
+      r.energy_type = r.energy_type || null;
+      r.installation_date = r.installation_date || null;
+      
+      return r;
+    });
+
+    const { error } = await supabase.from('equipment').insert(normalized);
     if (error) throw error;
   };
 
