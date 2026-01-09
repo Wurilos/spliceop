@@ -110,41 +110,58 @@ export default function EquipmentPage() {
     const contractMap = new Map<string, string>();
     contracts?.forEach((c) => contractMap.set(c.number?.toLowerCase().trim() || '', c.id));
 
-    // Função para normalizar coordenadas (converte valores inteiros para decimal)
-    const normalizeCoordinate = (val: any): number | null => {
-      if (!val) return null;
-      const num = Number(val);
-      if (isNaN(num)) return null;
-      // Se o valor absoluto for maior que 180, provavelmente está sem o ponto decimal
-      // Ex: -20462591 deve ser -20.462591
-      if (Math.abs(num) > 180) {
-        return num / 1000000;
+    const normalizeCoordinate = (val: any, maxAbs: number): number | null => {
+      if (val === null || val === undefined || val === '') return null;
+      let num = Number(val);
+      if (Number.isNaN(num)) return null;
+
+      // Caso típico da planilha: coordenada vem sem ponto decimal (ex: -20462591)
+      if (Math.abs(num) > maxAbs) {
+        num = num / 1_000_000;
       }
+
+      // Se ainda estiver fora do range esperado (ex: -210.293384), ajustar mais uma casa
+      if (Math.abs(num) > maxAbs) {
+        num = num / 10;
+      }
+
       return num;
+    };
+
+    const normalizeSpeedLimit = (val: any): number | null => {
+      if (val === null || val === undefined || val === '') return null;
+      const str = String(val).trim();
+
+      // Planilha pode vir como "100/80" (dia/noite). Gravamos o primeiro valor.
+      const firstPart = str.includes('/') ? str.split('/')[0] : str;
+      const n = parseInt(firstPart.replace(/[^0-9-]/g, ''), 10);
+      return Number.isNaN(n) ? null : n;
     };
 
     const normalized = rows.map((row) => {
       const r: any = { ...row };
-      
+
       // Resolver contract_number para contract_id
       if (r.contract_number) {
         const contractId = contractMap.get(String(r.contract_number).toLowerCase().trim());
         r.contract_id = contractId || null;
         delete r.contract_number;
       }
-      
+
       // Normalizar coordenadas
-      r.latitude = normalizeCoordinate(r.latitude);
-      r.longitude = normalizeCoordinate(r.longitude);
-      
+      r.latitude = normalizeCoordinate(r.latitude, 90);
+      r.longitude = normalizeCoordinate(r.longitude, 180);
+
+      // Normalizar velocidade (db espera integer)
+      r.speed_limit = normalizeSpeedLimit(r.speed_limit);
+
       // Garantir nulls em campos opcionais
       r.lanes_qty = r.lanes_qty || null;
-      r.speed_limit = r.speed_limit ? String(r.speed_limit) : null;
       r.direction = r.direction || null;
       r.communication_type = r.communication_type || null;
       r.energy_type = r.energy_type || null;
       r.installation_date = r.installation_date || null;
-      
+
       return r;
     });
 
