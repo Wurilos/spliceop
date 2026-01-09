@@ -100,7 +100,11 @@ export default function Vehicles() {
 
   const handleImport = async (rows: any[]) => {
     // Buscar contratos para resolver contract_number -> contract_id
-    const { data: contracts } = await supabase.from('contracts').select('id, number, client_name');
+    const { data: contracts, error: contractsError } = await supabase
+      .from('contracts')
+      .select('id, number, client_name');
+
+    if (contractsError) throw contractsError;
 
     // Aceita tanto "número" quanto "nome do cliente" como identificador do contrato
     const contractMap = new Map<string, string>();
@@ -114,10 +118,27 @@ export default function Vehicles() {
     const normalized = rows.map((row) => {
       const r: any = { ...row };
 
-      // Resolver contract_number (pode ser número OU nome do cliente) para contract_id
+      // Normalizar placa (garante consistência e evita duplicidade por caixa/espaços)
+      if (r.plate) r.plate = String(r.plate).toUpperCase().trim();
+
+      // Resolver contract_number (pode vir como "CTR-0002 - Barretos")
       if (r.contract_number) {
-        const key = String(r.contract_number).toLowerCase().trim();
-        const contractId = contractMap.get(key);
+        const raw = String(r.contract_number).trim();
+        const key = raw.toLowerCase();
+
+        let contractId = contractMap.get(key);
+
+        // Tenta quebrar "NUMERO - CLIENTE" para melhorar taxa de acerto
+        if (!contractId && raw.includes('-')) {
+          const [maybeNumber, ...rest] = raw.split('-');
+          const numberKey = maybeNumber?.trim().toLowerCase();
+          const nameKey = rest.join('-').trim().toLowerCase();
+          contractId =
+            (numberKey ? contractMap.get(numberKey) : undefined) ||
+            (nameKey ? contractMap.get(nameKey) : undefined) ||
+            null;
+        }
+
         r.contract_id = contractId || null;
         delete r.contract_number;
       }
@@ -125,7 +146,8 @@ export default function Vehicles() {
       return r;
     });
 
-    const { error } = await supabase.from('vehicles').insert(normalized);
+    // Upsert para evitar erro de "placa já existe" (UNIQUE plate)
+    const { error } = await supabase.from('vehicles').upsert(normalized, { onConflict: 'plate' });
     if (error) throw error;
   };
 
