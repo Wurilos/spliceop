@@ -35,7 +35,6 @@ const columns: Column<Contract>[] = [
     label: 'Data de Fim',
     render: (value) => (value ? format(new Date(String(value)), 'dd/MM/yyyy') : '-'),
   },
-  { key: 'cost_center' as keyof Contract, label: 'Centro de Custo' },
   {
     key: 'status',
     label: 'Status',
@@ -48,7 +47,6 @@ const exportColumns = [
   { key: 'Valor', label: 'Valor' },
   { key: 'Data de Início', label: 'Data de Início' },
   { key: 'Data de Fim', label: 'Data de Fim' },
-  { key: 'Centro de Custo', label: 'Centro de Custo' },
   { key: 'Status', label: 'Status' },
 ];
 
@@ -89,7 +87,6 @@ export default function Contracts() {
       'Valor': c.value || 0,
       'Data de Início': c.start_date || '',
       'Data de Fim': c.end_date || '',
-      'Centro de Custo': (c as any).cost_center || '',
       'Status': c.status || '',
     }));
     if (type === 'pdf') exportToPDF(data, exportColumns, 'Contratos');

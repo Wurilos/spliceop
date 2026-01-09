@@ -35,7 +35,6 @@ const schema = z.object({
   value: z.coerce.number().min(0, 'Valor é obrigatório'),
   start_date: z.string().min(1, 'Data de Início é obrigatória'),
   end_date: z.string().min(1, 'Data de Fim é obrigatória'),
-  cost_center: z.string().min(1, 'Centro de Custo é obrigatório'),
   description: z.string().optional(),
   status: z.enum(['active', 'inactive', 'expired', 'pending']),
 });
@@ -64,7 +63,6 @@ export function ContractForm({
       value: 0,
       start_date: '',
       end_date: '',
-      cost_center: '',
       description: '',
       status: 'active',
     },
@@ -77,7 +75,6 @@ export function ContractForm({
         value: Number(initialData.value) || 0,
         start_date: initialData.start_date || '',
         end_date: initialData.end_date || '',
-        cost_center: (initialData as any).cost_center || '',
         description: initialData.description || '',
         status: initialData.status || 'active',
       });
@@ -87,7 +84,6 @@ export function ContractForm({
         value: 0,
         start_date: '',
         end_date: '',
-        cost_center: '',
         description: '',
         status: 'active',
       });
@@ -183,21 +179,6 @@ export function ContractForm({
               />
             </div>
 
-            <FormField
-              control={form.control}
-              name="cost_center"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-foreground">
-                    Centro de Custo <span className="text-destructive">*</span>
-                  </FormLabel>
-                  <FormControl>
-                    <Input placeholder="" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
 
             <FormField
               control={form.control}
