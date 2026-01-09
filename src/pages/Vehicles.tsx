@@ -8,9 +8,10 @@ import { Tables } from '@/integrations/supabase/types';
 import { vehicleImportConfig } from '@/lib/importConfigs';
 import { supabase } from '@/integrations/supabase/client';
 import { exportToPDF, exportToExcel, exportToCSV } from '@/lib/export';
-import { Car, MoreHorizontal } from 'lucide-react';
+import { Car, MoreHorizontal, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -75,6 +76,8 @@ export default function Vehicles() {
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [vehicleToDelete, setVehicleToDelete] = useState<Vehicle | null>(null);
+  const [deleteManyDialogOpen, setDeleteManyDialogOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -189,9 +192,34 @@ export default function Vehicles() {
     }
   };
 
+  const handleConfirmDeleteMany = () => {
+    if (selectedIds.length > 0) {
+      deleteMany(selectedIds);
+      setDeleteManyDialogOpen(false);
+      setSelectedIds([]);
+    }
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === paginatedVehicles.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(paginatedVehicles.map((v) => v.id));
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
   const totalPages = Math.ceil(vehicles.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedVehicles = vehicles.slice(startIndex, startIndex + itemsPerPage);
+
+  const allSelected = paginatedVehicles.length > 0 && selectedIds.length === paginatedVehicles.length;
+  const someSelected = selectedIds.length > 0 && selectedIds.length < paginatedVehicles.length;
 
   return (
     <AppLayout title="Veículos">
@@ -205,6 +233,23 @@ export default function Vehicles() {
           onExport={handleExport}
         />
 
+        {selectedIds.length > 0 && (
+          <div className="flex items-center gap-4 p-3 bg-muted rounded-lg border">
+            <span className="text-sm font-medium">{selectedIds.length} veículo(s) selecionado(s)</span>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => setDeleteManyDialogOpen(true)}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Excluir Selecionados
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setSelectedIds([])}>
+              Limpar Seleção
+            </Button>
+          </div>
+        )}
+
         <div className="bg-card rounded-lg border">
           {loading ? (
             <div className="flex items-center justify-center h-64">
@@ -213,9 +258,17 @@ export default function Vehicles() {
           ) : (
             <>
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[1400px]">
+                <table className="w-full min-w-[1500px]">
                   <thead>
                     <tr className="border-b">
+                      <th className="py-3 px-3 w-10">
+                        <Checkbox
+                          checked={allSelected}
+                          onCheckedChange={toggleSelectAll}
+                          aria-label="Selecionar todos"
+                          className={someSelected ? 'opacity-50' : ''}
+                        />
+                      </th>
                       <th className="text-left py-3 px-3 font-medium text-muted-foreground text-xs">Contrato</th>
                       <th className="text-left py-3 px-3 font-medium text-muted-foreground text-xs">Placa</th>
                       <th className="text-left py-3 px-3 font-medium text-muted-foreground text-xs">Modelo</th>
@@ -237,6 +290,13 @@ export default function Vehicles() {
                   <tbody>
                     {paginatedVehicles.map((vehicle) => (
                       <tr key={vehicle.id} className="border-b hover:bg-muted/50 transition-colors">
+                        <td className="py-2 px-3">
+                          <Checkbox
+                            checked={selectedIds.includes(vehicle.id)}
+                            onCheckedChange={() => toggleSelect(vehicle.id)}
+                            aria-label={`Selecionar ${vehicle.plate}`}
+                          />
+                        </td>
                         <td className="py-2 px-3 text-sm">{(vehicle as any).contracts?.number || '-'}</td>
                         <td className="py-2 px-3">
                           <div className="flex items-center gap-2">
@@ -350,6 +410,14 @@ export default function Vehicles() {
           onConfirm={handleConfirmDelete}
           title="Excluir Veículo"
           description={`Tem certeza que deseja excluir o veículo ${vehicleToDelete?.plate}?`}
+        />
+
+        <DeleteDialog
+          open={deleteManyDialogOpen}
+          onOpenChange={setDeleteManyDialogOpen}
+          onConfirm={handleConfirmDeleteMany}
+          title="Excluir Veículos Selecionados"
+          description={`Tem certeza que deseja excluir ${selectedIds.length} veículo(s)?`}
         />
       </div>
     </AppLayout>
