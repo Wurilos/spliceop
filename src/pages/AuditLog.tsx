@@ -1,13 +1,56 @@
 import { useState } from 'react';
-import { Shield, Users, Activity, HardDrive } from 'lucide-react';
+import { Shield, Users, Activity, HardDrive, AlertTriangle } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UsersTab } from '@/components/admin/UsersTab';
 import { AuditLogsTab } from '@/components/admin/AuditLogsTab';
 import { BackupTab } from '@/components/admin/BackupTab';
+import { useAuth } from '@/hooks/useAuth';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
 
 export default function AuditLog() {
   const [activeTab, setActiveTab] = useState('users');
+  const { isAdmin, loading } = useAuth();
+  const navigate = useNavigate();
+
+  // Show loading while checking permissions
+  if (loading) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  // Block access for non-admins
+  if (!isAdmin) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <Card className="w-full max-w-md">
+            <CardHeader className="text-center">
+              <div className="mx-auto h-12 w-12 rounded-full bg-destructive/10 flex items-center justify-center mb-4">
+                <AlertTriangle className="h-6 w-6 text-destructive" />
+              </div>
+              <CardTitle>Acesso Restrito</CardTitle>
+              <CardDescription>
+                Você não tem permissão para acessar esta página. Apenas administradores podem gerenciar usuários e configurações do sistema.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="text-center">
+              <Button onClick={() => navigate('/')}>
+                Voltar ao Dashboard
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>
