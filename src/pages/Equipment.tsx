@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { ImportDialog } from '@/components/shared/ImportDialog';
@@ -82,6 +83,7 @@ const exportColumns = [
 ];
 
 export default function EquipmentPage() {
+  const queryClient = useQueryClient();
   const { equipment, loading, create, update, delete: deleteEquipment, deleteMany, isCreating, isUpdating } = useEquipment();
   const [formOpen, setFormOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
@@ -145,11 +147,20 @@ export default function EquipmentPage() {
     // Buscar contratos para resolver contract_number -> contract_id
     const { data: contracts } = await supabase.from('contracts').select('id, number, client_name');
 
+    const normalizeText = (value: any) =>
+      String(value ?? '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .trim()
+        .replace(/:$/, '')
+        .replace(/\s+/g, ' ')
+        .toLowerCase();
+
     // Aceita tanto "número" quanto "nome do cliente" como identificador do contrato
     const contractMap = new Map<string, string>();
     contracts?.forEach((c) => {
-      const numberKey = c.number?.toLowerCase().trim();
-      const nameKey = c.client_name?.toLowerCase().trim();
+      const numberKey = normalizeText(c.number);
+      const nameKey = normalizeText(c.client_name);
       if (numberKey) contractMap.set(numberKey, c.id);
       if (nameKey) contractMap.set(nameKey, c.id);
     });
@@ -195,10 +206,20 @@ export default function EquipmentPage() {
       const r: any = { ...row };
 
       // Resolver contract_number (pode ser número OU nome do cliente) para contract_id
-      if (r.contract_number) {
-        const key = String(r.contract_number).toLowerCase().trim();
-        const contractId = contractMap.get(key);
-        r.contract_id = contractId || null;
+      if (Object.prototype.hasOwnProperty.call(r, 'contract_number')) {
+        const key = normalizeText(r.contract_number);
+        const candidates = [key];
+
+        for (const sep of [' - ', ' – ', ' — ']) {
+          if (key.includes(sep)) {
+            candidates.push(key.split(sep)[0].trim());
+          }
+        }
+
+        const matched = candidates.find((c) => !!c && contractMap.has(c));
+        r.contract_id = matched ? contractMap.get(matched) : null;
+
+        // Nunca enviar essa coluna para o backend (ela é apenas um campo auxiliar de importação)
         delete r.contract_number;
       }
 
@@ -219,8 +240,12 @@ export default function EquipmentPage() {
       return r;
     });
 
+
     const { error } = await supabase.from('equipment').insert(normalized);
     if (error) throw error;
+
+    // Atualiza a listagem após importação
+    queryClient.invalidateQueries({ queryKey: ['equipment'] });
   };
 
   const handleExport = (type: 'pdf' | 'excel' | 'csv') => {
