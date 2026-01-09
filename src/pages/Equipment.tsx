@@ -106,26 +106,42 @@ export default function EquipmentPage() {
 
   const handleImport = async (rows: any[]) => {
     // Buscar contratos para resolver contract_number -> contract_id
-    const { data: contracts } = await supabase.from('contracts').select('id, number');
-    const contractMap = new Map<string, string>();
-    contracts?.forEach((c) => contractMap.set(c.number?.toLowerCase().trim() || '', c.id));
+    const { data: contracts } = await supabase.from('contracts').select('id, number, client_name');
 
+    // Aceita tanto "número" quanto "nome do cliente" como identificador do contrato
+    const contractMap = new Map<string, string>();
+    contracts?.forEach((c) => {
+      const numberKey = c.number?.toLowerCase().trim();
+      const nameKey = c.client_name?.toLowerCase().trim();
+      if (numberKey) contractMap.set(numberKey, c.id);
+      if (nameKey) contractMap.set(nameKey, c.id);
+    });
+
+    // Normaliza coordenadas que chegam sem separador decimal (ex: -20462591)
+    // Em vez de assumir "6 casas", reduzimos por 10 até caber no range esperado.
     const normalizeCoordinate = (val: any, maxAbs: number): number | null => {
       if (val === null || val === undefined || val === '') return null;
-      let num = Number(val);
-      if (Number.isNaN(num)) return null;
 
-      // Caso típico da planilha: coordenada vem sem ponto decimal (ex: -20462591)
-      if (Math.abs(num) > maxAbs) {
-        num = num / 1_000_000;
+      let num: number;
+      if (typeof val === 'number') {
+        num = val;
+      } else {
+        const s = String(val).trim().replace(',', '.');
+        num = Number(s);
       }
 
-      // Se ainda estiver fora do range esperado (ex: -210.293384), ajustar mais uma casa
-      if (Math.abs(num) > maxAbs) {
+      if (!Number.isFinite(num)) return null;
+
+      let guard = 0;
+      while (Math.abs(num) > maxAbs && guard < 20) {
         num = num / 10;
+        guard++;
       }
 
-      return num;
+      if (Math.abs(num) > maxAbs) return null;
+
+      // Garante compatibilidade com numeric(10,7)
+      return Math.round(num * 1e7) / 1e7;
     };
 
     const normalizeSpeedLimit = (val: any): number | null => {
@@ -141,9 +157,10 @@ export default function EquipmentPage() {
     const normalized = rows.map((row) => {
       const r: any = { ...row };
 
-      // Resolver contract_number para contract_id
+      // Resolver contract_number (pode ser número OU nome do cliente) para contract_id
       if (r.contract_number) {
-        const contractId = contractMap.get(String(r.contract_number).toLowerCase().trim());
+        const key = String(r.contract_number).toLowerCase().trim();
+        const contractId = contractMap.get(key);
         r.contract_id = contractId || null;
         delete r.contract_number;
       }
