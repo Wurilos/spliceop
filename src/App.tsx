@@ -36,6 +36,7 @@ import Alerts from "./pages/Alerts";
 import Kanban from "./pages/Kanban";
 import KanbanItems from "./pages/KanbanItems";
 import PhoneLines from "./pages/PhoneLines";
+import IssuesDashboard from "./pages/IssuesDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -53,6 +54,7 @@ const App = () => (
             <Route path="/alerts" element={<ProtectedRoute><Alerts /></ProtectedRoute>} />
             <Route path="/kanban" element={<ProtectedRoute><Kanban /></ProtectedRoute>} />
             <Route path="/kanban-items" element={<ProtectedRoute><KanbanItems /></ProtectedRoute>} />
+            <Route path="/issues-dashboard" element={<ProtectedRoute><IssuesDashboard /></ProtectedRoute>} />
             <Route path="/contracts" element={<ProtectedRoute><Contracts /></ProtectedRoute>} />
             <Route path="/employees" element={<ProtectedRoute><Employees /></ProtectedRoute>} />
             <Route path="/equipment" element={<ProtectedRoute><Equipment /></ProtectedRoute>} />
