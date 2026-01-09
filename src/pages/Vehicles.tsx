@@ -102,6 +102,16 @@ export default function Vehicles() {
   };
 
   const handleImport = async (rows: any[]) => {
+    const normalizeContractKey = (value: any) => {
+      if (value === null || value === undefined) return '';
+      return String(value)
+        .trim()
+        .toLowerCase()
+        .replace(/[–—−]/g, '-') // normaliza traços unicode
+        .replace(/\s+/g, ' ') // colapsa espaços
+        .replace(/\s*-\s*/g, ' - '); // normaliza " - "
+    };
+
     // Buscar contratos para resolver contract_number -> contract_id
     const { data: contracts, error: contractsError } = await supabase
       .from('contracts')
@@ -114,10 +124,10 @@ export default function Vehicles() {
     contracts?.forEach((c) => {
       const num = c.number?.trim() || '';
       const name = c.client_name?.trim() || '';
-      if (num) contractMap.set(num.toLowerCase(), c.id);
-      if (name) contractMap.set(name.toLowerCase(), c.id);
-      // Também mapeia o formato combinado "CTR-0002 - Barretos"
-      if (num && name) contractMap.set(`${num} - ${name}`.toLowerCase(), c.id);
+
+      if (num) contractMap.set(normalizeContractKey(num), c.id);
+      if (name) contractMap.set(normalizeContractKey(name), c.id);
+      if (num && name) contractMap.set(normalizeContractKey(`${num} - ${name}`), c.id);
     });
 
     const normalized = rows.map((row) => {
@@ -129,22 +139,20 @@ export default function Vehicles() {
       // Resolver contract_number (pode vir como "CTR-0002 - Barretos")
       if (r.contract_number) {
         const raw = String(r.contract_number).trim();
-        const key = raw.toLowerCase();
+        const normalizedRaw = normalizeContractKey(raw);
 
-        let contractId = contractMap.get(key);
+        let contractId = contractMap.get(normalizedRaw);
 
-        // Tenta quebrar "CTR-0002 - Barretos" -> extrair número e nome separados
-        if (!contractId && raw.includes(' - ')) {
-          const parts = raw.split(' - ');
-          const numberPart = parts[0]?.trim().toLowerCase();
-          const namePart = parts.slice(1).join(' - ').trim().toLowerCase();
-          contractId =
-            (numberPart ? contractMap.get(numberPart) : undefined) ||
-            (namePart ? contractMap.get(namePart) : undefined) ||
-            undefined;
+        // fallback: tenta extrair número e nome (quando vier combinado)
+        if (!contractId && normalizedRaw.includes(' - ')) {
+          const parts = normalizedRaw.split(' - ');
+          const numberPart = parts[0]?.trim();
+          const namePart = parts.slice(1).join(' - ').trim();
+          contractId = (numberPart ? contractMap.get(numberPart) : undefined) || (namePart ? contractMap.get(namePart) : undefined);
         }
 
-        r.contract_id = contractId || null;
+        // IMPORTANTE: só setar contract_id quando encontrado (para não "zerar" vínculo em upserts)
+        if (contractId) r.contract_id = contractId;
         delete r.contract_number;
       }
 
