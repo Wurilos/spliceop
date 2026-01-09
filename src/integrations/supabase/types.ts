@@ -271,16 +271,20 @@ export type Database = {
           contract_id: string | null
           cpf: string | null
           created_at: string | null
+          ctps: string | null
+          ctps_serie: string | null
           department: string | null
           email: string | null
           full_name: string
           id: string
           phone: string | null
+          re: string | null
           rg: string | null
           role: string | null
           salary: number | null
           state: string | null
           status: Database["public"]["Enums"]["employee_status"] | null
+          termination_date: string | null
           updated_at: string | null
         }
         Insert: {
@@ -290,16 +294,20 @@ export type Database = {
           contract_id?: string | null
           cpf?: string | null
           created_at?: string | null
+          ctps?: string | null
+          ctps_serie?: string | null
           department?: string | null
           email?: string | null
           full_name: string
           id?: string
           phone?: string | null
+          re?: string | null
           rg?: string | null
           role?: string | null
           salary?: number | null
           state?: string | null
           status?: Database["public"]["Enums"]["employee_status"] | null
+          termination_date?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -309,16 +317,20 @@ export type Database = {
           contract_id?: string | null
           cpf?: string | null
           created_at?: string | null
+          ctps?: string | null
+          ctps_serie?: string | null
           department?: string | null
           email?: string | null
           full_name?: string
           id?: string
           phone?: string | null
+          re?: string | null
           rg?: string | null
           role?: string | null
           salary?: number | null
           state?: string | null
           status?: Database["public"]["Enums"]["employee_status"] | null
+          termination_date?: string | null
           updated_at?: string | null
         }
         Relationships: [
