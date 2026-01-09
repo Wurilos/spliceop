@@ -135,20 +135,21 @@ export const equipmentImportConfig = {
     { excelColumn: 'Tipo Energia', dbColumn: 'energy_type', transform: toString },
     { excelColumn: 'Marca', dbColumn: 'brand', transform: toString },
     { excelColumn: 'Tipo', dbColumn: 'type', transform: toString },
-    { excelColumn: 'Início Atividades', dbColumn: 'installation_date', transform: toDate },
-    { excelColumn: 'Latitude', dbColumn: 'latitude', transform: toNumber },
-    { excelColumn: 'Longitude', dbColumn: 'longitude', transform: toNumber },
-    { excelColumn: 'Status', dbColumn: 'status', transform: (v: string) => {
-      const statusMap: Record<string, string> = {
-        'ativo': 'active',
-        'inativo': 'inactive',
-        'manutenção': 'maintenance',
-        'manutencao': 'maintenance',
-        'desativado': 'decommissioned',
-      };
-      const normalized = v?.toLowerCase().trim();
-      return statusMap[normalized] || normalized || 'active';
-    }},
+
+    // IMPORTANTE: manter como texto para suportar planilhas "legadas" (com colunas deslocadas)
+    // - pode vir como data (DD/MM/YYYY) OU como tipo (CEV/CEC/REV/SAT)
+    { excelColumn: 'Início Atividades', dbColumn: 'installation_date', transform: toString },
+
+    // Coordenadas podem vir sem separador decimal (ex: -20462591). Parse/normalização é feito na página.
+    { excelColumn: 'Latitude', dbColumn: 'latitude', transform: toString },
+    { excelColumn: 'Longitude', dbColumn: 'longitude', transform: toString },
+
+    // Alguns arquivos têm duas colunas "Status"; a segunda costuma virar "Status_1".
+    { excelColumn: 'Status_1', dbColumn: 'status_text', transform: toString },
+    { excelColumn: 'Status (1)', dbColumn: 'status_text', transform: toString },
+    { excelColumn: 'Status 1', dbColumn: 'status_text', transform: toString },
+
+    { excelColumn: 'Status', dbColumn: 'status', transform: toString },
   ] as ColumnMapping[],
   templateColumns: [
     { key: 'contract_number', label: 'Contrato' },
