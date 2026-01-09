@@ -11,7 +11,7 @@ import { equipmentImportConfig } from '@/lib/importConfigs';
 import { supabase } from '@/integrations/supabase/client';
 import { exportToPDF, exportToExcel, exportToCSV } from '@/lib/export';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { LayoutDashboard, List, Monitor, Smartphone, MoreHorizontal } from 'lucide-react';
+import { LayoutDashboard, List, Monitor, Smartphone, MoreHorizontal, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -21,6 +21,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { DeleteDialog } from '@/components/shared/DeleteDialog';
+import { Checkbox } from '@/components/ui/checkbox';
 
 type Equipment = Tables<'equipment'> & { contracts?: { number: string; client_name: string } | null };
 
@@ -88,7 +89,37 @@ export default function EquipmentPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [equipmentToDelete, setEquipmentToDelete] = useState<Equipment | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [deleteManyDialogOpen, setDeleteManyDialogOpen] = useState(false);
   const itemsPerPage = 10;
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedIds(paginatedEquipment.map((eq) => eq.id));
+    } else {
+      setSelectedIds([]);
+    }
+  };
+
+  const handleSelectOne = (id: string, checked: boolean) => {
+    if (checked) {
+      setSelectedIds((prev) => [...prev, id]);
+    } else {
+      setSelectedIds((prev) => prev.filter((i) => i !== id));
+    }
+  };
+
+  const handleDeleteSelected = () => {
+    if (selectedIds.length > 0) {
+      setDeleteManyDialogOpen(true);
+    }
+  };
+
+  const handleConfirmDeleteMany = () => {
+    deleteMany(selectedIds);
+    setSelectedIds([]);
+    setDeleteManyDialogOpen(false);
+  };
 
   const handleAdd = () => {
     setEditingEquipment(null);
@@ -259,6 +290,22 @@ export default function EquipmentPage() {
 
           <TabsContent value="list">
             <div className="bg-card rounded-lg border">
+              {selectedIds.length > 0 && (
+                <div className="flex items-center gap-4 p-4 border-b bg-muted/30">
+                  <span className="text-sm text-muted-foreground">
+                    {selectedIds.length} item(ns) selecionado(s)
+                  </span>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleDeleteSelected}
+                    className="flex items-center gap-2"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Excluir Selecionados
+                  </Button>
+                </div>
+              )}
               {loading ? (
                 <div className="flex items-center justify-center h-64">
                   <p className="text-muted-foreground">Carregando...</p>
@@ -269,6 +316,12 @@ export default function EquipmentPage() {
                     <table className="w-full">
                       <thead>
                         <tr className="border-b">
+                          <th className="py-3 px-4 w-10">
+                            <Checkbox
+                              checked={paginatedEquipment.length > 0 && selectedIds.length === paginatedEquipment.length}
+                              onCheckedChange={handleSelectAll}
+                            />
+                          </th>
                           <th className="text-left py-3 px-4 font-medium text-muted-foreground">Contrato</th>
                           <th className="text-left py-3 px-4 font-medium text-muted-foreground">Nº Série</th>
                           <th className="text-left py-3 px-4 font-medium text-muted-foreground">Modelo</th>
@@ -287,6 +340,12 @@ export default function EquipmentPage() {
                       <tbody>
                         {paginatedEquipment.map((eq) => (
                           <tr key={eq.id} className="border-b hover:bg-muted/50 transition-colors">
+                            <td className="py-3 px-4">
+                              <Checkbox
+                                checked={selectedIds.includes(eq.id)}
+                                onCheckedChange={(checked) => handleSelectOne(eq.id, !!checked)}
+                              />
+                            </td>
                             <td className="py-3 px-4 text-muted-foreground max-w-[120px] truncate" title={eq.contracts?.client_name || ''}>
                               {eq.contracts?.client_name || '-'}
                             </td>
@@ -391,6 +450,14 @@ export default function EquipmentPage() {
           onConfirm={handleConfirmDelete}
           title="Excluir Equipamento"
           description={`Tem certeza que deseja excluir o equipamento ${equipmentToDelete?.serial_number}?`}
+        />
+
+        <DeleteDialog
+          open={deleteManyDialogOpen}
+          onOpenChange={setDeleteManyDialogOpen}
+          onConfirm={handleConfirmDeleteMany}
+          title="Excluir Equipamentos"
+          description={`Tem certeza que deseja excluir ${selectedIds.length} equipamento(s) selecionado(s)?`}
         />
       </div>
     </AppLayout>
