@@ -16,10 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 type Contract = Tables<'contracts'>;
 
 const columns: Column<Contract>[] = [
-  { key: 'number', label: 'Número' },
   { key: 'client_name', label: 'Cliente' },
-  { key: 'city', label: 'Cidade' },
-  { key: 'state', label: 'UF' },
   {
     key: 'value',
     label: 'Valor',
@@ -30,14 +27,15 @@ const columns: Column<Contract>[] = [
   },
   {
     key: 'start_date',
-    label: 'Início',
+    label: 'Data de Início',
     render: (value) => (value ? format(new Date(String(value)), 'dd/MM/yyyy') : '-'),
   },
   {
     key: 'end_date',
-    label: 'Término',
+    label: 'Data de Fim',
     render: (value) => (value ? format(new Date(String(value)), 'dd/MM/yyyy') : '-'),
   },
+  { key: 'cost_center' as keyof Contract, label: 'Centro de Custo' },
   {
     key: 'status',
     label: 'Status',
@@ -46,11 +44,11 @@ const columns: Column<Contract>[] = [
 ];
 
 const exportColumns = [
-  { key: 'Número', label: 'Número' },
   { key: 'Cliente', label: 'Cliente' },
-  { key: 'Cidade', label: 'Cidade' },
-  { key: 'UF', label: 'UF' },
   { key: 'Valor', label: 'Valor' },
+  { key: 'Data de Início', label: 'Data de Início' },
+  { key: 'Data de Fim', label: 'Data de Fim' },
+  { key: 'Centro de Custo', label: 'Centro de Custo' },
   { key: 'Status', label: 'Status' },
 ];
 
@@ -87,11 +85,11 @@ export default function Contracts() {
 
   const handleExport = (type: 'pdf' | 'excel' | 'csv') => {
     const data = contracts.map((c) => ({
-      'Número': c.number,
       'Cliente': c.client_name,
-      'Cidade': c.city || '',
-      'UF': c.state || '',
       'Valor': c.value || 0,
+      'Data de Início': c.start_date || '',
+      'Data de Fim': c.end_date || '',
+      'Centro de Custo': (c as any).cost_center || '',
       'Status': c.status || '',
     }));
     if (type === 'pdf') exportToPDF(data, exportColumns, 'Contratos');

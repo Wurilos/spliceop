@@ -174,6 +174,7 @@ export type Database = {
         Row: {
           city: string | null
           client_name: string
+          cost_center: string | null
           created_at: string | null
           description: string | null
           end_date: string | null
@@ -188,6 +189,7 @@ export type Database = {
         Insert: {
           city?: string | null
           client_name: string
+          cost_center?: string | null
           created_at?: string | null
           description?: string | null
           end_date?: string | null
@@ -202,6 +204,7 @@ export type Database = {
         Update: {
           city?: string | null
           client_name?: string
+          cost_center?: string | null
           created_at?: string | null
           description?: string | null
           end_date?: string | null
