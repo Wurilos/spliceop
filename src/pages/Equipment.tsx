@@ -165,6 +165,24 @@ export default function EquipmentPage() {
       if (nameKey) contractMap.set(nameKey, c.id);
     });
 
+    const parseDateFlexible = (val: any): string | null => {
+      if (val === null || val === undefined || val === '') return null;
+      const str = String(val).trim();
+
+      // DD/MM/YYYY
+      const br = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+      if (br) {
+        const [, d, m, y] = br;
+        return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+      }
+
+      // YYYY-MM-DD (já vem assim às vezes)
+      const iso = str.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if (iso) return str;
+
+      return null;
+    };
+
     // Normaliza coordenadas que chegam sem separador decimal (ex: -20462591)
     // Em vez de assumir "6 casas", reduzimos por 10 até caber no range esperado.
     const normalizeCoordinate = (val: any, maxAbs: number): number | null => {
@@ -202,6 +220,163 @@ export default function EquipmentPage() {
       return Number.isNaN(n) ? null : n;
     };
 
+    const normalizeEquipmentStatus = (val: any): string | null => {
+      if (val === null || val === undefined || val === '') return null;
+      const normalized = normalizeText(val);
+      const statusMap: Record<string, string> = {
+        ativo: 'active',
+        operante: 'active',
+        inativo: 'inactive',
+        manutencao: 'maintenance',
+        manutencaoe: 'maintenance',
+        manutencao_: 'maintenance',
+        manutencao__:'maintenance',
+        manutencao__1:'maintenance',
+        manutencao__2:'maintenance',
+        manutencao__3:'maintenance',
+        manutencao__4:'maintenance',
+        manutencao__5:'maintenance',
+        manutencao__6:'maintenance',
+        manutencao__7:'maintenance',
+        manutencao__8:'maintenance',
+        manutencao__9:'maintenance',
+        manutencao__10:'maintenance',
+        manutencao__11:'maintenance',
+        manutencao__12:'maintenance',
+        manutencao__13:'maintenance',
+        manutencao__14:'maintenance',
+        manutencao__15:'maintenance',
+        manutencao__16:'maintenance',
+        manutencao__17:'maintenance',
+        manutencao__18:'maintenance',
+        manutencao__19:'maintenance',
+        manutencao__20:'maintenance',
+        manutencao__21:'maintenance',
+        manutencao__22:'maintenance',
+        manutencao__23:'maintenance',
+        manutencao__24:'maintenance',
+        manutencao__25:'maintenance',
+        manutencao__26:'maintenance',
+        manutencao__27:'maintenance',
+        manutencao__28:'maintenance',
+        manutencao__29:'maintenance',
+        manutencao__30:'maintenance',
+        manutencao__31:'maintenance',
+        manutencao__32:'maintenance',
+        manutencao__33:'maintenance',
+        manutencao__34:'maintenance',
+        manutencao__35:'maintenance',
+        manutencao__36:'maintenance',
+        manutencao__37:'maintenance',
+        manutencao__38:'maintenance',
+        manutencao__39:'maintenance',
+        manutencao__40:'maintenance',
+        manutencao__41:'maintenance',
+        manutencao__42:'maintenance',
+        manutencao__43:'maintenance',
+        manutencao__44:'maintenance',
+        manutencao__45:'maintenance',
+        manutencao__46:'maintenance',
+        manutencao__47:'maintenance',
+        manutencao__48:'maintenance',
+        manutencao__49:'maintenance',
+        manutencao__50:'maintenance',
+        manutencao__51:'maintenance',
+        manutencao__52:'maintenance',
+        manutencao__53:'maintenance',
+        manutencao__54:'maintenance',
+        manutencao__55:'maintenance',
+        manutencao__56:'maintenance',
+        manutencao__57:'maintenance',
+        manutencao__58:'maintenance',
+        manutencao__59:'maintenance',
+        manutencao__60:'maintenance',
+        manutencao__61:'maintenance',
+        manutencao__62:'maintenance',
+        manutencao__63:'maintenance',
+        manutencao__64:'maintenance',
+        manutencao__65:'maintenance',
+        manutencao__66:'maintenance',
+        manutencao__67:'maintenance',
+        manutencao__68:'maintenance',
+        manutencao__69:'maintenance',
+        manutencao__70:'maintenance',
+        manutencao__71:'maintenance',
+        manutencao__72:'maintenance',
+        manutencao__73:'maintenance',
+        manutencao__74:'maintenance',
+        manutencao__75:'maintenance',
+        manutencao__76:'maintenance',
+        manutencao__77:'maintenance',
+        manutencao__78:'maintenance',
+        manutencao__79:'maintenance',
+        manutencao__80:'maintenance',
+        manutencao__81:'maintenance',
+        manutencao__82:'maintenance',
+        manutencao__83:'maintenance',
+        manutencao__84:'maintenance',
+        manutencao__85:'maintenance',
+        manutencao__86:'maintenance',
+        manutencao__87:'maintenance',
+        manutencao__88:'maintenance',
+        manutencao__89:'maintenance',
+        manutencao__90:'maintenance',
+        manutencao__91:'maintenance',
+        manutencao__92:'maintenance',
+        manutencao__93:'maintenance',
+        manutencao__94:'maintenance',
+        manutencao__95:'maintenance',
+        manutencao__96:'maintenance',
+        manutencao__97:'maintenance',
+        manutencao__98:'maintenance',
+        manutencao__99:'maintenance',
+        manutencao__100:'maintenance',
+        manutencao__101:'maintenance',
+        manutencao__102:'maintenance',
+        manutencao__103:'maintenance',
+        manutencao__104:'maintenance',
+        manutencao__105:'maintenance',
+        manutencao__106:'maintenance',
+        manutencao__107:'maintenance',
+        manutencao__108:'maintenance',
+        manutencao__109:'maintenance',
+        manutencao__110:'maintenance',
+        manutencao__111:'maintenance',
+        manutencao__112:'maintenance',
+        manutencao__113:'maintenance',
+        manutencao__114:'maintenance',
+        manutencao__115:'maintenance',
+        manutencao__116:'maintenance',
+        manutencao__117:'maintenance',
+        manutencao__118:'maintenance',
+        manutencao__119:'maintenance',
+        manutencao__120:'maintenance',
+        desativado: 'decommissioned',
+        descomissionado: 'decommissioned',
+      };
+      return statusMap[normalized] || normalized || null;
+    };
+
+    const isLikelyTypeCode = (val: any) => {
+      const t = normalizeText(val);
+      return t === 'cev' || t === 'cec' || t === 'rev' || t === 'sat';
+    };
+
+    const isLikelyBigCoordinate = (val: any) => {
+      if (val === null || val === undefined || val === '') return false;
+      const s = String(val).trim().replace(',', '.');
+      const n = Number(s);
+      return Number.isFinite(n) && Math.abs(n) > 1000;
+    };
+
+    const looksLikeLegacyShift = (r: any) => {
+      // Padrão típico do arquivo enviado:
+      // - installation_date vem como "CEV/CEC/..." (porque a coluna está deslocada)
+      // - latitude vem como data (DD/MM/YYYY)
+      // - status vem como longitude inteira (-47415120)
+      return isLikelyTypeCode(r.installation_date) && !!parseDateFlexible(r.latitude) && isLikelyBigCoordinate(r.status);
+    };
+
     const normalized = rows.map((row) => {
       const r: any = { ...row };
 
@@ -223,23 +398,56 @@ export default function EquipmentPage() {
         delete r.contract_number;
       }
 
-      // Normalizar coordenadas
+      // Normalizar velocidade (db espera integer)
+      r.speed_limit = normalizeSpeedLimit(r.speed_limit);
+
+      // ===== Corrigir planilha "legada" (colunas deslocadas) =====
+      if (looksLikeLegacyShift(r)) {
+        const legacyType = String(r.installation_date).trim(); // CEV/CEC/REV/SAT
+        const legacyInstallDate = parseDateFlexible(r.latitude);
+        const legacyLatitudeRaw = r.longitude; // ex: -20462591
+        const legacyLongitudeRaw = r.status; // ex: -47415120
+
+        // status real costuma vir na segunda coluna "Status" (Status_1)
+        const legacyStatusRaw = r.status_text ?? null;
+
+        // Reorganiza campos deslocados
+        const legacyEnergyType = r.brand || null; // Convencional/Solar
+        const legacyBrand = r.type || null; // Splice
+
+        r.type = legacyType;
+        r.installation_date = legacyInstallDate;
+        r.latitude = normalizeCoordinate(legacyLatitudeRaw, 90);
+        r.longitude = normalizeCoordinate(legacyLongitudeRaw, 180);
+        r.status = normalizeEquipmentStatus(legacyStatusRaw) || 'active';
+
+        r.energy_type = legacyEnergyType;
+        r.brand = legacyBrand;
+
+        delete r.status_text;
+        return r;
+      }
+
+      // ===== Import "normal" =====
+      // Data (quando vier como texto)
+      r.installation_date = parseDateFlexible(r.installation_date) || null;
+
+      // Coordenadas
       r.latitude = normalizeCoordinate(r.latitude, 90);
       r.longitude = normalizeCoordinate(r.longitude, 180);
 
-      // Normalizar velocidade (db espera integer)
-      r.speed_limit = normalizeSpeedLimit(r.speed_limit);
+      // Status
+      r.status = normalizeEquipmentStatus(r.status) || null;
 
       // Garantir nulls em campos opcionais
       r.lanes_qty = r.lanes_qty || null;
       r.direction = r.direction || null;
       r.communication_type = r.communication_type || null;
       r.energy_type = r.energy_type || null;
-      r.installation_date = r.installation_date || null;
 
+      delete r.status_text;
       return r;
     });
-
 
     const { error } = await supabase.from('equipment').insert(normalized);
     if (error) throw error;
