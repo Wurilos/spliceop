@@ -10,6 +10,7 @@ export interface KanbanIssue {
   status: string | null;
   contract_id: string | null;
   equipment_id: string | null;
+  vehicle_id: string | null;
   assigned_to: string | null;
   column_key: string | null;
   type: string | null;
@@ -20,6 +21,7 @@ export interface KanbanIssue {
   updated_at: string | null;
   contracts?: { number: string; client_name: string } | null;
   equipment?: { serial_number: string } | null;
+  vehicles?: { plate: string; model: string | null } | null;
   employees?: { full_name: string } | null;
 }
 
@@ -35,6 +37,7 @@ export function useKanbanIssues() {
           *,
           contracts!fk_pending_issues_contract(number, client_name),
           equipment!fk_pending_issues_equipment(serial_number),
+          vehicles(plate, model),
           employees!fk_pending_issues_employee(full_name)
         `)
         .order('created_at', { ascending: false });
@@ -45,13 +48,32 @@ export function useKanbanIssues() {
 
   const createMutation = useMutation({
     mutationFn: async (issue: Partial<KanbanIssue>) => {
-      const { contracts, equipment, employees, ...cleanIssue } = issue as any;
+      const { contracts, equipment, vehicles, employees, ...cleanIssue } = issue as any;
       const { data, error } = await supabase.from('pending_issues').insert(cleanIssue).select().single();
       if (error) throw error;
+      
+      // Atualiza status do equipamento para "maintenance" se equipamento foi selecionado
+      if (cleanIssue.equipment_id) {
+        await supabase
+          .from('equipment')
+          .update({ status: 'maintenance' })
+          .eq('id', cleanIssue.equipment_id);
+      }
+      
+      // Atualiza status do veículo para "maintenance" se veículo foi selecionado
+      if (cleanIssue.vehicle_id) {
+        await supabase
+          .from('vehicles')
+          .update({ status: 'maintenance' })
+          .eq('id', cleanIssue.vehicle_id);
+      }
+      
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['kanban_issues'] });
+      queryClient.invalidateQueries({ queryKey: ['equipment'] });
+      queryClient.invalidateQueries({ queryKey: ['vehicles'] });
       toast.success('Demanda criada com sucesso!');
     },
     onError: () => toast.error('Erro ao criar demanda'),
@@ -59,13 +81,15 @@ export function useKanbanIssues() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, ...issue }: Partial<KanbanIssue> & { id: string }) => {
-      const { contracts, equipment, employees, ...cleanIssue } = issue as any;
+      const { contracts, equipment, vehicles, employees, ...cleanIssue } = issue as any;
       const { data, error } = await supabase.from('pending_issues').update(cleanIssue).eq('id', id).select().single();
       if (error) throw error;
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['kanban_issues'] });
+      queryClient.invalidateQueries({ queryKey: ['equipment'] });
+      queryClient.invalidateQueries({ queryKey: ['vehicles'] });
     },
     onError: () => toast.error('Erro ao atualizar demanda'),
   });

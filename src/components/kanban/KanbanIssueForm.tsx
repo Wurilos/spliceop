@@ -38,6 +38,7 @@ const formSchema = z.object({
   due_date: z.string().optional(),
   contract_id: z.string().optional(),
   equipment_id: z.string().optional(),
+  vehicle_id: z.string().optional(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -48,6 +49,7 @@ interface KanbanIssueFormProps {
   columns: KanbanColumn[];
   contracts: { id: string; number: string; client_name: string }[];
   equipment: { id: string; serial_number: string }[];
+  vehicles: { id: string; plate: string; model: string | null }[];
   onSubmit: (data: FormData) => void;
 }
 
@@ -57,6 +59,7 @@ export function KanbanIssueForm({
   columns,
   contracts,
   equipment,
+  vehicles,
   onSubmit,
 }: KanbanIssueFormProps) {
   const form = useForm<FormData>({
@@ -72,6 +75,7 @@ export function KanbanIssueForm({
       due_date: '',
       contract_id: '',
       equipment_id: '',
+      vehicle_id: '',
     },
   });
 
@@ -80,6 +84,7 @@ export function KanbanIssueForm({
       ...data,
       contract_id: data.contract_id || undefined,
       equipment_id: data.equipment_id || undefined,
+      vehicle_id: data.vehicle_id || undefined,
     });
     form.reset();
     onOpenChange(false);
@@ -208,6 +213,31 @@ export function KanbanIssueForm({
                 )}
               />
             </div>
+
+            <FormField
+              control={form.control}
+              name="vehicle_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Veículo</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {vehicles.map((v) => (
+                        <SelectItem key={v.id} value={v.id}>
+                          {v.plate} {v.model ? `- ${v.model}` : ''}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <FormField
               control={form.control}

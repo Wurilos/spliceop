@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/shared/PageHeader';
-import { DataTable, Column, StatusBadge } from '@/components/shared/DataTable';
 import { ImportDialog } from '@/components/shared/ImportDialog';
 import { useEquipment } from '@/hooks/useEquipment';
 import { EquipmentForm } from '@/components/equipment/EquipmentForm';
@@ -12,32 +11,59 @@ import { equipmentImportConfig } from '@/lib/importConfigs';
 import { supabase } from '@/integrations/supabase/client';
 import { exportToPDF, exportToExcel, exportToCSV } from '@/lib/export';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { LayoutDashboard, List } from 'lucide-react';
+import { LayoutDashboard, List, Monitor, Smartphone, MoreHorizontal } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { DeleteDialog } from '@/components/shared/DeleteDialog';
 
 type Equipment = Tables<'equipment'> & { contracts?: { number: string; client_name: string } | null };
 
-const columns: Column<Equipment>[] = [
-  { key: 'serial_number', label: 'Nº Série' },
-  { key: 'type', label: 'Tipo' },
-  { key: 'brand', label: 'Marca' },
-  { key: 'model', label: 'Modelo' },
-  { key: 'address', label: 'Localização' },
-  {
-    key: 'contracts.client_name',
-    label: 'Contrato',
-    render: (_, row) => row.contracts?.client_name || '-',
-  },
-  {
-    key: 'next_calibration_date',
-    label: 'Próx. Aferição',
-    render: (value) => (value ? format(new Date(String(value)), 'dd/MM/yyyy') : '-'),
-  },
-  {
-    key: 'status',
-    label: 'Status',
-    render: (value) => <StatusBadge status={String(value || 'active')} />,
-  },
-];
+const getTypeIcon = (type: string | null) => {
+  switch (type?.toLowerCase()) {
+    case 'cev':
+      return <Monitor className="h-5 w-5 text-primary" />;
+    case 'cec':
+      return <Smartphone className="h-5 w-5 text-primary" />;
+    default:
+      return <Monitor className="h-5 w-5 text-primary" />;
+  }
+};
+
+const getStatusBadge = (status: string | null) => {
+  switch (status) {
+    case 'maintenance':
+      return (
+        <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+          Em Manutenção
+        </Badge>
+      );
+    case 'active':
+      return (
+        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+          Operante
+        </Badge>
+      );
+    case 'inactive':
+    case 'decommissioned':
+      return (
+        <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+          Inativo
+        </Badge>
+      );
+    default:
+      return (
+        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+          Operante
+        </Badge>
+      );
+  }
+};
 
 const exportColumns = [
   { key: 'Nº Série', label: 'Nº Série' },
@@ -53,6 +79,10 @@ export default function EquipmentPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [editingEquipment, setEditingEquipment] = useState<Equipment | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [equipmentToDelete, setEquipmentToDelete] = useState<Equipment | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const handleAdd = () => {
     setEditingEquipment(null);
@@ -93,19 +123,36 @@ export default function EquipmentPage() {
     else exportToCSV(data, exportColumns, 'equipamentos');
   };
 
+  const handleDeleteClick = (eq: Equipment) => {
+    setEquipmentToDelete(eq);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (equipmentToDelete) {
+      deleteEquipment(equipmentToDelete.id);
+      setDeleteDialogOpen(false);
+      setEquipmentToDelete(null);
+    }
+  };
+
+  const totalPages = Math.ceil(equipment.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedEquipment = equipment.slice(startIndex, startIndex + itemsPerPage);
+
   return (
     <AppLayout title="Equipamentos">
       <div className="space-y-6">
         <PageHeader
           title="Equipamentos"
-          description="Gerencie radares e medidores de velocidade"
+          description="Gerencie CEV, CEC, REV e SAT"
           onAdd={handleAdd}
           addLabel="Novo Equipamento"
           onImport={() => setImportOpen(true)}
           onExport={handleExport}
         />
 
-        <Tabs defaultValue="dashboard" className="space-y-4">
+        <Tabs defaultValue="list" className="space-y-4">
           <TabsList>
             <TabsTrigger value="dashboard" className="flex items-center gap-2">
               <LayoutDashboard className="h-4 w-4" />
@@ -122,16 +169,105 @@ export default function EquipmentPage() {
           </TabsContent>
 
           <TabsContent value="list">
-            <DataTable
-              data={equipment}
-              columns={columns}
-              loading={loading}
-              searchPlaceholder="Buscar equipamentos..."
-              onEdit={handleEdit}
-              onDelete={(eq) => deleteEquipment(eq.id)}
-              onDeleteMany={deleteMany}
-              entityName="equipamento"
-            />
+            <div className="bg-card rounded-lg border">
+              {loading ? (
+                <div className="flex items-center justify-center h-64">
+                  <p className="text-muted-foreground">Carregando...</p>
+                </div>
+              ) : (
+                <>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="text-left py-3 px-4 font-medium text-muted-foreground">Nº Série</th>
+                          <th className="text-left py-3 px-4 font-medium text-muted-foreground">Tipo</th>
+                          <th className="text-left py-3 px-4 font-medium text-muted-foreground">Contrato</th>
+                          <th className="text-left py-3 px-4 font-medium text-muted-foreground">Localização</th>
+                          <th className="text-left py-3 px-4 font-medium text-muted-foreground">Status</th>
+                          <th className="text-left py-3 px-4 font-medium text-muted-foreground">Equipe</th>
+                          <th className="text-left py-3 px-4 font-medium text-muted-foreground">Próx. Aferição</th>
+                          <th className="py-3 px-4"></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {paginatedEquipment.map((eq) => (
+                          <tr key={eq.id} className="border-b hover:bg-muted/50 transition-colors">
+                            <td className="py-3 px-4">
+                              <span className="font-medium text-primary">{eq.serial_number}</span>
+                            </td>
+                            <td className="py-3 px-4">
+                              <div className="flex items-center gap-2">
+                                {getTypeIcon(eq.type)}
+                                <span>{eq.type || 'N/A'}</span>
+                              </div>
+                            </td>
+                            <td className="py-3 px-4 text-muted-foreground">
+                              {eq.contracts?.client_name || 'N/A'}
+                            </td>
+                            <td className="py-3 px-4">{eq.address || 'N/A'}</td>
+                            <td className="py-3 px-4">{getStatusBadge(eq.status)}</td>
+                            <td className="py-3 px-4 text-muted-foreground">-</td>
+                            <td className="py-3 px-4 text-muted-foreground">
+                              {eq.next_calibration_date
+                                ? format(new Date(eq.next_calibration_date), 'dd/MM/yyyy')
+                                : '-'}
+                            </td>
+                            <td className="py-3 px-4">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => handleEdit(eq)}>
+                                    Editar
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem 
+                                    className="text-destructive"
+                                    onClick={() => handleDeleteClick(eq)}
+                                  >
+                                    Excluir
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 border-t">
+                    <p className="text-sm text-muted-foreground">
+                      Mostrando {startIndex + 1} a {Math.min(startIndex + itemsPerPage, equipment.length)} de {equipment.length} registros
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                      >
+                        &lt;
+                      </Button>
+                      <span className="text-sm">
+                        Página {currentPage} de {totalPages || 1}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages || totalPages === 0}
+                      >
+                        &gt;
+                      </Button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
           </TabsContent>
         </Tabs>
 
@@ -152,6 +288,14 @@ export default function EquipmentPage() {
           templateColumns={equipmentImportConfig.templateColumns}
           templateFilename="equipamentos"
           onImport={handleImport}
+        />
+
+        <DeleteDialog
+          open={deleteDialogOpen}
+          onOpenChange={setDeleteDialogOpen}
+          onConfirm={handleConfirmDelete}
+          title="Excluir Equipamento"
+          description={`Tem certeza que deseja excluir o equipamento ${equipmentToDelete?.serial_number}?`}
         />
       </div>
     </AppLayout>
