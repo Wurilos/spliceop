@@ -26,7 +26,16 @@ export const contractImportConfig = {
     { excelColumn: 'Data Fim', dbColumn: 'end_date', transform: toDate },
     { excelColumn: 'Estado', dbColumn: 'state', transform: toString },
     { excelColumn: 'Cidade', dbColumn: 'city', transform: toString },
-    { excelColumn: 'Status', dbColumn: 'status', transform: (v: string) => v?.toLowerCase() || 'active' },
+    { excelColumn: 'Status', dbColumn: 'status', transform: (v: string) => {
+      const statusMap: Record<string, string> = {
+        'ativo': 'active',
+        'inativo': 'inactive',
+        'pendente': 'pending',
+        'cancelado': 'cancelled',
+      };
+      const normalized = v?.toLowerCase().trim();
+      return statusMap[normalized] || normalized || 'active';
+    }},
   ] as ColumnMapping[],
   templateColumns: [
     { key: 'number', label: 'Número' },
