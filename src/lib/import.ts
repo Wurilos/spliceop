@@ -52,27 +52,46 @@ export function mapExcelData<T>(
 ): ImportResult<T> {
   const errors: string[] = [];
   const data: T[] = [];
-  
+
+  const normalizeHeader = (value: string) =>
+    value
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '') // remove diacritics
+      .trim()
+      .replace(/:$/, '')
+      .replace(/\s+/g, ' ')
+      .toLowerCase();
+
+  const getCellValue = (row: Record<string, any>, excelColumn: string) => {
+    // Fast path: exact match
+    if (Object.prototype.hasOwnProperty.call(row, excelColumn)) return row[excelColumn];
+
+    // Fallback: normalized match (handles "Contrato" vs "Contrato:", accents, spacing)
+    const expected = normalizeHeader(excelColumn);
+    const foundKey = Object.keys(row).find((k) => normalizeHeader(k) === expected);
+    return foundKey ? row[foundKey] : undefined;
+  };
+
   rawData.forEach((row, index) => {
     const rowNumber = index + 2; // +2 because Excel is 1-indexed and has header row
     const mappedRow: Record<string, any> = {};
     let isValid = true;
-    
+
     for (const mapping of mappings) {
-      const value = row[mapping.excelColumn];
-      
+      const value = getCellValue(row, mapping.excelColumn);
+
       // Check required fields
       if (mapping.required && (value === undefined || value === null || value === '')) {
         errors.push(`Linha ${rowNumber}: Campo "${mapping.excelColumn}" é obrigatório`);
         isValid = false;
         continue;
       }
-      
+
       // Apply transformation if provided
       if (value !== undefined && value !== null && value !== '') {
         try {
           mappedRow[mapping.dbColumn] = mapping.transform ? mapping.transform(value) : value;
-        } catch (e) {
+        } catch {
           errors.push(`Linha ${rowNumber}: Erro ao processar campo "${mapping.excelColumn}"`);
           isValid = false;
         }
@@ -80,12 +99,12 @@ export function mapExcelData<T>(
         mappedRow[mapping.dbColumn] = null;
       }
     }
-    
+
     if (isValid) {
       data.push(mappedRow as T);
     }
   });
-  
+
   return {
     success: errors.length === 0,
     data,
