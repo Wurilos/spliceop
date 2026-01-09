@@ -106,13 +106,15 @@ export default function Vehicles() {
 
     if (contractsError) throw contractsError;
 
-    // Aceita tanto "número" quanto "nome do cliente" como identificador do contrato
+    // Cria mapa para lookup flexível (number, client_name, "number - client_name")
     const contractMap = new Map<string, string>();
     contracts?.forEach((c) => {
-      const numberKey = c.number?.toLowerCase().trim();
-      const nameKey = c.client_name?.toLowerCase().trim();
-      if (numberKey) contractMap.set(numberKey, c.id);
-      if (nameKey) contractMap.set(nameKey, c.id);
+      const num = c.number?.trim() || '';
+      const name = c.client_name?.trim() || '';
+      if (num) contractMap.set(num.toLowerCase(), c.id);
+      if (name) contractMap.set(name.toLowerCase(), c.id);
+      // Também mapeia o formato combinado "CTR-0002 - Barretos"
+      if (num && name) contractMap.set(`${num} - ${name}`.toLowerCase(), c.id);
     });
 
     const normalized = rows.map((row) => {
@@ -128,15 +130,15 @@ export default function Vehicles() {
 
         let contractId = contractMap.get(key);
 
-        // Tenta quebrar "NUMERO - CLIENTE" para melhorar taxa de acerto
-        if (!contractId && raw.includes('-')) {
-          const [maybeNumber, ...rest] = raw.split('-');
-          const numberKey = maybeNumber?.trim().toLowerCase();
-          const nameKey = rest.join('-').trim().toLowerCase();
+        // Tenta quebrar "CTR-0002 - Barretos" -> extrair número e nome separados
+        if (!contractId && raw.includes(' - ')) {
+          const parts = raw.split(' - ');
+          const numberPart = parts[0]?.trim().toLowerCase();
+          const namePart = parts.slice(1).join(' - ').trim().toLowerCase();
           contractId =
-            (numberKey ? contractMap.get(numberKey) : undefined) ||
-            (nameKey ? contractMap.get(nameKey) : undefined) ||
-            null;
+            (numberPart ? contractMap.get(numberPart) : undefined) ||
+            (namePart ? contractMap.get(namePart) : undefined) ||
+            undefined;
         }
 
         r.contract_id = contractId || null;
