@@ -172,26 +172,52 @@ export const equipmentImportConfig = {
 // Vehicle import config
 export const vehicleImportConfig = {
   mappings: [
+    { excelColumn: 'Contrato', dbColumn: 'contract_number', transform: toString }, // Será resolvido para contract_id no import
     { excelColumn: 'Placa', dbColumn: 'plate', required: true, transform: toString },
-    { excelColumn: 'Marca', dbColumn: 'brand', transform: toString },
     { excelColumn: 'Modelo', dbColumn: 'model', transform: toString },
+    { excelColumn: 'Marca', dbColumn: 'brand', transform: toString },
     { excelColumn: 'Ano', dbColumn: 'year', transform: toInteger },
-    { excelColumn: 'Cor', dbColumn: 'color', transform: toString },
-    { excelColumn: 'Renavam', dbColumn: 'renavam', transform: toString },
+    { excelColumn: 'Combustível', dbColumn: 'fuel_type', transform: toString },
+    { excelColumn: 'KM Atual', dbColumn: 'current_km', transform: (v: any) => {
+      if (!v) return 0;
+      // Remove "km" suffix and parse
+      const cleaned = String(v).replace(/[^\d.,]/gi, '').replace('.', '').replace(',', '.');
+      return parseInt(cleaned, 10) || 0;
+    }},
+    { excelColumn: 'RENAVAM', dbColumn: 'renavam', transform: toString },
     { excelColumn: 'Chassi', dbColumn: 'chassis', transform: toString },
-    { excelColumn: 'Cartão Combustível', dbColumn: 'fuel_card', transform: toString },
-    { excelColumn: 'Status', dbColumn: 'status', transform: (v: string) => v?.toLowerCase() || 'active' },
+    { excelColumn: 'Data Disponibilização', dbColumn: 'availability_date', transform: toDate },
+    { excelColumn: 'Número Cartão', dbColumn: 'fuel_card', transform: toString },
+    { excelColumn: 'Saldo Mensal', dbColumn: 'monthly_balance', transform: toNumber },
+    { excelColumn: 'Número TAG', dbColumn: 'tag_number', transform: toString },
+    { excelColumn: 'Status', dbColumn: 'status', transform: (v: string) => {
+      const statusMap: Record<string, string> = {
+        'ativo': 'active',
+        'inativo': 'inactive',
+        'manutenção': 'maintenance',
+        'manutencao': 'maintenance',
+      };
+      const normalized = v?.toLowerCase().trim();
+      return statusMap[normalized] || normalized || 'active';
+    }},
+    { excelColumn: 'Observações', dbColumn: 'notes', transform: toString },
   ] as ColumnMapping[],
   templateColumns: [
+    { key: 'contract_number', label: 'Contrato' },
     { key: 'plate', label: 'Placa' },
-    { key: 'brand', label: 'Marca' },
     { key: 'model', label: 'Modelo' },
+    { key: 'brand', label: 'Marca' },
     { key: 'year', label: 'Ano' },
-    { key: 'color', label: 'Cor' },
-    { key: 'renavam', label: 'Renavam' },
+    { key: 'fuel_type', label: 'Combustível' },
+    { key: 'current_km', label: 'KM Atual' },
+    { key: 'renavam', label: 'RENAVAM' },
     { key: 'chassis', label: 'Chassi' },
-    { key: 'fuel_card', label: 'Cartão Combustível' },
+    { key: 'availability_date', label: 'Data Disponibilização' },
+    { key: 'fuel_card', label: 'Número Cartão' },
+    { key: 'monthly_balance', label: 'Saldo Mensal' },
+    { key: 'tag_number', label: 'Número TAG' },
     { key: 'status', label: 'Status' },
+    { key: 'notes', label: 'Observações' },
   ],
 };
 
