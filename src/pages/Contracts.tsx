@@ -79,6 +79,8 @@ export default function Contracts() {
   const handleImport = async (data: any[]) => {
     const { error } = await supabase.from('contracts').insert(data);
     if (error) throw error;
+    // Força o refetch da lista após importação
+    window.location.reload();
   };
 
   const handleExport = (type: 'pdf' | 'excel' | 'csv') => {
