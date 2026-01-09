@@ -12,7 +12,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { exportToPDF, exportToExcel, exportToCSV } from '@/lib/export';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-type Employee = Tables<'employees'> & { contracts?: { number: string; client_name: string } | null };
+type Employee = Tables<'employees'> & {
+  contracts?: { number: string; client_name: string } | null;
+  ctps?: string | null;
+  ctps_serie?: string | null;
+  termination_date?: string | null;
+  re?: string | null;
+};
 
 const columns: Column<Employee>[] = [
   { key: 'full_name', label: 'Nome' },
@@ -70,8 +76,50 @@ export default function Employees() {
     setEditingEmployee(null);
   };
 
-  const handleImport = async (data: any[]) => {
-    const { error } = await supabase.from('employees').insert(data);
+  const handleImport = async (rows: any[]) => {
+    const mapStatus = (value: any) => {
+      const v = String(value ?? '').toLowerCase().trim();
+      const statusMap: Record<string, string> = {
+        'ativo': 'active',
+        'active': 'active',
+        'inativo': 'inactive',
+        'inactive': 'inactive',
+        'férias': 'vacation',
+        'ferias': 'vacation',
+        'vacation': 'vacation',
+        'desligado': 'terminated',
+        'terminated': 'terminated',
+      };
+      return statusMap[v] || 'active';
+    };
+
+    const normalized = rows.map((row) => {
+      const r: any = { ...row };
+
+      // Alguns relatórios vêm com as colunas RE e Status invertidas.
+      // Ex: re = "Ativo" e status = "4199" (número do RE).
+      const statusRaw = String(r.status ?? '').trim();
+      const reRaw = String(r.re ?? '').trim();
+      const statusLooksNumeric = /^\d+$/.test(statusRaw);
+      const reLooksLikeStatus = ['ativo', 'inativo', 'férias', 'ferias', 'desligado', 'active', 'inactive', 'vacation', 'terminated']
+        .includes(reRaw.toLowerCase());
+
+      if (statusLooksNumeric && reLooksLikeStatus) {
+        r.re = statusRaw || null;
+        r.status = mapStatus(reRaw);
+      } else {
+        r.status = mapStatus(r.status);
+        r.re = r.re ? String(r.re).trim() : null;
+      }
+
+      // Garantir nulls em campos opcionais
+      r.email = r.email ? String(r.email).trim() : null;
+      r.termination_date = r.termination_date || null;
+
+      return r;
+    });
+
+    const { error } = await supabase.from('employees').insert(normalized);
     if (error) throw error;
   };
 
