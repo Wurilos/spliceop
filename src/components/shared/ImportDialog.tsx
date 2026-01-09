@@ -109,8 +109,12 @@ export function ImportDialog({
       clearInterval(progressInterval);
       setImportProgress(100);
       setStep('complete');
-    } catch (error) {
-      setImportError('Erro ao importar dados. Tente novamente.');
+    } catch (error: any) {
+      const message =
+        typeof error?.message === 'string'
+          ? error.message
+          : 'Erro ao importar dados. Tente novamente.';
+      setImportError(message);
       setStep('preview');
     }
   };
