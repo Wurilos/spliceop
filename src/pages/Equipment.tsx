@@ -66,11 +66,17 @@ const getStatusBadge = (status: string | null) => {
 };
 
 const exportColumns = [
+  { key: 'Contrato', label: 'Contrato' },
   { key: 'Nº Série', label: 'Nº Série' },
-  { key: 'Tipo', label: 'Tipo' },
-  { key: 'Marca', label: 'Marca' },
   { key: 'Modelo', label: 'Modelo' },
-  { key: 'Localização', label: 'Localização' },
+  { key: 'Endereço', label: 'Endereço' },
+  { key: 'Sentido', label: 'Sentido' },
+  { key: 'Faixas', label: 'Faixas' },
+  { key: 'Velocidade', label: 'Velocidade' },
+  { key: 'Comunicação', label: 'Comunicação' },
+  { key: 'Energia', label: 'Energia' },
+  { key: 'Marca', label: 'Marca' },
+  { key: 'Tipo', label: 'Tipo' },
   { key: 'Status', label: 'Status' },
 ];
 
@@ -188,11 +194,17 @@ export default function EquipmentPage() {
 
   const handleExport = (type: 'pdf' | 'excel' | 'csv') => {
     const data = equipment.map((e) => ({
+      'Contrato': (e as any).contracts?.client_name || '',
       'Nº Série': e.serial_number,
-      'Tipo': e.type || '',
-      'Marca': e.brand || '',
       'Modelo': e.model || '',
-      'Localização': e.address || '',
+      'Endereço': e.address || '',
+      'Sentido': e.direction || '',
+      'Faixas': e.lanes_qty ?? '',
+      'Velocidade': e.speed_limit ? `${e.speed_limit} km/h` : '',
+      'Comunicação': e.communication_type || '',
+      'Energia': e.energy_type || '',
+      'Marca': e.brand || '',
+      'Tipo': e.type || '',
       'Status': e.status || '',
     }));
     if (type === 'pdf') exportToPDF(data, exportColumns, 'Equipamentos');
@@ -257,39 +269,45 @@ export default function EquipmentPage() {
                     <table className="w-full">
                       <thead>
                         <tr className="border-b">
-                          <th className="text-left py-3 px-4 font-medium text-muted-foreground">Nº Série</th>
-                          <th className="text-left py-3 px-4 font-medium text-muted-foreground">Tipo</th>
                           <th className="text-left py-3 px-4 font-medium text-muted-foreground">Contrato</th>
-                          <th className="text-left py-3 px-4 font-medium text-muted-foreground">Localização</th>
+                          <th className="text-left py-3 px-4 font-medium text-muted-foreground">Nº Série</th>
+                          <th className="text-left py-3 px-4 font-medium text-muted-foreground">Modelo</th>
+                          <th className="text-left py-3 px-4 font-medium text-muted-foreground">Endereço</th>
+                          <th className="text-left py-3 px-4 font-medium text-muted-foreground">Sentido</th>
+                          <th className="text-left py-3 px-4 font-medium text-muted-foreground">Faixas</th>
+                          <th className="text-left py-3 px-4 font-medium text-muted-foreground">Velocidade</th>
+                          <th className="text-left py-3 px-4 font-medium text-muted-foreground">Comunicação</th>
+                          <th className="text-left py-3 px-4 font-medium text-muted-foreground">Energia</th>
+                          <th className="text-left py-3 px-4 font-medium text-muted-foreground">Marca</th>
+                          <th className="text-left py-3 px-4 font-medium text-muted-foreground">Tipo</th>
                           <th className="text-left py-3 px-4 font-medium text-muted-foreground">Status</th>
-                          <th className="text-left py-3 px-4 font-medium text-muted-foreground">Equipe</th>
-                          <th className="text-left py-3 px-4 font-medium text-muted-foreground">Próx. Aferição</th>
                           <th className="py-3 px-4"></th>
                         </tr>
                       </thead>
                       <tbody>
                         {paginatedEquipment.map((eq) => (
                           <tr key={eq.id} className="border-b hover:bg-muted/50 transition-colors">
+                            <td className="py-3 px-4 text-muted-foreground">
+                              {eq.contracts?.client_name || '-'}
+                            </td>
                             <td className="py-3 px-4">
                               <span className="font-medium text-primary">{eq.serial_number}</span>
                             </td>
+                            <td className="py-3 px-4">{eq.model || '-'}</td>
+                            <td className="py-3 px-4">{eq.address || '-'}</td>
+                            <td className="py-3 px-4">{eq.direction || '-'}</td>
+                            <td className="py-3 px-4">{eq.lanes_qty ?? '-'}</td>
+                            <td className="py-3 px-4">{eq.speed_limit ? `${eq.speed_limit} km/h` : '-'}</td>
+                            <td className="py-3 px-4">{eq.communication_type || '-'}</td>
+                            <td className="py-3 px-4">{eq.energy_type || '-'}</td>
+                            <td className="py-3 px-4">{eq.brand || '-'}</td>
                             <td className="py-3 px-4">
                               <div className="flex items-center gap-2">
                                 {getTypeIcon(eq.type)}
-                                <span>{eq.type || 'N/A'}</span>
+                                <span>{eq.type || '-'}</span>
                               </div>
                             </td>
-                            <td className="py-3 px-4 text-muted-foreground">
-                              {eq.contracts?.client_name || 'N/A'}
-                            </td>
-                            <td className="py-3 px-4">{eq.address || 'N/A'}</td>
                             <td className="py-3 px-4">{getStatusBadge(eq.status)}</td>
-                            <td className="py-3 px-4 text-muted-foreground">-</td>
-                            <td className="py-3 px-4 text-muted-foreground">
-                              {eq.next_calibration_date
-                                ? format(new Date(eq.next_calibration_date), 'dd/MM/yyyy')
-                                : '-'}
-                            </td>
                             <td className="py-3 px-4">
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
