@@ -17,14 +17,10 @@ type Employee = Tables<'employees'> & { contracts?: { number: string; client_nam
 const columns: Column<Employee>[] = [
   { key: 'full_name', label: 'Nome' },
   { key: 'cpf', label: 'CPF' },
+  { key: 'rg', label: 'RG' },
   { key: 'role', label: 'Cargo' },
-  { key: 'department', label: 'Departamento' },
   { key: 'phone', label: 'Telefone' },
-  {
-    key: 'contracts.client_name',
-    label: 'Contrato',
-    render: (_, row) => row.contracts?.client_name || '-',
-  },
+  { key: 're', label: 'RE' },
   {
     key: 'status',
     label: 'Status',
@@ -33,12 +29,19 @@ const columns: Column<Employee>[] = [
 ];
 
 const exportColumns = [
-  { key: 'Nome', label: 'Nome' },
+  { key: 'Nome Completo', label: 'Nome Completo' },
   { key: 'CPF', label: 'CPF' },
-  { key: 'Cargo', label: 'Cargo' },
-  { key: 'Departamento', label: 'Departamento' },
+  { key: 'RG', label: 'RG' },
+  { key: 'Email', label: 'Email' },
   { key: 'Telefone', label: 'Telefone' },
+  { key: 'Cargo', label: 'Cargo' },
+  { key: 'CTPS', label: 'CTPS' },
+  { key: 'Série', label: 'Série' },
+  { key: 'Salário', label: 'Salário' },
+  { key: 'Data Admissão', label: 'Data Admissão' },
+  { key: 'Data Demissão', label: 'Data Demissão' },
   { key: 'Status', label: 'Status' },
+  { key: 'RE', label: 'RE' },
 ];
 
 export default function Employees() {
@@ -73,13 +76,20 @@ export default function Employees() {
   };
 
   const handleExport = (type: 'pdf' | 'excel' | 'csv') => {
-    const data = employees.map((e) => ({
-      'Nome': e.full_name,
+    const data = employees.map((e: any) => ({
+      'Nome Completo': e.full_name,
       'CPF': e.cpf || '',
-      'Cargo': e.role || '',
-      'Departamento': e.department || '',
+      'RG': e.rg || '',
+      'Email': e.email || '',
       'Telefone': e.phone || '',
-      'Status': e.status || '',
+      'Cargo': e.role || '',
+      'CTPS': e.ctps || '',
+      'Série': e.ctps_serie || '',
+      'Salário': e.salary ? `R$ ${Number(e.salary).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '',
+      'Data Admissão': e.admission_date || '',
+      'Data Demissão': e.termination_date || '',
+      'Status': e.status === 'active' ? 'Ativo' : e.status === 'inactive' ? 'Inativo' : e.status === 'vacation' ? 'Férias' : 'Desligado',
+      'RE': e.re || '',
     }));
     if (type === 'pdf') exportToPDF(data, exportColumns, 'Colaboradores');
     else if (type === 'excel') exportToExcel(data, exportColumns, 'colaboradores');

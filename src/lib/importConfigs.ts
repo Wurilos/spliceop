@@ -86,13 +86,23 @@ export const employeeImportConfig = {
     { excelColumn: 'Email', dbColumn: 'email', transform: toString },
     { excelColumn: 'Telefone', dbColumn: 'phone', transform: toString },
     { excelColumn: 'Cargo', dbColumn: 'role', transform: toString },
-    { excelColumn: 'Departamento', dbColumn: 'department', transform: toString },
-    { excelColumn: 'Endereço', dbColumn: 'address', transform: toString },
-    { excelColumn: 'Cidade', dbColumn: 'city', transform: toString },
-    { excelColumn: 'Estado', dbColumn: 'state', transform: toString },
-    { excelColumn: 'Data Admissão', dbColumn: 'admission_date', transform: toDate },
+    { excelColumn: 'CTPS', dbColumn: 'ctps', transform: toString },
+    { excelColumn: 'Série', dbColumn: 'ctps_serie', transform: toString },
     { excelColumn: 'Salário', dbColumn: 'salary', transform: toNumber },
-    { excelColumn: 'Status', dbColumn: 'status', transform: (v: string) => v?.toLowerCase() || 'active' },
+    { excelColumn: 'Data Admissão', dbColumn: 'admission_date', transform: toDate },
+    { excelColumn: 'Data Demissão', dbColumn: 'termination_date', transform: toDate },
+    { excelColumn: 'RE', dbColumn: 're', transform: toString },
+    { excelColumn: 'Status', dbColumn: 'status', transform: (v: string) => {
+      const statusMap: Record<string, string> = {
+        'ativo': 'active',
+        'inativo': 'inactive',
+        'férias': 'vacation',
+        'ferias': 'vacation',
+        'desligado': 'terminated',
+      };
+      const normalized = v?.toLowerCase().trim();
+      return statusMap[normalized] || normalized || 'active';
+    }},
   ] as ColumnMapping[],
   templateColumns: [
     { key: 'full_name', label: 'Nome Completo' },
@@ -101,12 +111,12 @@ export const employeeImportConfig = {
     { key: 'email', label: 'Email' },
     { key: 'phone', label: 'Telefone' },
     { key: 'role', label: 'Cargo' },
-    { key: 'department', label: 'Departamento' },
-    { key: 'address', label: 'Endereço' },
-    { key: 'city', label: 'Cidade' },
-    { key: 'state', label: 'Estado' },
-    { key: 'admission_date', label: 'Data Admissão' },
+    { key: 'ctps', label: 'CTPS' },
+    { key: 'ctps_serie', label: 'Série' },
     { key: 'salary', label: 'Salário' },
+    { key: 'admission_date', label: 'Data Admissão' },
+    { key: 'termination_date', label: 'Data Demissão' },
+    { key: 're', label: 'RE' },
     { key: 'status', label: 'Status' },
   ],
 };

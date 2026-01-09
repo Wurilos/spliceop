@@ -37,12 +37,12 @@ const schema = z.object({
   email: z.string().email('Email inválido').optional().or(z.literal('')),
   phone: z.string().optional(),
   role: z.string().optional(),
-  department: z.string().optional(),
+  ctps: z.string().optional(),
+  ctps_serie: z.string().optional(),
   salary: z.coerce.number().min(0).optional(),
   admission_date: z.string().optional(),
-  address: z.string().optional(),
-  city: z.string().optional(),
-  state: z.string().optional(),
+  termination_date: z.string().optional(),
+  re: z.string().optional(),
   contract_id: z.string().optional(),
   status: z.enum(['active', 'inactive', 'vacation', 'terminated']).optional(),
 });
@@ -56,22 +56,6 @@ interface EmployeeFormProps {
   initialData?: Employee | null;
   loading?: boolean;
 }
-
-const states = [
-  'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS',
-  'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC',
-  'SP', 'SE', 'TO',
-];
-
-const departments = [
-  'Administrativo',
-  'Técnico',
-  'Operacional',
-  'Comercial',
-  'Financeiro',
-  'RH',
-  'TI',
-];
 
 export function EmployeeForm({
   open,
@@ -91,12 +75,12 @@ export function EmployeeForm({
       email: '',
       phone: '',
       role: '',
-      department: '',
+      ctps: '',
+      ctps_serie: '',
       salary: 0,
       admission_date: '',
-      address: '',
-      city: '',
-      state: '',
+      termination_date: '',
+      re: '',
       contract_id: '',
       status: 'active',
     },
@@ -111,12 +95,12 @@ export function EmployeeForm({
         email: initialData.email || '',
         phone: initialData.phone || '',
         role: initialData.role || '',
-        department: initialData.department || '',
+        ctps: (initialData as any).ctps || '',
+        ctps_serie: (initialData as any).ctps_serie || '',
         salary: Number(initialData.salary) || 0,
         admission_date: initialData.admission_date || '',
-        address: initialData.address || '',
-        city: initialData.city || '',
-        state: initialData.state || '',
+        termination_date: (initialData as any).termination_date || '',
+        re: (initialData as any).re || '',
         contract_id: initialData.contract_id || '',
         status: initialData.status || 'active',
       });
@@ -128,12 +112,12 @@ export function EmployeeForm({
         email: '',
         phone: '',
         role: '',
-        department: '',
+        ctps: '',
+        ctps_serie: '',
         salary: 0,
         admission_date: '',
-        address: '',
-        city: '',
-        state: '',
+        termination_date: '',
+        re: '',
         contract_id: '',
         status: 'active',
       });
@@ -145,6 +129,7 @@ export function EmployeeForm({
       ...data,
       contract_id: data.contract_id || null,
       email: data.email || null,
+      termination_date: data.termination_date || null,
     };
     onSubmit(cleanData as any);
   };
@@ -174,7 +159,7 @@ export function EmployeeForm({
               )}
             />
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <FormField
                 control={form.control}
                 name="cpf"
@@ -197,6 +182,20 @@ export function EmployeeForm({
                     <FormLabel>RG</FormLabel>
                     <FormControl>
                       <Input placeholder="00.000.000-0" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="re"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>RE</FormLabel>
+                    <FormControl>
+                      <Input placeholder="0000" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -234,15 +233,29 @@ export function EmployeeForm({
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="role"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Cargo</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Técnico Eletrônico" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="grid grid-cols-3 gap-4">
               <FormField
                 control={form.control}
-                name="role"
+                name="ctps"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Cargo</FormLabel>
+                    <FormLabel>CTPS</FormLabel>
                     <FormControl>
-                      <Input placeholder="Técnico de Campo" {...field} />
+                      <Input placeholder="00000" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -251,31 +264,18 @@ export function EmployeeForm({
 
               <FormField
                 control={form.control}
-                name="department"
+                name="ctps_serie"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Departamento</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {departments.map((dept) => (
-                          <SelectItem key={dept} value={dept}>
-                            {dept}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormLabel>Série CTPS</FormLabel>
+                    <FormControl>
+                      <Input placeholder="000" {...field} />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-            </div>
 
-            <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="salary"
@@ -289,7 +289,9 @@ export function EmployeeForm({
                   </FormItem>
                 )}
               />
+            </div>
 
+            <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="admission_date"
@@ -303,57 +305,16 @@ export function EmployeeForm({
                   </FormItem>
                 )}
               />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="address"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Endereço</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Rua, número, bairro" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="grid grid-cols-3 gap-4">
-              <FormField
-                control={form.control}
-                name="city"
-                render={({ field }) => (
-                  <FormItem className="col-span-2">
-                    <FormLabel>Cidade</FormLabel>
-                    <FormControl>
-                      <Input placeholder="São Paulo" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
 
               <FormField
                 control={form.control}
-                name="state"
+                name="termination_date"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>UF</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="UF" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {states.map((state) => (
-                          <SelectItem key={state} value={state}>
-                            {state}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormLabel>Data de Demissão</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
