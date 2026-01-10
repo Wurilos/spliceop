@@ -1,63 +1,54 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* SpliceStream ERP - Design System
-   Modern, professional design for traffic enforcement management
-   All colors MUST be HSL.
-*/
 
 @layer base {
   :root {
     --background: 210 20% 98%;
     --foreground: 222 47% 11%;
-
     --card: 0 0% 100%;
     --card-foreground: 222 47% 11%;
-
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
-
-    --primary: 221 83% 53%;
-    --primary-foreground: 210 40% 98%;
-
-    --secondary: 210 40% 96%;
+    --primary: 217 91% 30%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 214 32% 91%;
     --secondary-foreground: 222 47% 11%;
-
     --muted: 210 40% 96%;
     --muted-foreground: 215 16% 47%;
-
-    --accent: 142 76% 36%;
+    --accent: 173 80% 40%;
     --accent-foreground: 0 0% 100%;
-
     --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 217 91% 30%;
+    --radius: 0.625rem;
+    --sidebar-background: 222 47% 11%;
+    --sidebar-foreground: 210 40% 96%;
+    --sidebar-primary: 217 91% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 217 32% 20%;
+    --sidebar-accent-foreground: 210 40% 96%;
+    --sidebar-border: 217 32% 17%;
+    --sidebar-ring: 217 91% 60%;
+    --gradient-sidebar: linear-gradient(180deg, hsl(222 47% 11%) 0%, hsl(222 47% 8%) 100%);
+    --shadow-sm: 0 1px 2px 0 hsl(222 47% 11% / 0.05);
+    --shadow-md: 0 4px 6px -1px hsl(222 47% 11% / 0.1), 0 2px 4px -2px hsl(222 47% 11% / 0.1);
+    --shadow-lg: 0 10px 15px -3px hsl(222 47% 11% / 0.1), 0 4px 6px -4px hsl(222 47% 11% / 0.1);
+    --shadow-card: 0 1px 3px 0 hsl(222 47% 11% / 0.1), 0 1px 2px -1px hsl(222 47% 11% / 0.1);
+    --shadow-card-hover: 0 10px 15px -3px hsl(222 47% 11% / 0.15), 0 4px 6px -4px hsl(222 47% 11% / 0.1);
 
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
-
     --success: 142 76% 36%;
     --success-foreground: 0 0% 100%;
-
     --info: 199 89% 48%;
     --info-foreground: 0 0% 100%;
 
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 221 83% 53%;
-
-    --radius: 0.5rem;
-
-    --sidebar-background: 222 47% 11%;
-    --sidebar-foreground: 210 40% 96%;
-    --sidebar-primary: 221 83% 53%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 217 33% 17%;
-    --sidebar-accent-foreground: 210 40% 96%;
-    --sidebar-border: 217 33% 17%;
-    --sidebar-ring: 221 83% 53%;
-
-    --chart-1: 221 83% 53%;
+    --chart-1: 217 91% 30%;
     --chart-2: 142 76% 36%;
     --chart-3: 38 92% 50%;
     --chart-4: 0 84% 60%;
@@ -67,49 +58,38 @@
   .dark {
     --background: 222 47% 6%;
     --foreground: 210 40% 98%;
-
     --card: 222 47% 9%;
     --card-foreground: 210 40% 98%;
-
     --popover: 222 47% 9%;
     --popover-foreground: 210 40% 98%;
-
     --primary: 217 91% 60%;
     --primary-foreground: 222 47% 11%;
-
-    --secondary: 217 33% 17%;
+    --secondary: 217 32% 17%;
     --secondary-foreground: 210 40% 98%;
-
-    --muted: 217 33% 17%;
+    --muted: 217 32% 17%;
     --muted-foreground: 215 20% 65%;
-
-    --accent: 142 71% 45%;
+    --accent: 173 80% 40%;
     --accent-foreground: 0 0% 100%;
-
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 210 40% 98%;
-
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 100%;
-
-    --success: 142 71% 45%;
-    --success-foreground: 0 0% 100%;
-
-    --info: 199 89% 48%;
-    --info-foreground: 0 0% 100%;
-
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 217 32% 17%;
+    --input: 217 32% 17%;
     --ring: 217 91% 60%;
-
-    --sidebar-background: 222 47% 6%;
+    --sidebar-background: 222 47% 5%;
     --sidebar-foreground: 210 40% 96%;
     --sidebar-primary: 217 91% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 217 33% 17%;
+    --sidebar-accent: 217 32% 12%;
     --sidebar-accent-foreground: 210 40% 96%;
-    --sidebar-border: 217 33% 17%;
+    --sidebar-border: 217 32% 12%;
     --sidebar-ring: 217 91% 60%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 100%;
+    --info: 199 89% 48%;
+    --info-foreground: 0 0% 100%;
 
     --chart-1: 217 91% 60%;
     --chart-2: 142 71% 45%;
@@ -120,17 +100,37 @@
 }
 
 @layer base {
-  * {
-    @apply border-border;
-  }
-
+  * { @apply border-border; }
   body {
-    @apply bg-background text-foreground antialiased;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    @apply bg-background text-foreground;
+    font-family: 'DM Sans', sans-serif;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 600;
+  }
+}
+
+@layer components {
+  .stat-card {
+    @apply relative overflow-hidden rounded-xl bg-card p-6 transition-all duration-300;
+    box-shadow: var(--shadow-md);
+  }
+  .stat-card:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-2px);
+  }
+  .glass-effect {
+    @apply backdrop-blur-sm bg-background/80;
   }
 }
 
 @layer utilities {
+  .animate-fade-in { animation: fadeIn 0.3s ease-out; }
+  .animate-slide-up { animation: slideUp 0.4s ease-out; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
   .scrollbar-thin {
     scrollbar-width: thin;
   }
