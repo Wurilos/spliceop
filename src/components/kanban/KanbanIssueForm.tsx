@@ -33,7 +33,7 @@ const formSchema = z.object({
   title: z.string().min(1, 'Título é obrigatório'),
   description: z.string().optional(),
   priority: z.string().default('medium'),
-  column_key: z.string().min(1, 'Motivo é obrigatório'),
+  column_key: z.string().optional(),
   type: z.string().min(1, 'Tipo é obrigatório'),
   status: z.string().optional(),
   address: z.string().min(1, 'Localidade é obrigatória'),
@@ -121,6 +121,7 @@ export function KanbanIssueForm({
   const handleSubmit = (data: FormData) => {
     onSubmit({
       ...data,
+      column_key: columns[0]?.key || 'backlog',
       contract_id: data.contract_id || undefined,
       equipment_id: data.equipment_id || undefined,
       vehicle_id: data.vehicle_id || undefined,
@@ -349,31 +350,6 @@ export function KanbanIssueForm({
               )}
             />
 
-            {/* Motivo (antiga Coluna) */}
-            <FormField
-              control={form.control}
-              name="column_key"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Motivo *</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o motivo" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {columns.map((col) => (
-                        <SelectItem key={col.key} value={col.key}>
-                          {col.title}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
 
             {/* Observações Técnicas */}
             <FormField
