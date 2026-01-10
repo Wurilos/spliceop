@@ -1,112 +1,153 @@
-import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Bell, AlertTriangle, Clock, MapPin, X } from 'lucide-react';
+import { 
+  Bell, AlertTriangle, AlertCircle, Clock, FileText, 
+  Package, Wrench, Zap, Wifi, Car, CheckCircle2 
+} from 'lucide-react';
 import { useSystemAlerts, SystemAlert } from '@/hooks/useSystemAlerts';
-import { format, differenceInDays, parseISO } from 'date-fns';
 
 interface NotificationPopupProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
+const categoryIcons: Record<string, React.ElementType> = {
+  contracts: FileText,
+  calibrations: AlertTriangle,
+  invoices: FileText,
+  inventory: Package,
+  maintenance: Wrench,
+  energy: Zap,
+  internet: Wifi,
+  mileage: Car,
+};
+
+const categoryLabels: Record<string, string> = {
+  contracts: 'Contratos',
+  calibrations: 'Aferições',
+  invoices: 'Faturas',
+  inventory: 'Estoque',
+  maintenance: 'Manutenção',
+  energy: 'Energia',
+  internet: 'Internet',
+  mileage: 'Quilometragem',
+};
+
+const categoryRoutes: Record<string, string> = {
+  contracts: '/contracts',
+  calibrations: '/calibrations',
+  invoices: '/invoices',
+  inventory: '/inventory',
+  maintenance: '/maintenance',
+  energy: '/energy',
+  internet: '/internet',
+  mileage: '/mileage',
+};
+
+const alertTypeStyles: Record<string, { bg: string; text: string; icon: React.ElementType }> = {
+  critical: { bg: 'bg-destructive/10', text: 'text-destructive', icon: AlertCircle },
+  high: { bg: 'bg-orange-100', text: 'text-orange-700', icon: AlertTriangle },
+  medium: { bg: 'bg-yellow-100', text: 'text-yellow-700', icon: Clock },
+  low: { bg: 'bg-blue-100', text: 'text-blue-700', icon: Bell },
+};
+
 export function NotificationPopup({ open, onOpenChange }: NotificationPopupProps) {
   const navigate = useNavigate();
-  const { alerts, isLoading } = useSystemAlerts();
-
-  // Filter only calibration alerts for the popup (as shown in reference image)
-  const calibrationAlerts = alerts.filter(a => a.category === 'calibrations');
-
-  const getDaysLabel = (alert: SystemAlert) => {
-    // Parse from description to get days
-    const match = alert.description.match(/(\d+) dias/);
-    if (!match) return null;
-    const days = parseInt(match[1]);
-    const isExpired = alert.description.includes('venceu');
-    
-    if (isExpired) {
-      return { label: 'Vencido', variant: 'destructive' as const };
-    } else if (days <= 7) {
-      return { label: `${days} dias`, variant: 'destructive' as const };
-    } else if (days <= 30) {
-      return { label: `${days} dias`, variant: 'warning' as const };
-    }
-    return { label: `${days} dias`, variant: 'secondary' as const };
-  };
-
-  const getEquipmentInfo = (alert: SystemAlert) => {
-    // Extract serial number from description
-    const serialMatch = alert.description.match(/equipamento ([^\s]+)/);
-    return serialMatch ? serialMatch[1] : 'N/A';
-  };
+  const { alerts, isLoading, alertCounts } = useSystemAlerts();
 
   const handleNavigate = (alert: SystemAlert) => {
     onOpenChange(false);
-    navigate('/calibrations');
+    const route = categoryRoutes[alert.category] || '/alerts';
+    navigate(route);
   };
-
-  if (calibrationAlerts.length === 0 && !isLoading) {
-    return null;
-  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Bell className="h-5 w-5 text-primary" />
-            Aferições Próximas do Vencimento
+            Notificações do Sistema
           </DialogTitle>
         </DialogHeader>
+        
+        {/* Summary badges */}
+        <div className="flex flex-wrap gap-2 pb-2 border-b">
+          {alertCounts.critical > 0 && (
+            <Badge variant="destructive" className="gap-1">
+              <AlertCircle className="h-3 w-3" />
+              {alertCounts.critical} Crítico{alertCounts.critical > 1 ? 's' : ''}
+            </Badge>
+          )}
+          {alertCounts.high > 0 && (
+            <Badge className="bg-orange-100 text-orange-700 hover:bg-orange-100 gap-1">
+              <AlertTriangle className="h-3 w-3" />
+              {alertCounts.high} Alto{alertCounts.high > 1 ? 's' : ''}
+            </Badge>
+          )}
+          {alertCounts.medium > 0 && (
+            <Badge className="bg-yellow-100 text-yellow-700 hover:bg-yellow-100 gap-1">
+              <Clock className="h-3 w-3" />
+              {alertCounts.medium} Médio{alertCounts.medium > 1 ? 's' : ''}
+            </Badge>
+          )}
+          {alertCounts.low > 0 && (
+            <Badge variant="secondary" className="gap-1">
+              <Bell className="h-3 w-3" />
+              {alertCounts.low} Baixo{alertCounts.low > 1 ? 's' : ''}
+            </Badge>
+          )}
+        </div>
         
         <ScrollArea className="max-h-[400px] pr-4">
           {isLoading ? (
             <div className="py-8 text-center text-muted-foreground">
               Carregando notificações...
             </div>
-          ) : calibrationAlerts.length === 0 ? (
-            <div className="py-8 text-center text-muted-foreground">
-              Nenhuma aferição próxima do vencimento.
+          ) : alerts.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <CheckCircle2 className="h-10 w-10 text-green-500 mb-3" />
+              <p className="text-sm text-muted-foreground">Nenhum alerta no momento</p>
             </div>
           ) : (
-            <div className="space-y-3">
-              {calibrationAlerts.slice(0, 10).map((alert) => {
-                const daysInfo = getDaysLabel(alert);
-                const serialNumber = getEquipmentInfo(alert);
+            <div className="space-y-2">
+              {alerts.slice(0, 15).map((alert) => {
+                const CategoryIcon = categoryIcons[alert.category] || AlertTriangle;
+                const typeStyle = alertTypeStyles[alert.type] || alertTypeStyles.low;
+                const TypeIcon = typeStyle.icon;
                 
                 return (
                   <div
                     key={alert.id}
-                    className="rounded-lg border p-4 hover:bg-muted/50 cursor-pointer transition-colors"
+                    className="rounded-lg border p-3 hover:bg-muted/50 cursor-pointer transition-colors"
                     onClick={() => handleNavigate(alert)}
                   >
-                    <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start gap-3">
+                      <div className={`p-1.5 rounded-md ${typeStyle.bg}`}>
+                        <TypeIcon className={`h-4 w-4 ${typeStyle.text}`} />
+                      </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="font-semibold text-primary truncate">
-                            {serialNumber}
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <span className="font-medium text-sm truncate">
+                            {alert.title}
                           </span>
-                          {daysInfo && (
-                            <Badge 
-                              variant={daysInfo.variant === 'warning' ? 'secondary' : daysInfo.variant}
-                              className={daysInfo.variant === 'warning' ? 'bg-orange-100 text-orange-700 hover:bg-orange-100' : ''}
-                            >
-                              {daysInfo.label}
-                            </Badge>
-                          )}
+                          <Badge variant="outline" className="text-xs shrink-0">
+                            <CategoryIcon className="h-3 w-3 mr-1" />
+                            {categoryLabels[alert.category] || alert.category}
+                          </Badge>
                         </div>
-                        <p className="text-sm text-muted-foreground line-clamp-2">
+                        <p className="text-xs text-muted-foreground line-clamp-2">
                           {alert.description}
                         </p>
+                        {alert.suggestion && (
+                          <p className="text-xs text-primary mt-1 line-clamp-1">
+                            💡 {alert.suggestion}
+                          </p>
+                        )}
                       </div>
-                      <AlertTriangle className={`h-5 w-5 flex-shrink-0 ${
-                        alert.type === 'critical' ? 'text-destructive' : 
-                        alert.type === 'high' ? 'text-orange-500' : 
-                        'text-yellow-500'
-                      }`} />
                     </div>
                   </div>
                 );
@@ -115,20 +156,20 @@ export function NotificationPopup({ open, onOpenChange }: NotificationPopupProps
           )}
         </ScrollArea>
         
-        {calibrationAlerts.length > 0 && (
+        {alerts.length > 0 && (
           <div className="flex justify-between items-center pt-4 border-t">
             <span className="text-sm text-muted-foreground">
-              {calibrationAlerts.length} {calibrationAlerts.length === 1 ? 'alerta' : 'alertas'}
+              {alerts.length} {alerts.length === 1 ? 'alerta' : 'alertas'} no total
             </span>
             <Button 
-              variant="outline" 
+              variant="default" 
               size="sm"
               onClick={() => {
                 onOpenChange(false);
                 navigate('/alerts');
               }}
             >
-              Ver Todos os Alertas
+              Ver Central de Alertas
             </Button>
           </div>
         )}
