@@ -15,19 +15,39 @@ import {
 import { ColumnForm } from '@/components/kanban/ColumnForm';
 import { DeleteDialog } from '@/components/shared/DeleteDialog';
 import { useKanbanColumns, KanbanColumn } from '@/hooks/useKanbanColumns';
+import { useKanbanSubitems } from '@/hooks/useKanbanSubitems';
 
 export default function KanbanItems() {
-  const { columns, isLoading, createColumn, updateColumn, deleteColumn } = useKanbanColumns();
+  const { columns, isLoading, createColumnAsync, updateColumn, deleteColumn } = useKanbanColumns();
+  const { createSubitem } = useKanbanSubitems();
   const [showForm, setShowForm] = useState(false);
   const [editingColumn, setEditingColumn] = useState<KanbanColumn | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  const handleCreate = (data: any) => {
-    createColumn({
-      ...data,
-      is_system: false,
-      color: data.color === 'none' ? null : data.color,
-    });
+  const handleCreate = async (data: any) => {
+    const { subitems, ...columnData } = data;
+    try {
+      const newColumn = await createColumnAsync({
+        ...columnData,
+        is_system: false,
+        color: columnData.color === 'none' ? null : columnData.color,
+      });
+      
+      // Criar subitems para a nova coluna
+      if (subitems && subitems.length > 0 && newColumn) {
+        for (let i = 0; i < subitems.length; i++) {
+          if (subitems[i].title) {
+            createSubitem({
+              column_id: newColumn.id,
+              title: subitems[i].title,
+              order_index: i + 1,
+            });
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao criar coluna:', error);
+    }
   };
 
   const handleUpdate = (data: any) => {

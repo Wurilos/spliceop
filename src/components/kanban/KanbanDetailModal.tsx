@@ -19,6 +19,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { KanbanIssue } from '@/hooks/useKanbanIssues';
 import { KanbanColumn } from '@/hooks/useKanbanColumns';
+import { useAllKanbanSubitems } from '@/hooks/useKanbanSubitems';
 
 interface KanbanDetailModalProps {
   issue: KanbanIssue | null;
@@ -41,44 +42,6 @@ const priorityLabels: Record<string, string> = {
   low: 'Baixa',
 };
 
-// Mapeamento de substatus por tipo de demanda
-const substatusByType: Record<string, string[]> = {
-  'Aferição': [
-    'Rompimento de Lacres',
-    'Aguardando lacres',
-    'Fechamento de O.S',
-    'Aguardando GRU',
-    'Aguardando pagamento de GRU',
-    'Aguardando data de aferição',
-  ],
-  'Energia': [
-    'Conjunta com fornecedor',
-    'Falta de pagamento',
-    'Vandalismo',
-    'Pausa temporária',
-  ],
-  'Internet': [
-    'Conjunta com fornecedor',
-    'Falta de pagamento',
-    'Vandalismo',
-  ],
-  'Infraestrutura': [
-    'Aguardando material',
-    'Aguardando Adiantamento',
-  ],
-  'Manutenção Veicular': [
-    'Aguardando setor de transporte',
-    'Aguardando Locadora',
-    'Aguardando Oficina',
-  ],
-};
-
-// Helper para obter substatus options baseado no tipo
-const getSubstatusOptions = (type: string | null | undefined): string[] => {
-  if (!type) return [];
-  return substatusByType[type] || [];
-};
-
 export function KanbanDetailModal({
   issue,
   columns,
@@ -87,6 +50,8 @@ export function KanbanDetailModal({
   onUpdateType,
   onEdit,
 }: KanbanDetailModalProps) {
+  const { subitemsByType } = useAllKanbanSubitems();
+  
   if (!issue) return null;
 
   const currentColumn = columns.find((c) => c.key === issue.column_key);
@@ -194,7 +159,7 @@ export function KanbanDetailModal({
           </div>
 
           {/* Substatus baseado no tipo de demanda */}
-          {issue.type && getSubstatusOptions(issue.type).length > 0 && (
+          {issue.type && subitemsByType[issue.type] && subitemsByType[issue.type].length > 0 && (
             <div className="pt-2 space-y-2">
               <Label className="text-xs text-muted-foreground uppercase tracking-wide">
                 Substatus - {issue.type}
@@ -204,7 +169,7 @@ export function KanbanDetailModal({
                   <SelectValue placeholder="Selecione o substatus" />
                 </SelectTrigger>
                 <SelectContent>
-                  {getSubstatusOptions(issue.type).map((option) => (
+                  {subitemsByType[issue.type].map((option) => (
                     <SelectItem key={option} value={option}>
                       {option}
                     </SelectItem>
