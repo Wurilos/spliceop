@@ -50,6 +50,7 @@ const afericaoSubstatusOptions = [
   'Fechamento de O.S',
   'Aguardando GRU',
   'Aguardando pagamento de GRU',
+  'Aguardando data de aferição',
 ];
 
 type FormData = z.infer<typeof formSchema>;
