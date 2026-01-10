@@ -59,6 +59,72 @@ export type Database = {
           },
         ]
       }
+      archived_issues: {
+        Row: {
+          address: string | null
+          archived_at: string
+          completed_at: string
+          contract_id: string | null
+          contract_name: string | null
+          created_at: string | null
+          description: string | null
+          due_date: string | null
+          equipment_id: string | null
+          equipment_serial: string | null
+          id: string
+          original_issue_id: string
+          priority: string | null
+          status: string | null
+          team: string | null
+          title: string
+          type: string | null
+          vehicle_id: string | null
+          vehicle_plate: string | null
+        }
+        Insert: {
+          address?: string | null
+          archived_at?: string
+          completed_at: string
+          contract_id?: string | null
+          contract_name?: string | null
+          created_at?: string | null
+          description?: string | null
+          due_date?: string | null
+          equipment_id?: string | null
+          equipment_serial?: string | null
+          id?: string
+          original_issue_id: string
+          priority?: string | null
+          status?: string | null
+          team?: string | null
+          title: string
+          type?: string | null
+          vehicle_id?: string | null
+          vehicle_plate?: string | null
+        }
+        Update: {
+          address?: string | null
+          archived_at?: string
+          completed_at?: string
+          contract_id?: string | null
+          contract_name?: string | null
+          created_at?: string | null
+          description?: string | null
+          due_date?: string | null
+          equipment_id?: string | null
+          equipment_serial?: string | null
+          id?: string
+          original_issue_id?: string
+          priority?: string | null
+          status?: string | null
+          team?: string | null
+          title?: string
+          type?: string | null
+          vehicle_id?: string | null
+          vehicle_plate?: string | null
+        }
+        Relationships: []
+      }
       audit_log: {
         Row: {
           action: string
@@ -1207,6 +1273,7 @@ export type Database = {
           address: string | null
           assigned_to: string | null
           column_key: string | null
+          completed_at: string | null
           contract_id: string | null
           created_at: string | null
           description: string | null
@@ -1225,6 +1292,7 @@ export type Database = {
           address?: string | null
           assigned_to?: string | null
           column_key?: string | null
+          completed_at?: string | null
           contract_id?: string | null
           created_at?: string | null
           description?: string | null
@@ -1243,6 +1311,7 @@ export type Database = {
           address?: string | null
           assigned_to?: string | null
           column_key?: string | null
+          completed_at?: string | null
           contract_id?: string | null
           created_at?: string | null
           description?: string | null

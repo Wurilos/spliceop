@@ -3,10 +3,12 @@ import { Plus } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { KanbanColumn } from '@/components/kanban/KanbanColumn';
 import { KanbanFilters } from '@/components/kanban/KanbanFilters';
 import { KanbanIssueForm } from '@/components/kanban/KanbanIssueForm';
 import { KanbanDetailModal } from '@/components/kanban/KanbanDetailModal';
+import { KanbanArchive } from '@/components/kanban/KanbanArchive';
 import { useKanbanColumns } from '@/hooks/useKanbanColumns';
 import { useKanbanIssues, KanbanIssue } from '@/hooks/useKanbanIssues';
 import { useContracts } from '@/hooks/useContracts';
@@ -89,56 +91,72 @@ export default function Kanban() {
   return (
     <AppLayout>
       <div className="flex flex-col h-full">
-        <div className="p-6 border-b border-border">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">Kanban Operacional</h1>
-              <p className="text-sm text-muted-foreground">
-                Gerencie demandas e ordens de serviço
-              </p>
+        <Tabs defaultValue="board" className="flex-1 flex flex-col">
+          <div className="p-6 border-b border-border">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h1 className="text-2xl font-bold text-foreground">Kanban Operacional</h1>
+                <p className="text-sm text-muted-foreground">
+                  Gerencie demandas e ordens de serviço
+                </p>
+              </div>
+              <div className="flex items-center gap-4">
+                <TabsList>
+                  <TabsTrigger value="board">Quadro</TabsTrigger>
+                  <TabsTrigger value="archive">Histórico</TabsTrigger>
+                </TabsList>
+                <Button onClick={() => setShowForm(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Nova Demanda
+                </Button>
+              </div>
             </div>
-            <Button onClick={() => setShowForm(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Nova Demanda
-            </Button>
+
+            <TabsContent value="board" className="m-0">
+              <KanbanFilters
+                contracts={contracts.map(c => ({ id: c.id, number: c.number, client_name: c.client_name }))}
+                selectedContract={selectedContract}
+                selectedTeam={selectedTeam}
+                selectedType={selectedType}
+                selectedPriority={selectedPriority}
+                onContractChange={setSelectedContract}
+                onTeamChange={setSelectedTeam}
+                onTypeChange={setSelectedType}
+                onPriorityChange={setSelectedPriority}
+              />
+            </TabsContent>
           </div>
 
-          <KanbanFilters
-            contracts={contracts.map(c => ({ id: c.id, number: c.number, client_name: c.client_name }))}
-            selectedContract={selectedContract}
-            selectedTeam={selectedTeam}
-            selectedType={selectedType}
-            selectedPriority={selectedPriority}
-            onContractChange={setSelectedContract}
-            onTeamChange={setSelectedTeam}
-            onTypeChange={setSelectedType}
-            onPriorityChange={setSelectedPriority}
-          />
-        </div>
+          <TabsContent value="board" className="flex-1 m-0">
+            {isLoading ? (
+              <div className="flex-1 flex items-center justify-center">
+                <p className="text-muted-foreground">Carregando...</p>
+              </div>
+            ) : (
+              <ScrollArea className="flex-1 h-full">
+                <div className="flex gap-4 p-6 min-w-max">
+                  {activeColumns.map((column) => (
+                    <KanbanColumn
+                      key={column.id}
+                      column={column}
+                      issues={filteredIssues}
+                      onDeleteIssue={deleteIssue}
+                      onClickIssue={handleClickIssue}
+                      onDragStart={handleDragStart}
+                      onDragOver={handleDragOver}
+                      onDrop={handleDrop}
+                    />
+                  ))}
+                </div>
+                <ScrollBar orientation="horizontal" />
+              </ScrollArea>
+            )}
+          </TabsContent>
 
-        {isLoading ? (
-          <div className="flex-1 flex items-center justify-center">
-            <p className="text-muted-foreground">Carregando...</p>
-          </div>
-        ) : (
-          <ScrollArea className="flex-1">
-            <div className="flex gap-4 p-6 min-w-max">
-              {activeColumns.map((column) => (
-                <KanbanColumn
-                  key={column.id}
-                  column={column}
-                  issues={filteredIssues}
-                  onDeleteIssue={deleteIssue}
-                  onClickIssue={handleClickIssue}
-                  onDragStart={handleDragStart}
-                  onDragOver={handleDragOver}
-                  onDrop={handleDrop}
-                />
-              ))}
-            </div>
-            <ScrollBar orientation="horizontal" />
-          </ScrollArea>
-        )}
+          <TabsContent value="archive" className="flex-1 m-0 overflow-auto">
+            <KanbanArchive />
+          </TabsContent>
+        </Tabs>
       </div>
 
       <KanbanIssueForm
