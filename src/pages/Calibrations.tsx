@@ -62,14 +62,26 @@ export default function Calibrations() {
   };
 
   const handleImport = async (data: any[]) => {
-    // Resolve equipment by serial_number and calculate expiration date
+    // Resolve contract and equipment, then calculate expiration date
     const dataWithEquipment = data.map(d => {
+      // Resolve contract by number or client name
+      const contract = contracts.find(c => 
+        c.number?.toLowerCase() === d.contract_ref?.toLowerCase() ||
+        c.client_name?.toLowerCase() === d.contract_ref?.toLowerCase()
+      );
+      
+      if (!contract) {
+        throw new Error(`Contrato não encontrado: ${d.contract_ref}`);
+      }
+
+      // Find equipment by serial within the contract
       const equipmentItem = equipment.find(e => 
-        e.serial_number?.toLowerCase() === d.equipment_serial?.toLowerCase()
+        e.serial_number?.toLowerCase() === d.equipment_serial?.toLowerCase() &&
+        e.contract_id === contract.id
       );
       
       if (!equipmentItem) {
-        throw new Error(`Equipamento não encontrado: ${d.equipment_serial}`);
+        throw new Error(`Equipamento "${d.equipment_serial}" não encontrado no contrato "${d.contract_ref}"`);
       }
 
       // Calculate expiration date (1 year from calibration)
@@ -80,7 +92,7 @@ export default function Calibrations() {
         expirationDate = calibDate.toISOString().split('T')[0];
       }
 
-      const { equipment_serial, ...rest } = d;
+      const { equipment_serial, contract_ref, ...rest } = d;
       return { 
         ...rest, 
         equipment_id: equipmentItem.id,

@@ -387,6 +387,7 @@ export const advanceImportConfig = {
 // Calibrations import config
 export const calibrationImportConfig = {
   mappings: [
+    { excelColumn: 'Contrato', dbColumn: 'contract_ref', required: true, transform: toString },
     { excelColumn: 'Serial Equipamento', dbColumn: 'equipment_serial', required: true, transform: toString },
     { excelColumn: 'Data Aferição', dbColumn: 'calibration_date', required: true, transform: toDate },
     { excelColumn: 'Data Vencimento', dbColumn: 'expiration_date', transform: toDate },
@@ -395,6 +396,7 @@ export const calibrationImportConfig = {
     { excelColumn: 'Status', dbColumn: 'status', transform: (v: string) => v?.toLowerCase() || 'valid' },
   ] as ColumnMapping[],
   templateColumns: [
+    { key: 'contract_ref', label: 'Contrato' },
     { key: 'equipment_serial', label: 'Serial Equipamento' },
     { key: 'calibration_date', label: 'Data Aferição' },
     { key: 'expiration_date', label: 'Data Vencimento (opcional)' },
