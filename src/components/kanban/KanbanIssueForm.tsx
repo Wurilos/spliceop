@@ -1,6 +1,7 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -22,6 +23,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -31,12 +33,12 @@ const formSchema = z.object({
   title: z.string().min(1, 'Título é obrigatório'),
   description: z.string().optional(),
   priority: z.string().default('medium'),
-  column_key: z.string().min(1, 'Coluna é obrigatória'),
-  type: z.string().optional(),
-  address: z.string().optional(),
-  team: z.string().optional(),
-  due_date: z.string().optional(),
-  contract_id: z.string().optional(),
+  column_key: z.string().min(1, 'Motivo é obrigatório'),
+  type: z.string().min(1, 'Tipo é obrigatório'),
+  address: z.string().min(1, 'Localidade é obrigatória'),
+  team: z.string().min(1, 'Equipe é obrigatória'),
+  due_date: z.string().min(1, 'Prazo SLA é obrigatório'),
+  contract_id: z.string().min(1, 'Contrato é obrigatório'),
   equipment_id: z.string().optional(),
   vehicle_id: z.string().optional(),
 });
@@ -48,7 +50,7 @@ interface KanbanIssueFormProps {
   onOpenChange: (open: boolean) => void;
   columns: KanbanColumn[];
   contracts: { id: string; number: string; client_name: string }[];
-  equipment: { id: string; serial_number: string }[];
+  equipment: { id: string; serial_number: string; address: string | null; contract_id: string | null }[];
   vehicles: { id: string; plate: string; model: string | null }[];
   onSubmit: (data: FormData) => void;
 }
@@ -79,6 +81,30 @@ export function KanbanIssueForm({
     },
   });
 
+  const selectedContractId = form.watch('contract_id');
+  const selectedEquipmentId = form.watch('equipment_id');
+
+  // Filter equipment by selected contract
+  const filteredEquipment = selectedContractId
+    ? equipment.filter((e) => e.contract_id === selectedContractId)
+    : [];
+
+  // Auto-fill address when equipment is selected
+  useEffect(() => {
+    if (selectedEquipmentId) {
+      const selectedEquip = equipment.find((e) => e.id === selectedEquipmentId);
+      if (selectedEquip?.address) {
+        form.setValue('address', selectedEquip.address);
+      }
+    }
+  }, [selectedEquipmentId, equipment, form]);
+
+  // Reset equipment when contract changes
+  useEffect(() => {
+    form.setValue('equipment_id', '');
+    form.setValue('address', '');
+  }, [selectedContractId, form]);
+
   const handleSubmit = (data: FormData) => {
     onSubmit({
       ...data,
@@ -95,42 +121,46 @@ export function KanbanIssueForm({
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Nova Demanda</DialogTitle>
+          <DialogDescription>
+            Preencha os campos para criar uma nova demanda no Kanban.
+          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+            {/* Título da Demanda */}
             <FormField
               control={form.control}
               name="title"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Título *</FormLabel>
+                  <FormLabel>Título da Demanda *</FormLabel>
                   <FormControl>
-                    <Input placeholder="Título da demanda" {...field} />
+                    <Input placeholder="Ex: Instalação de radar na BR-101" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
+            {/* Tipo de Demanda + Prioridade */}
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="column_key"
+                name="type"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Coluna *</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormLabel>Tipo de Demanda *</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Selecione" />
+                          <SelectValue placeholder="Selecione o tipo" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {columns.map((col) => (
-                          <SelectItem key={col.key} value={col.key}>
-                            {col.title}
-                          </SelectItem>
-                        ))}
+                        <SelectItem value="Rompimento de Lacres">Rompimento de Lacres</SelectItem>
+                        <SelectItem value="Fechamento de OS">Fechamento de OS</SelectItem>
+                        <SelectItem value="Manutenção Preventiva">Manutenção Preventiva</SelectItem>
+                        <SelectItem value="Manutenção Corretiva">Manutenção Corretiva</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -143,17 +173,18 @@ export function KanbanIssueForm({
                 name="priority"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Prioridade</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormLabel>Prioridade *</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue />
+                          <SelectValue placeholder="Selecione a prioridade" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="low">Baixa</SelectItem>
                         <SelectItem value="medium">Média</SelectItem>
                         <SelectItem value="high">Alta</SelectItem>
+                        <SelectItem value="critical">Crítica</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -162,17 +193,18 @@ export function KanbanIssueForm({
               />
             </div>
 
+            {/* Contrato + Equipamento */}
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="contract_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Contrato</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormLabel>Contrato *</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Selecione" />
+                          <SelectValue placeholder="Selecione o contrato" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -194,14 +226,18 @@ export function KanbanIssueForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Equipamento</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select 
+                      onValueChange={field.onChange} 
+                      value={field.value}
+                      disabled={!selectedContractId}
+                    >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Selecione" />
+                          <SelectValue placeholder={selectedContractId ? "Selecione" : "Selecione um contrato primeiro"} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {equipment.map((e) => (
+                        {filteredEquipment.map((e) => (
                           <SelectItem key={e.id} value={e.id}>
                             {e.serial_number}
                           </SelectItem>
@@ -214,76 +250,29 @@ export function KanbanIssueForm({
               />
             </div>
 
-            <FormField
-              control={form.control}
-              name="vehicle_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Veículo</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {vehicles.map((v) => (
-                        <SelectItem key={v.id} value={v.id}>
-                          {v.plate} {v.model ? `- ${v.model}` : ''}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Tipo</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o tipo" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="Rompimento de Lacres">Rompimento de Lacres</SelectItem>
-                      <SelectItem value="Fechamento de OS">Fechamento de OS</SelectItem>
-                      <SelectItem value="Manutenção Preventiva">Manutenção Preventiva</SelectItem>
-                      <SelectItem value="Manutenção Corretiva">Manutenção Corretiva</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
+            {/* Localidade */}
             <FormField
               control={form.control}
               name="address"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Endereço</FormLabel>
+                  <FormLabel>Localidade *</FormLabel>
                   <FormControl>
-                    <Input placeholder="Endereço ou localização" {...field} />
+                    <Input placeholder="Ex: Rodovia SP-425, KM 120" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
+            {/* Equipe Responsável */}
             <FormField
               control={form.control}
               name="team"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Equipe</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormLabel>Equipe Responsável *</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione a equipe" />
@@ -303,12 +292,13 @@ export function KanbanIssueForm({
               )}
             />
 
+            {/* Prazo SLA */}
             <FormField
               control={form.control}
               name="due_date"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Data Limite</FormLabel>
+                  <FormLabel>Prazo SLA *</FormLabel>
                   <FormControl>
                     <Input type="date" {...field} />
                   </FormControl>
@@ -317,14 +307,45 @@ export function KanbanIssueForm({
               )}
             />
 
+            {/* Motivo (antiga Coluna) */}
+            <FormField
+              control={form.control}
+              name="column_key"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Motivo *</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o motivo" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {columns.map((col) => (
+                        <SelectItem key={col.key} value={col.key}>
+                          {col.title}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Observações Técnicas */}
             <FormField
               control={form.control}
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Descrição</FormLabel>
+                  <FormLabel>Observações Técnicas</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Detalhes da demanda" rows={3} {...field} />
+                    <Textarea 
+                      placeholder="Adicione informações relevantes sobre a demanda..." 
+                      rows={3} 
+                      {...field} 
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
