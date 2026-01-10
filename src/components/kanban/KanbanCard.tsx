@@ -87,9 +87,16 @@ export function KanbanCard({ issue, columnTitle, onDelete, onClick, onDragStart 
 
       {/* Equipment Serial */}
       {issue.equipment?.serial_number && (
-        <div className="flex items-center gap-2 text-gray-500 text-sm mb-2">
+        <div 
+          className="inline-flex items-center gap-2 text-sm mb-3 px-3 py-1.5 rounded-lg"
+          style={{
+            backgroundColor: '#EEF2FF',
+            border: '1px solid #C7D2FE',
+            color: '#4F46E5',
+          }}
+        >
           <MessageSquare className="h-4 w-4" />
-          <span>{issue.equipment.serial_number}</span>
+          <span className="font-medium">{issue.equipment.serial_number}</span>
         </div>
       )}
       
