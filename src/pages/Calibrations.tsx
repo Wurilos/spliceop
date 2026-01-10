@@ -62,11 +62,35 @@ export default function Calibrations() {
   };
 
   const handleImport = async (data: any[]) => {
-    const firstEquipment = equipment[0];
-    if (!firstEquipment) throw new Error('Cadastre um equipamento primeiro');
-    const dataWithEquipment = data.map(d => ({ ...d, equipment_id: firstEquipment.id }));
+    // Resolve equipment by serial_number and calculate expiration date
+    const dataWithEquipment = data.map(d => {
+      const equipmentItem = equipment.find(e => 
+        e.serial_number?.toLowerCase() === d.equipment_serial?.toLowerCase()
+      );
+      
+      if (!equipmentItem) {
+        throw new Error(`Equipamento não encontrado: ${d.equipment_serial}`);
+      }
+
+      // Calculate expiration date (1 year from calibration)
+      let expirationDate = d.expiration_date;
+      if (!expirationDate && d.calibration_date) {
+        const calibDate = new Date(d.calibration_date);
+        calibDate.setFullYear(calibDate.getFullYear() + 1);
+        expirationDate = calibDate.toISOString().split('T')[0];
+      }
+
+      const { equipment_serial, ...rest } = d;
+      return { 
+        ...rest, 
+        equipment_id: equipmentItem.id,
+        expiration_date: expirationDate
+      };
+    });
+    
     const { error } = await supabase.from('calibrations').insert(dataWithEquipment);
     if (error) throw error;
+    window.location.reload();
   };
 
   return (
@@ -93,6 +117,9 @@ export default function Calibrations() {
                   <DropdownMenuItem onClick={() => handleExport('csv')}>CSV</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+              <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
+                Importar
+              </Button>
               <Button onClick={() => { setEditing(null); setFormOpen(true); }}>
                 <Plus className="h-4 w-4 mr-2" />
                 Nova Aferição
