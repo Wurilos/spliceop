@@ -141,16 +141,12 @@ export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarHeader className="border-b border-sidebar-border p-4">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center justify-center">
           <img 
             src={spliceIcon} 
-            alt="Splice" 
-            className="h-10 w-auto rounded-lg"
+            alt="Splice OP" 
+            className="h-12 w-auto"
           />
-          <div>
-            <h1 className="text-lg font-bold text-sidebar-foreground">Splice OP</h1>
-            <p className="text-xs text-sidebar-foreground/60">Sistema de Gestão Operacional</p>
-          </div>
         </div>
       </SidebarHeader>
 
