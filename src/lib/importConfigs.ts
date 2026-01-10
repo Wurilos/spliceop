@@ -387,15 +387,17 @@ export const advanceImportConfig = {
 // Calibrations import config
 export const calibrationImportConfig = {
   mappings: [
+    { excelColumn: 'Serial Equipamento', dbColumn: 'equipment_serial', required: true, transform: toString },
     { excelColumn: 'Data Aferição', dbColumn: 'calibration_date', required: true, transform: toDate },
-    { excelColumn: 'Data Vencimento', dbColumn: 'expiration_date', required: true, transform: toDate },
+    { excelColumn: 'Data Vencimento', dbColumn: 'expiration_date', transform: toDate },
     { excelColumn: 'Número Certificado', dbColumn: 'certificate_number', transform: toString },
     { excelColumn: 'Número INMETRO', dbColumn: 'inmetro_number', transform: toString },
     { excelColumn: 'Status', dbColumn: 'status', transform: (v: string) => v?.toLowerCase() || 'valid' },
   ] as ColumnMapping[],
   templateColumns: [
+    { key: 'equipment_serial', label: 'Serial Equipamento' },
     { key: 'calibration_date', label: 'Data Aferição' },
-    { key: 'expiration_date', label: 'Data Vencimento' },
+    { key: 'expiration_date', label: 'Data Vencimento (opcional)' },
     { key: 'certificate_number', label: 'Número Certificado' },
     { key: 'inmetro_number', label: 'Número INMETRO' },
     { key: 'status', label: 'Status' },

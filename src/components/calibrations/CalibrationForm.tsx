@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -9,10 +9,13 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tables } from '@/integrations/supabase/types';
 import { useEquipment } from '@/hooks/useEquipment';
+import { useContracts } from '@/hooks/useContracts';
+import { addYears, format } from 'date-fns';
 
 type Calibration = Tables<'calibrations'>;
 
 const schema = z.object({
+  contract_id: z.string().min(1, 'Contrato é obrigatório'),
   equipment_id: z.string().min(1, 'Equipamento é obrigatório'),
   calibration_date: z.string().min(1, 'Data é obrigatória'),
   expiration_date: z.string().min(1, 'Validade é obrigatória'),
@@ -26,21 +29,57 @@ type FormData = z.infer<typeof schema>;
 interface CalibrationFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (data: FormData) => void;
+  onSubmit: (data: Omit<FormData, 'contract_id'>) => void;
   initialData?: Calibration | null;
   loading?: boolean;
 }
 
 export function CalibrationForm({ open, onOpenChange, onSubmit, initialData, loading }: CalibrationFormProps) {
   const { equipment } = useEquipment();
+  const { contracts } = useContracts();
+
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { equipment_id: '', calibration_date: '', expiration_date: '', certificate_number: '', inmetro_number: '', status: 'valid' },
+    defaultValues: { 
+      contract_id: '',
+      equipment_id: '', 
+      calibration_date: '', 
+      expiration_date: '', 
+      certificate_number: '', 
+      inmetro_number: '', 
+      status: 'valid' 
+    },
   });
+
+  const selectedContractId = form.watch('contract_id');
+  const calibrationDate = form.watch('calibration_date');
+
+  // Filter equipment by selected contract
+  const filteredEquipment = useMemo(() => {
+    if (!selectedContractId) return [];
+    return equipment.filter(e => e.contract_id === selectedContractId);
+  }, [equipment, selectedContractId]);
+
+  // Auto-calculate expiration date (1 year from calibration date)
+  useEffect(() => {
+    if (calibrationDate) {
+      const expirationDate = addYears(new Date(calibrationDate), 1);
+      form.setValue('expiration_date', format(expirationDate, 'yyyy-MM-dd'));
+    }
+  }, [calibrationDate, form]);
+
+  // Reset equipment when contract changes
+  useEffect(() => {
+    if (selectedContractId && !initialData) {
+      form.setValue('equipment_id', '');
+    }
+  }, [selectedContractId, form, initialData]);
 
   useEffect(() => {
     if (initialData) {
+      const equipmentItem = equipment.find(e => e.id === initialData.equipment_id);
       form.reset({
+        contract_id: equipmentItem?.contract_id || '',
         equipment_id: initialData.equipment_id,
         calibration_date: initialData.calibration_date,
         expiration_date: initialData.expiration_date,
@@ -49,44 +88,102 @@ export function CalibrationForm({ open, onOpenChange, onSubmit, initialData, loa
         status: (initialData.status as 'valid' | 'expired' | 'pending') || 'valid',
       });
     } else {
-      form.reset({ equipment_id: '', calibration_date: '', expiration_date: '', certificate_number: '', inmetro_number: '', status: 'valid' });
+      form.reset({ 
+        contract_id: '',
+        equipment_id: '', 
+        calibration_date: '', 
+        expiration_date: '', 
+        certificate_number: '', 
+        inmetro_number: '', 
+        status: 'valid' 
+      });
     }
-  }, [initialData, form]);
+  }, [initialData, form, equipment]);
+
+  const handleSubmit = (data: FormData) => {
+    // Remove contract_id as it's not in the calibrations table
+    const { contract_id, ...submitData } = data;
+    onSubmit(submitData);
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader><DialogTitle>{initialData ? 'Editar Aferição' : 'Nova Aferição'}</DialogTitle></DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField control={form.control} name="equipment_id" render={({ field }) => (
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+            <FormField control={form.control} name="contract_id" render={({ field }) => (
               <FormItem>
-                <FormLabel>Equipamento</FormLabel>
+                <FormLabel>Contrato</FormLabel>
                 <Select onValueChange={field.onChange} value={field.value}>
-                  <FormControl><SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger></FormControl>
+                  <FormControl><SelectTrigger><SelectValue placeholder="Selecione o contrato" /></SelectTrigger></FormControl>
                   <SelectContent>
-                    {equipment.map((e) => <SelectItem key={e.id} value={e.id}>{e.serial_number} - {e.type}</SelectItem>)}
+                    {contracts.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.number} - {c.client_name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <FormMessage />
               </FormItem>
             )} />
+
+            <FormField control={form.control} name="equipment_id" render={({ field }) => (
+              <FormItem>
+                <FormLabel>Equipamento</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value} disabled={!selectedContractId}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder={selectedContractId ? "Selecione o equipamento" : "Selecione um contrato primeiro"} />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {filteredEquipment.map((e) => (
+                      <SelectItem key={e.id} value={e.id}>
+                        {e.serial_number} - {e.type}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )} />
+
             <div className="grid grid-cols-2 gap-4">
               <FormField control={form.control} name="calibration_date" render={({ field }) => (
-                <FormItem><FormLabel>Data Aferição</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>
+                <FormItem>
+                  <FormLabel>Data Aferição</FormLabel>
+                  <FormControl><Input type="date" {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
               )} />
               <FormField control={form.control} name="expiration_date" render={({ field }) => (
-                <FormItem><FormLabel>Validade</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>
+                <FormItem>
+                  <FormLabel>Validade (auto)</FormLabel>
+                  <FormControl><Input type="date" {...field} readOnly className="bg-muted" /></FormControl>
+                  <FormMessage />
+                </FormItem>
               )} />
             </div>
+
             <div className="grid grid-cols-2 gap-4">
               <FormField control={form.control} name="certificate_number" render={({ field }) => (
-                <FormItem><FormLabel>Nº Certificado</FormLabel><FormControl><Input placeholder="CERT-001" {...field} /></FormControl><FormMessage /></FormItem>
+                <FormItem>
+                  <FormLabel>Nº Certificado</FormLabel>
+                  <FormControl><Input placeholder="CERT-001" {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
               )} />
               <FormField control={form.control} name="inmetro_number" render={({ field }) => (
-                <FormItem><FormLabel>Nº INMETRO</FormLabel><FormControl><Input placeholder="INMETRO-001" {...field} /></FormControl><FormMessage /></FormItem>
+                <FormItem>
+                  <FormLabel>Nº INMETRO</FormLabel>
+                  <FormControl><Input placeholder="INMETRO-001" {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
               )} />
             </div>
+
             <FormField control={form.control} name="status" render={({ field }) => (
               <FormItem>
                 <FormLabel>Status</FormLabel>
@@ -101,6 +198,7 @@ export function CalibrationForm({ open, onOpenChange, onSubmit, initialData, loa
                 <FormMessage />
               </FormItem>
             )} />
+
             <div className="flex justify-end gap-2 pt-4">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
               <Button type="submit" disabled={loading}>{loading ? 'Salvando...' : initialData ? 'Salvar' : 'Criar'}</Button>
