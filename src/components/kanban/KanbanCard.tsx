@@ -28,6 +28,13 @@ const priorityLabels: Record<string, string> = {
   low: 'Baixa',
 };
 
+const typeColors: Record<string, string> = {
+  'Aferição': 'bg-orange-100 text-orange-700 border-orange-300',
+  'Manutenção Preventiva': 'bg-green-100 text-green-700 border-green-300',
+  'Manutenção Corretiva': 'bg-red-100 text-red-700 border-red-300',
+  'Manutenção Veicular': 'bg-cyan-100 text-cyan-700 border-cyan-300',
+};
+
 export function KanbanCard({ issue, columnTitle, onDelete, onClick, onDragStart }: KanbanCardProps) {
   const handleClick = (e: React.MouseEvent) => {
     // Don't open modal when clicking delete button
@@ -45,9 +52,11 @@ export function KanbanCard({ issue, columnTitle, onDelete, onClick, onDragStart 
       <CardHeader className="p-3 pb-2 space-y-2">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <Badge variant="outline" className="text-xs font-medium">
-              {columnTitle}
-            </Badge>
+            {issue.type && (
+              <Badge variant="outline" className={`text-xs font-medium ${typeColors[issue.type] || 'bg-gray-100 text-gray-700 border-gray-300'}`}>
+                {issue.type}
+              </Badge>
+            )}
             {issue.priority && (
               <Badge className={priorityColors[issue.priority] || priorityColors.medium}>
                 {priorityLabels[issue.priority] || issue.priority}
@@ -78,9 +87,9 @@ export function KanbanCard({ issue, columnTitle, onDelete, onClick, onDragStart 
           </div>
         )}
         
-        {issue.type && (
+        {issue.status && (
           <Badge variant="secondary" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
-            {issue.type}
+            {issue.status}
           </Badge>
         )}
 
