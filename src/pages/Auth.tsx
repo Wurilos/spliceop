@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Check } from 'lucide-react';
 import { z } from 'zod';
-import spliceLogo from '@/assets/splice-logo.png';
+import spliceIcon from '@/assets/splice-icon.png';
 
 const ALLOWED_EMAIL_DOMAIN = '@splice.com.br';
 const ADMIN_EMAIL = 'sergio.silva@splice.com.br';
@@ -165,9 +165,9 @@ export default function Auth() {
           {/* Logo Box */}
           <div className="flex items-center gap-4 mb-8">
             <img 
-              src={spliceLogo} 
+              src={spliceIcon} 
               alt="Splice" 
-              className="h-12 w-auto"
+              className="h-14 w-auto rounded-lg"
             />
             <div>
               <h1 className="text-2xl font-bold text-white">
@@ -214,9 +214,9 @@ export default function Auth() {
           <CardHeader className="text-center pb-2">
             <div className="flex items-center justify-center gap-2 mb-4 lg:hidden">
               <img 
-                src={spliceLogo} 
+                src={spliceIcon} 
                 alt="Splice" 
-                className="h-8 w-auto"
+                className="h-10 w-auto rounded-lg"
               />
             </div>
             <CardTitle className="text-2xl">Acesse sua conta</CardTitle>
