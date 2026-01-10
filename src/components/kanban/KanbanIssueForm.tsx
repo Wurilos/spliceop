@@ -28,6 +28,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { KanbanColumn } from '@/hooks/useKanbanColumns';
+import { useAllKanbanSubitems } from '@/hooks/useKanbanSubitems';
 
 const formSchema = z.object({
   title: z.string().min(1, 'Título é obrigatório'),
@@ -43,38 +44,6 @@ const formSchema = z.object({
   equipment_id: z.string().optional(),
   vehicle_id: z.string().optional(),
 });
-
-// Mapeamento de substatus por tipo de demanda
-const substatusByType: Record<string, string[]> = {
-  'Aferição': [
-    'Rompimento de Lacres',
-    'Aguardando lacres',
-    'Fechamento de O.S',
-    'Aguardando GRU',
-    'Aguardando pagamento de GRU',
-    'Aguardando data de aferição',
-  ],
-  'Energia': [
-    'Conjunta com fornecedor',
-    'Falta de pagamento',
-    'Vandalismo',
-    'Pausa temporária',
-  ],
-  'Internet': [
-    'Conjunta com fornecedor',
-    'Falta de pagamento',
-    'Vandalismo',
-  ],
-  'Infraestrutura': [
-    'Aguardando material',
-    'Aguardando Adiantamento',
-  ],
-  'Manutenção Veicular': [
-    'Aguardando setor de transporte',
-    'Aguardando Locadora',
-    'Aguardando Oficina',
-  ],
-};
 
 type FormData = z.infer<typeof formSchema>;
 
@@ -97,6 +66,8 @@ export function KanbanIssueForm({
   vehicles,
   onSubmit,
 }: KanbanIssueFormProps) {
+  const { subitemsByType } = useAllKanbanSubitems();
+  
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -232,7 +203,7 @@ export function KanbanIssueForm({
             </div>
 
             {/* Substatus baseado no tipo de demanda */}
-            {selectedType && substatusByType[selectedType] && (
+            {selectedType && subitemsByType[selectedType] && subitemsByType[selectedType].length > 0 && (
               <FormField
                 control={form.control}
                 name="status"
@@ -246,7 +217,7 @@ export function KanbanIssueForm({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {substatusByType[selectedType].map((option) => (
+                        {subitemsByType[selectedType].map((option) => (
                           <SelectItem key={option} value={option}>
                             {option}
                           </SelectItem>
@@ -258,7 +229,6 @@ export function KanbanIssueForm({
                 )}
               />
             )}
-
             {/* Contrato + Equipamento */}
             <div className="grid grid-cols-2 gap-4">
               <FormField

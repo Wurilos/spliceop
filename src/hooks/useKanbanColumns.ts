@@ -72,6 +72,7 @@ export function useKanbanColumns() {
     activeColumns: columns.filter(c => c.is_active),
     isLoading,
     createColumn: createMutation.mutate,
+    createColumnAsync: createMutation.mutateAsync,
     updateColumn: updateMutation.mutate,
     deleteColumn: deleteMutation.mutate,
   };
