@@ -56,13 +56,13 @@ export function KanbanCard({ issue, columnTitle, onDelete, onClick, onDragStart 
         <div className="flex items-center gap-2">
           {issue.priority && (
             <span 
-              className="px-2.5 py-1 rounded-md text-xs font-semibold text-white"
+              className="px-2.5 py-1 rounded-md text-xs font-semibold"
               style={{
-                background: issue.priority === 'critical' ? 'linear-gradient(90deg, #9333EA, #7C3AED)' :
-                           issue.priority === 'high' ? 'linear-gradient(90deg, #F43F5E, #FB923C)' :
-                           issue.priority === 'medium' ? 'linear-gradient(90deg, #FBBF24, #FCD34D)' :
-                           '#E5E7EB',
-                color: issue.priority === 'low' ? '#6B7280' : 'white',
+                backgroundColor: issue.priority === 'critical' ? '#DC2626' :
+                                issue.priority === 'high' ? '#F97316' :
+                                issue.priority === 'medium' ? '#EAB308' :
+                                '#16A34A',
+                color: issue.priority === 'medium' ? '#1F2937' : 'white',
               }}
             >
               {priorityLabels[issue.priority] || issue.priority}
@@ -90,14 +90,14 @@ export function KanbanCard({ issue, columnTitle, onDelete, onClick, onDragStart 
       {/* Equipment Serial - Full Width */}
       {issue.equipment?.serial_number && (
         <div 
-          className="flex items-center gap-2 text-sm mb-3 px-3 py-2 rounded-lg w-full"
+          className="flex items-center gap-2 text-xs mb-3 px-3 py-2 rounded-lg w-full"
           style={{
             backgroundColor: '#EEF2FF',
             border: '1px solid #C7D2FE',
             color: '#4F46E5',
           }}
         >
-          <MessageSquare className="h-4 w-4" />
+          <MessageSquare className="h-3.5 w-3.5" />
           <span className="font-medium">{issue.equipment.serial_number}</span>
         </div>
       )}
@@ -118,16 +118,16 @@ export function KanbanCard({ issue, columnTitle, onDelete, onClick, onDragStart 
 
       {/* Address */}
       {issue.address && (
-        <div className="flex items-center gap-2 text-gray-500 text-sm mb-1.5">
-          <MapPin className="h-4 w-4 flex-shrink-0" />
+        <div className="flex items-center gap-2 text-gray-500 text-xs mb-1.5">
+          <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
           <span>{issue.address}</span>
         </div>
       )}
 
       {/* Team */}
       {issue.team && (
-        <div className="flex items-center gap-2 text-gray-500 text-sm mb-3">
-          <Users className="h-4 w-4 flex-shrink-0" />
+        <div className="flex items-center gap-2 text-gray-500 text-xs mb-3">
+          <Users className="h-3.5 w-3.5 flex-shrink-0" />
           <span>{issue.team}</span>
         </div>
       )}
