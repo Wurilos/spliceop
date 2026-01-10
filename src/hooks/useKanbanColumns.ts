@@ -67,6 +67,23 @@ export function useKanbanColumns() {
     onError: () => toast.error('Erro ao excluir coluna'),
   });
 
+  const reorderMutation = useMutation({
+    mutationFn: async (reorderedColumns: { id: string; order_index: number }[]) => {
+      // Update each column's order_index
+      const promises = reorderedColumns.map(({ id, order_index }) =>
+        supabase.from('kanban_columns').update({ order_index }).eq('id', id)
+      );
+      const results = await Promise.all(promises);
+      const hasError = results.some(r => r.error);
+      if (hasError) throw new Error('Erro ao reordenar colunas');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['kanban_columns'] });
+      toast.success('Ordem atualizada!');
+    },
+    onError: () => toast.error('Erro ao reordenar colunas'),
+  });
+
   return {
     columns,
     activeColumns: columns.filter(c => c.is_active),
@@ -75,5 +92,6 @@ export function useKanbanColumns() {
     createColumnAsync: createMutation.mutateAsync,
     updateColumn: updateMutation.mutate,
     deleteColumn: deleteMutation.mutate,
+    reorderColumns: reorderMutation.mutate,
   };
 }
