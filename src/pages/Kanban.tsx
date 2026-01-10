@@ -143,7 +143,7 @@ export default function Kanban() {
         onOpenChange={setShowForm}
         columns={activeColumns}
         contracts={contracts.map(c => ({ id: c.id, number: c.number, client_name: c.client_name }))}
-        equipment={equipment.map(e => ({ id: e.id, serial_number: e.serial_number }))}
+        equipment={equipment.map(e => ({ id: e.id, serial_number: e.serial_number, address: e.address || null, contract_id: e.contract_id || null }))}
         vehicles={vehicles.map(v => ({ id: v.id, plate: v.plate, model: v.model }))}
         onSubmit={handleCreateIssue}
       />
