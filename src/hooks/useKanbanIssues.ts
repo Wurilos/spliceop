@@ -95,8 +95,14 @@ export function useKanbanIssues() {
   });
 
   const moveIssue = useMutation({
-    mutationFn: async ({ id, column_key }: { id: string; column_key: string }) => {
-      const { error } = await supabase.from('pending_issues').update({ column_key }).eq('id', id);
+    mutationFn: async ({ id, column_key, newType }: { id: string; column_key: string; newType?: string }) => {
+      // When moving to a new column, update the type to match the column and reset substatus
+      const updateData: Record<string, any> = { column_key };
+      if (newType) {
+        updateData.type = newType;
+        updateData.status = null; // Reset substatus when changing column/type
+      }
+      const { error } = await supabase.from('pending_issues').update(updateData).eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => {

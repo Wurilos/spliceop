@@ -54,7 +54,10 @@ export default function Kanban() {
   const handleDrop = (e: React.DragEvent, columnKey: string) => {
     e.preventDefault();
     if (draggedId) {
-      moveIssue({ id: draggedId, column_key: columnKey });
+      // Find the target column to get its title (which becomes the new type)
+      const targetColumn = activeColumns.find(col => col.key === columnKey);
+      const newType = targetColumn?.title;
+      moveIssue({ id: draggedId, column_key: columnKey, newType });
       setDraggedId(null);
     }
   };
