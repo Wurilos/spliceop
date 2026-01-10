@@ -87,9 +87,11 @@ export function KanbanIssueForm({
   });
 
   const selectedType = form.watch('type');
-
   const selectedContractId = form.watch('contract_id');
   const selectedEquipmentId = form.watch('equipment_id');
+
+  // Check if the selected type is vehicle-related
+  const isVehicleType = selectedType === 'Manutenção Veicular';
 
   // Filter equipment by selected contract
   const filteredEquipment = selectedContractId
@@ -98,19 +100,20 @@ export function KanbanIssueForm({
 
   // Auto-fill address when equipment is selected
   useEffect(() => {
-    if (selectedEquipmentId) {
+    if (selectedEquipmentId && !isVehicleType) {
       const selectedEquip = equipment.find((e) => e.id === selectedEquipmentId);
       if (selectedEquip?.address) {
         form.setValue('address', selectedEquip.address);
       }
     }
-  }, [selectedEquipmentId, equipment, form]);
+  }, [selectedEquipmentId, equipment, form, isVehicleType]);
 
-  // Reset equipment when contract changes
+  // Reset asset selection when contract or type changes
   useEffect(() => {
     form.setValue('equipment_id', '');
+    form.setValue('vehicle_id', '');
     form.setValue('address', '');
-  }, [selectedContractId, form]);
+  }, [selectedContractId, selectedType, form]);
 
   const handleSubmit = (data: FormData) => {
     // Find the column that matches the selected type
@@ -259,34 +262,65 @@ export function KanbanIssueForm({
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="equipment_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Equipamento</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange} 
-                      value={field.value}
-                      disabled={!selectedContractId}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder={selectedContractId ? "Selecione" : "Selecione um contrato primeiro"} />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {filteredEquipment.map((e) => (
-                          <SelectItem key={e.id} value={e.id}>
-                            {e.serial_number}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {isVehicleType ? (
+                <FormField
+                  control={form.control}
+                  name="vehicle_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Veículo</FormLabel>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        value={field.value}
+                        disabled={!selectedContractId}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder={selectedContractId ? "Selecione" : "Selecione um contrato primeiro"} />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {vehicles.map((v) => (
+                            <SelectItem key={v.id} value={v.id}>
+                              {v.plate} {v.model ? `- ${v.model}` : ''}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              ) : (
+                <FormField
+                  control={form.control}
+                  name="equipment_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Equipamento</FormLabel>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        value={field.value}
+                        disabled={!selectedContractId}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder={selectedContractId ? "Selecione" : "Selecione um contrato primeiro"} />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {filteredEquipment.map((e) => (
+                            <SelectItem key={e.id} value={e.id}>
+                              {e.serial_number}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
             </div>
 
             {/* Localidade */}
