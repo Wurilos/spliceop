@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { DataTable, Column, StatusBadge } from '@/components/shared/DataTable';
+import { DataTable, Column } from '@/components/shared/DataTable';
 import { DeleteDialog } from '@/components/shared/DeleteDialog';
 import { ImportDialog } from '@/components/shared/ImportDialog';
 import { useCalibrations } from '@/hooks/useCalibrations';
@@ -25,6 +25,17 @@ import {
 
 type Calibration = Tables<'calibrations'> & { equipment?: { serial_number: string; type: string | null; brand: string | null; contract_id?: string | null } | null };
 
+// Custom status badge with color scale for calibrations
+function CalibrationStatusBadge({ status }: { status: string }) {
+  const config: Record<string, { className: string; label: string }> = {
+    valid: { className: 'bg-emerald-500 text-white hover:bg-emerald-600', label: 'Válido' },
+    pending: { className: 'bg-amber-500 text-white hover:bg-amber-600', label: 'Pendente' },
+    expired: { className: 'bg-red-500 text-white hover:bg-red-600', label: 'Vencido' },
+  };
+  const { className, label } = config[status] || { className: 'bg-muted text-muted-foreground', label: status };
+  return <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors ${className}`}>{label}</span>;
+}
+
 const columns: Column<Calibration>[] = [
   { key: 'equipment.serial_number', label: 'Equipamento', render: (_, row) => row.equipment?.serial_number || '-' },
   { key: 'equipment.type', label: 'Tipo', render: (_, row) => row.equipment?.type || '-' },
@@ -32,7 +43,7 @@ const columns: Column<Calibration>[] = [
   { key: 'expiration_date', label: 'Validade', render: (v) => format(new Date(String(v)), 'dd/MM/yyyy') },
   { key: 'certificate_number', label: 'Certificado' },
   { key: 'inmetro_number', label: 'Nº INMETRO' },
-  { key: 'status', label: 'Status', render: (v) => <StatusBadge status={String(v || 'valid')} /> },
+  { key: 'status', label: 'Status', render: (v) => <CalibrationStatusBadge status={String(v || 'valid')} /> },
 ];
 
 export default function Calibrations() {
@@ -167,7 +178,8 @@ export default function Calibrations() {
               data={calibrations} 
               columns={columns} 
               loading={loading} 
-              searchPlaceholder="Buscar..." 
+              searchPlaceholder="Buscar por Nº equipamento..." 
+              searchKey="equipment.serial_number"
               onEdit={(r) => { setEditing(r); setFormOpen(true); }} 
               onDelete={setDeleting} 
             />
