@@ -3,12 +3,17 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { DataTable } from '@/components/shared/DataTable';
 import { DeleteDialog } from '@/components/shared/DeleteDialog';
+import { ImportDialog } from '@/components/shared/ImportDialog';
 import { PhoneLineForm } from '@/components/phone-lines/PhoneLineForm';
 import { PhoneLinesDashboard } from '@/components/phone-lines/PhoneLinesDashboard';
 import { usePhoneLines, type PhoneLine } from '@/hooks/usePhoneLines';
+import { useContracts } from '@/hooks/useContracts';
+import { useEquipment } from '@/hooks/useEquipment';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { exportToExcel, exportToPDF } from '@/lib/export';
+import { phoneLineImportConfig } from '@/lib/importConfigs';
+import { supabase } from '@/integrations/supabase/client';
 
 const columns = [
   { 
@@ -45,7 +50,10 @@ const columns = [
 
 export default function PhoneLines() {
   const { phoneLines, loading, createPhoneLine, updatePhoneLine, deletePhoneLine, isCreating, isUpdating, isDeleting } = usePhoneLines();
+  const { contracts } = useContracts();
+  const { equipment } = useEquipment();
   const [formOpen, setFormOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [selectedPhoneLine, setSelectedPhoneLine] = useState<PhoneLine | null>(null);
 
@@ -110,6 +118,41 @@ export default function PhoneLines() {
     }
   };
 
+  const handleImport = async (data: any[]) => {
+    const dataWithIds = data.map(d => {
+      // Resolve contract by number or client name
+      const contract = contracts.find(c => 
+        c.number?.toLowerCase() === d.contract_ref?.toLowerCase() ||
+        c.client_name?.toLowerCase() === d.contract_ref?.toLowerCase()
+      );
+      
+      if (!contract) {
+        throw new Error(`Contrato não encontrado: ${d.contract_ref}`);
+      }
+
+      // Find equipment by serial within the contract
+      const equipmentItem = equipment.find(e => 
+        e.serial_number?.toLowerCase() === d.equipment_serial?.toLowerCase() &&
+        e.contract_id === contract.id
+      );
+      
+      if (!equipmentItem) {
+        throw new Error(`Equipamento "${d.equipment_serial}" não encontrado no contrato "${d.contract_ref}"`);
+      }
+
+      const { contract_ref, equipment_serial, ...rest } = d;
+      return { 
+        ...rest, 
+        contract_id: contract.id,
+        equipment_id: equipmentItem.id,
+      };
+    });
+    
+    const { error } = await supabase.from('phone_lines').insert(dataWithIds);
+    if (error) throw error;
+    window.location.reload();
+  };
+
   return (
     <AppLayout>
       <div className="space-y-6">
@@ -119,6 +162,7 @@ export default function PhoneLines() {
           onAdd={handleCreate}
           addLabel="Nova Linha"
           onExport={handleExport}
+          onImport={() => setImportOpen(true)}
         />
 
         <Tabs defaultValue="dashboard" className="space-y-4">
@@ -157,6 +201,17 @@ export default function PhoneLines() {
           loading={isDeleting}
           title="Excluir Linha"
           description="Tem certeza que deseja excluir esta linha? Esta ação não pode ser desfeita."
+        />
+
+        <ImportDialog
+          open={importOpen}
+          onOpenChange={setImportOpen}
+          title="Importar Linhas / Chip"
+          description="Importe linhas a partir de uma planilha Excel"
+          columnMappings={phoneLineImportConfig.mappings}
+          templateColumns={phoneLineImportConfig.templateColumns}
+          templateFilename="linhas-chip"
+          onImport={handleImport}
         />
       </div>
     </AppLayout>

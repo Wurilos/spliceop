@@ -583,3 +583,28 @@ export const goalImportConfig = {
     { key: 'percentage', label: 'Percentual' },
   ],
 };
+
+// Phone Lines import config
+export const phoneLineImportConfig = {
+  mappings: [
+    { excelColumn: 'Contrato', dbColumn: 'contract_ref', required: true, transform: toString },
+    { excelColumn: 'Serial Equipamento', dbColumn: 'equipment_serial', required: true, transform: toString },
+    { excelColumn: 'Número Linha', dbColumn: 'line_number', required: true, transform: toString },
+    { excelColumn: 'Operadora', dbColumn: 'carrier', required: true, transform: toString },
+    { excelColumn: 'Sub Operadora', dbColumn: 'sub_carrier', transform: toString },
+    { excelColumn: 'Status', dbColumn: 'status', transform: (v: string) => {
+      const lower = v?.toLowerCase()?.trim();
+      if (lower === 'ativa' || lower === 'active') return 'active';
+      if (lower === 'inativa' || lower === 'inactive') return 'inactive';
+      return 'active';
+    }},
+  ] as ColumnMapping[],
+  templateColumns: [
+    { key: 'contract_ref', label: 'Contrato' },
+    { key: 'equipment_serial', label: 'Serial Equipamento' },
+    { key: 'line_number', label: 'Número Linha' },
+    { key: 'carrier', label: 'Operadora' },
+    { key: 'sub_carrier', label: 'Sub Operadora' },
+    { key: 'status', label: 'Status (Ativa/Inativa)' },
+  ],
+};
