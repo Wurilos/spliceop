@@ -85,10 +85,10 @@ export function KanbanCard({ issue, columnTitle, onDelete, onClick, onDragStart 
         {issue.title}
       </h4>
 
-      {/* Equipment Serial */}
+      {/* Equipment Serial - Full Width */}
       {issue.equipment?.serial_number && (
         <div 
-          className="inline-flex items-center gap-2 text-sm mb-3 px-3 py-1.5 rounded-lg"
+          className="flex items-center gap-2 text-sm mb-3 px-3 py-2 rounded-lg w-full"
           style={{
             backgroundColor: '#EEF2FF',
             border: '1px solid #C7D2FE',
@@ -100,10 +100,10 @@ export function KanbanCard({ issue, columnTitle, onDelete, onClick, onDragStart 
         </div>
       )}
       
-      {/* Substatus Badge - Purple/Violet */}
+      {/* Substatus Badge - Full Width */}
       {issue.status && (
         <div 
-          className="inline-block px-3 py-1.5 rounded-lg text-xs font-medium mb-3"
+          className="flex items-center px-3 py-2 rounded-lg text-xs font-medium mb-3 w-full"
           style={{
             backgroundColor: '#F3E8FF',
             color: '#7C3AED',
