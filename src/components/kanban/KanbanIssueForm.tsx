@@ -157,10 +157,11 @@ export function KanbanIssueForm({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="Rompimento de Lacres">Rompimento de Lacres</SelectItem>
-                        <SelectItem value="Fechamento de OS">Fechamento de OS</SelectItem>
-                        <SelectItem value="Manutenção Preventiva">Manutenção Preventiva</SelectItem>
-                        <SelectItem value="Manutenção Corretiva">Manutenção Corretiva</SelectItem>
+                        {columns.map((col) => (
+                          <SelectItem key={col.key} value={col.title}>
+                            {col.title}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />
