@@ -147,7 +147,12 @@ export function useKanbanIssues() {
       // Get current issue to track column change
       const { data: currentIssue } = await supabase
         .from('pending_issues')
-        .select('column_key, type')
+        .select(`
+          *,
+          contracts!fk_pending_issues_contract(number, client_name),
+          equipment!fk_pending_issues_equipment(serial_number),
+          vehicles(plate)
+        `)
         .eq('id', id)
         .single();
       
@@ -157,6 +162,36 @@ export function useKanbanIssues() {
         updateData.type = newType;
         updateData.status = null; // Reset substatus when changing column/type
       }
+      
+      // If moving to "Concluído", set completed_at and archive the issue
+      const isMovingToCompleted = newType === 'Concluído' || column_key === 'concluido';
+      if (isMovingToCompleted) {
+        updateData.completed_at = new Date().toISOString();
+        
+        // Archive the issue
+        if (currentIssue) {
+          await supabase.from('archived_issues').insert({
+            original_issue_id: id,
+            title: currentIssue.title,
+            description: currentIssue.description,
+            priority: currentIssue.priority,
+            type: newType || currentIssue.type,
+            status: currentIssue.status,
+            address: currentIssue.address,
+            team: currentIssue.team,
+            due_date: currentIssue.due_date,
+            contract_id: currentIssue.contract_id,
+            equipment_id: currentIssue.equipment_id,
+            vehicle_id: currentIssue.vehicle_id,
+            contract_name: currentIssue.contracts?.client_name || null,
+            equipment_serial: currentIssue.equipment?.serial_number || null,
+            vehicle_plate: currentIssue.vehicles?.plate || null,
+            created_at: currentIssue.created_at,
+            completed_at: new Date().toISOString(),
+          });
+        }
+      }
+      
       const { error } = await supabase.from('pending_issues').update(updateData).eq('id', id);
       if (error) throw error;
       
@@ -174,6 +209,7 @@ export function useKanbanIssues() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['kanban_issues'] });
       queryClient.invalidateQueries({ queryKey: ['issue_history'] });
+      queryClient.invalidateQueries({ queryKey: ['archived-issues'] });
     },
     onError: () => toast.error('Erro ao mover demanda'),
   });
