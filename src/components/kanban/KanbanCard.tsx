@@ -32,9 +32,9 @@ export function KanbanCard({ issue, columnTitle, onDelete, onClick, onDragStart 
       onClick={handleClick}
       className="cursor-grab active:cursor-grabbing bg-white rounded-2xl border border-gray-100 p-4 hover:shadow-md transition-shadow"
     >
-      {/* Top Row: Type + Priority + Delete */}
+      {/* Top Row: Type on left, Priority + Delete on right */}
       <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center">
           {issue.type && (
             <span 
               className="px-2.5 py-1 rounded-md text-xs font-medium"
@@ -52,6 +52,8 @@ export function KanbanCard({ issue, columnTitle, onDelete, onClick, onDragStart 
               {issue.type}
             </span>
           )}
+        </div>
+        <div className="flex items-center gap-2">
           {issue.priority && (
             <span 
               className="px-2.5 py-1 rounded-md text-xs font-semibold text-white"
@@ -66,18 +68,18 @@ export function KanbanCard({ issue, columnTitle, onDelete, onClick, onDragStart 
               {priorityLabels[issue.priority] || issue.priority}
             </span>
           )}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 text-gray-400 hover:text-red-500 hover:bg-transparent"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(issue.id);
+            }}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-6 w-6 text-gray-400 hover:text-red-500 hover:bg-transparent"
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete(issue.id);
-          }}
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
       </div>
 
       {/* Title */}
