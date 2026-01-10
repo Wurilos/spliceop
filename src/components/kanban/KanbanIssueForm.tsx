@@ -35,6 +35,7 @@ const formSchema = z.object({
   priority: z.string().default('medium'),
   column_key: z.string().min(1, 'Motivo é obrigatório'),
   type: z.string().min(1, 'Tipo é obrigatório'),
+  status: z.string().optional(),
   address: z.string().min(1, 'Localidade é obrigatória'),
   team: z.string().min(1, 'Equipe é obrigatória'),
   due_date: z.string().min(1, 'Prazo SLA é obrigatório'),
@@ -42,6 +43,14 @@ const formSchema = z.object({
   equipment_id: z.string().optional(),
   vehicle_id: z.string().optional(),
 });
+
+const afericaoSubstatusOptions = [
+  'Rompimento de Lacres',
+  'Aguardando lacres',
+  'Fechamento de O.S',
+  'Aguardando GRU',
+  'Aguardando pagamento de GRU',
+];
 
 type FormData = z.infer<typeof formSchema>;
 
@@ -72,6 +81,7 @@ export function KanbanIssueForm({
       priority: 'medium',
       column_key: columns[0]?.key || '',
       type: '',
+      status: '',
       address: '',
       team: '',
       due_date: '',
@@ -80,6 +90,8 @@ export function KanbanIssueForm({
       vehicle_id: '',
     },
   });
+
+  const selectedType = form.watch('type');
 
   const selectedContractId = form.watch('contract_id');
   const selectedEquipmentId = form.watch('equipment_id');
@@ -193,6 +205,34 @@ export function KanbanIssueForm({
                 )}
               />
             </div>
+
+            {/* Substatus para Aferição */}
+            {selectedType === 'Aferição' && (
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Substatus</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o substatus" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {afericaoSubstatusOptions.map((option) => (
+                          <SelectItem key={option} value={option}>
+                            {option}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             {/* Contrato + Equipamento */}
             <div className="grid grid-cols-2 gap-4">
