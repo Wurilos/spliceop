@@ -25,6 +25,25 @@ export interface KanbanIssue {
   employees?: { full_name: string } | null;
 }
 
+// Helper function to add history entry
+async function addHistoryEntry(entry: {
+  issue_id: string;
+  action: string;
+  old_value?: string | null;
+  new_value?: string | null;
+  field_name?: string | null;
+}) {
+  await supabase
+    .from('pending_issues_history')
+    .insert({
+      issue_id: entry.issue_id,
+      action: entry.action,
+      old_value: entry.old_value || null,
+      new_value: entry.new_value || null,
+      field_name: entry.field_name || null,
+    });
+}
+
 export function useKanbanIssues() {
   const queryClient = useQueryClient();
 
@@ -52,7 +71,15 @@ export function useKanbanIssues() {
       const { data, error } = await supabase.from('pending_issues').insert(cleanIssue).select().single();
       if (error) throw error;
       
-      // Atualiza status do equipamento para "maintenance" se equipamento foi selecionado
+      // Add creation history
+      await addHistoryEntry({
+        issue_id: data.id,
+        action: 'created',
+        new_value: issue.type || 'Demanda',
+        field_name: 'type',
+      });
+      
+      // Update equipment status to "maintenance" if equipment was selected
       if (cleanIssue.equipment_id) {
         await supabase
           .from('equipment')
@@ -60,7 +87,7 @@ export function useKanbanIssues() {
           .eq('id', cleanIssue.equipment_id);
       }
       
-      // Atualiza status do veículo para "maintenance" se veículo foi selecionado
+      // Update vehicle status to "maintenance" if vehicle was selected
       if (cleanIssue.vehicle_id) {
         await supabase
           .from('vehicles')
@@ -82,12 +109,33 @@ export function useKanbanIssues() {
   const updateMutation = useMutation({
     mutationFn: async ({ id, ...issue }: Partial<KanbanIssue> & { id: string }) => {
       const { contracts, equipment, vehicles, employees, ...cleanIssue } = issue as any;
+      
+      // Get current issue to track changes
+      const { data: currentIssue } = await supabase
+        .from('pending_issues')
+        .select('status, priority, team')
+        .eq('id', id)
+        .single();
+      
       const { data, error } = await supabase.from('pending_issues').update(cleanIssue).eq('id', id).select().single();
       if (error) throw error;
+      
+      // Track status change
+      if (cleanIssue.status !== undefined && currentIssue?.status !== cleanIssue.status) {
+        await addHistoryEntry({
+          issue_id: id,
+          action: 'status_changed',
+          old_value: currentIssue?.status || 'Sem status',
+          new_value: cleanIssue.status,
+          field_name: 'status',
+        });
+      }
+      
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['kanban_issues'] });
+      queryClient.invalidateQueries({ queryKey: ['issue_history'] });
       queryClient.invalidateQueries({ queryKey: ['equipment'] });
       queryClient.invalidateQueries({ queryKey: ['vehicles'] });
     },
@@ -96,6 +144,13 @@ export function useKanbanIssues() {
 
   const moveIssue = useMutation({
     mutationFn: async ({ id, column_key, newType }: { id: string; column_key: string; newType?: string }) => {
+      // Get current issue to track column change
+      const { data: currentIssue } = await supabase
+        .from('pending_issues')
+        .select('column_key, type')
+        .eq('id', id)
+        .single();
+      
       // When moving to a new column, update the type to match the column and reset substatus
       const updateData: Record<string, any> = { column_key };
       if (newType) {
@@ -104,9 +159,21 @@ export function useKanbanIssues() {
       }
       const { error } = await supabase.from('pending_issues').update(updateData).eq('id', id);
       if (error) throw error;
+      
+      // Track movement
+      if (currentIssue?.type !== newType) {
+        await addHistoryEntry({
+          issue_id: id,
+          action: 'moved',
+          old_value: currentIssue?.type || 'Coluna anterior',
+          new_value: newType || column_key,
+          field_name: 'column_key',
+        });
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['kanban_issues'] });
+      queryClient.invalidateQueries({ queryKey: ['issue_history'] });
     },
     onError: () => toast.error('Erro ao mover demanda'),
   });

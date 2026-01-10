@@ -1309,6 +1309,44 @@ export type Database = {
           },
         ]
       }
+      pending_issues_history: {
+        Row: {
+          action: string
+          created_at: string
+          field_name: string | null
+          id: string
+          issue_id: string
+          new_value: string | null
+          old_value: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          field_name?: string | null
+          id?: string
+          issue_id: string
+          new_value?: string | null
+          old_value?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          field_name?: string | null
+          id?: string
+          issue_id?: string
+          new_value?: string | null
+          old_value?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pending_issues_history_issue_id_fkey"
+            columns: ["issue_id"]
+            isOneToOne: false
+            referencedRelation: "pending_issues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       phone_lines: {
         Row: {
           carrier: string
