@@ -113,9 +113,12 @@ export function KanbanIssueForm({
   }, [selectedContractId, form]);
 
   const handleSubmit = (data: FormData) => {
+    // Find the column that matches the selected type
+    const selectedColumn = columns.find(col => col.title === data.type);
+    
     onSubmit({
       ...data,
-      column_key: columns[0]?.key || 'backlog',
+      column_key: selectedColumn?.key || columns[0]?.key || 'backlog',
       contract_id: data.contract_id || undefined,
       equipment_id: data.equipment_id || undefined,
       vehicle_id: data.vehicle_id || undefined,
