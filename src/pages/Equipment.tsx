@@ -1,11 +1,13 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { ImportDialog } from '@/components/shared/ImportDialog';
 import { useEquipment } from '@/hooks/useEquipment';
+import { useContracts } from '@/hooks/useContracts';
 import { EquipmentForm } from '@/components/equipment/EquipmentForm';
 import { EquipmentDashboard } from '@/components/equipment/EquipmentDashboard';
+import { EquipmentFilters } from '@/components/equipment/EquipmentFilters';
 import { Tables } from '@/integrations/supabase/types';
 import { format } from 'date-fns';
 import { equipmentImportConfig } from '@/lib/importConfigs';
@@ -85,6 +87,7 @@ const exportColumns = [
 export default function EquipmentPage() {
   const queryClient = useQueryClient();
   const { equipment, loading, create, update, delete: deleteEquipment, deleteMany, isCreating, isUpdating } = useEquipment();
+  const { contracts } = useContracts();
   const [formOpen, setFormOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [editingEquipment, setEditingEquipment] = useState<Equipment | null>(null);
@@ -94,6 +97,37 @@ export default function EquipmentPage() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [deleteManyDialogOpen, setDeleteManyDialogOpen] = useState(false);
   const itemsPerPage = 10;
+
+  // Filter states
+  const [filterContract, setFilterContract] = useState('all');
+  const [filterSpeed, setFilterSpeed] = useState('all');
+  const [filterCommunication, setFilterCommunication] = useState('all');
+  const [filterEnergy, setFilterEnergy] = useState('all');
+  const [filterType, setFilterType] = useState('all');
+  const [filterStatus, setFilterStatus] = useState('all');
+
+  // Apply filters
+  const filteredEquipment = useMemo(() => {
+    return equipment.filter((eq) => {
+      if (filterContract !== 'all' && eq.contract_id !== filterContract) return false;
+      if (filterSpeed !== 'all' && eq.speed_limit !== Number(filterSpeed)) return false;
+      if (filterCommunication !== 'all' && eq.communication_type !== filterCommunication) return false;
+      if (filterEnergy !== 'all' && eq.energy_type !== filterEnergy) return false;
+      if (filterType !== 'all' && eq.type !== filterType) return false;
+      if (filterStatus !== 'all' && eq.status !== filterStatus) return false;
+      return true;
+    });
+  }, [equipment, filterContract, filterSpeed, filterCommunication, filterEnergy, filterType, filterStatus]);
+
+  const clearFilters = () => {
+    setFilterContract('all');
+    setFilterSpeed('all');
+    setFilterCommunication('all');
+    setFilterEnergy('all');
+    setFilterType('all');
+    setFilterStatus('all');
+    setCurrentPage(1);
+  };
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
@@ -489,9 +523,9 @@ export default function EquipmentPage() {
     }
   };
 
-  const totalPages = Math.ceil(equipment.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredEquipment.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedEquipment = equipment.slice(startIndex, startIndex + itemsPerPage);
+  const paginatedEquipment = filteredEquipment.slice(startIndex, startIndex + itemsPerPage);
 
   return (
     <AppLayout title="Equipamentos">
@@ -523,6 +557,23 @@ export default function EquipmentPage() {
 
           <TabsContent value="list">
             <div className="bg-card rounded-lg border">
+              <EquipmentFilters
+                contracts={contracts}
+                equipment={equipment}
+                selectedContract={filterContract}
+                selectedSpeed={filterSpeed}
+                selectedCommunication={filterCommunication}
+                selectedEnergy={filterEnergy}
+                selectedType={filterType}
+                selectedStatus={filterStatus}
+                onContractChange={(v) => { setFilterContract(v); setCurrentPage(1); }}
+                onSpeedChange={(v) => { setFilterSpeed(v); setCurrentPage(1); }}
+                onCommunicationChange={(v) => { setFilterCommunication(v); setCurrentPage(1); }}
+                onEnergyChange={(v) => { setFilterEnergy(v); setCurrentPage(1); }}
+                onTypeChange={(v) => { setFilterType(v); setCurrentPage(1); }}
+                onStatusChange={(v) => { setFilterStatus(v); setCurrentPage(1); }}
+                onClearFilters={clearFilters}
+              />
               {selectedIds.length > 0 && (
                 <div className="flex items-center gap-4 p-4 border-b bg-muted/30">
                   <span className="text-sm text-muted-foreground">
@@ -628,7 +679,7 @@ export default function EquipmentPage() {
 
                   <div className="flex items-center justify-between p-4 border-t">
                     <p className="text-sm text-muted-foreground">
-                      Mostrando {startIndex + 1} a {Math.min(startIndex + itemsPerPage, equipment.length)} de {equipment.length} registros
+                      Mostrando {startIndex + 1} a {Math.min(startIndex + itemsPerPage, filteredEquipment.length)} de {filteredEquipment.length} registros
                     </p>
                     <div className="flex items-center gap-2">
                       <Button
