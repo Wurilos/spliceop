@@ -3,8 +3,6 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
 import {
@@ -15,7 +13,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { MessageSquare, MapPin, Users, Calendar, FileText } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
+import { FileText, MapPin, Users, Calendar, Radio, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { KanbanIssue } from '@/hooks/useKanbanIssues';
@@ -45,6 +44,7 @@ const priorityLabels: Record<string, string> = {
 const substatusOptions = [
   'Rompimento de Lacres',
   'Aguardando Lacres',
+  'Aguardando Infraestrutura',
   'Solicitado GRU',
   'Fechamento de OS',
   'Aferição',
@@ -70,29 +70,107 @@ export function KanbanDetailModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader className="space-y-3">
-          <div className="flex items-center gap-2">
-            <Badge variant="outline">{currentColumn?.title || 'Sem coluna'}</Badge>
+      <DialogContent className="max-w-lg p-0 overflow-hidden">
+        {/* Header com badges */}
+        <div className="p-6 pb-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Badge variant="outline" className="bg-muted">
+              {currentColumn?.title || 'Sem coluna'}
+            </Badge>
             {issue.priority && (
               <Badge className={priorityColors[issue.priority] || priorityColors.medium}>
                 {priorityLabels[issue.priority] || issue.priority}
               </Badge>
             )}
           </div>
-          <DialogTitle className="text-xl">{issue.title}</DialogTitle>
-        </DialogHeader>
+          <h2 className="text-xl font-semibold text-foreground">{issue.title}</h2>
+        </div>
 
-        <div className="space-y-4 py-4">
-          {/* Status Atual */}
-          <div className="bg-muted/50 rounded-lg p-4 space-y-1">
-            <Label className="text-xs text-muted-foreground">Status Atual</Label>
-            <p className="font-medium">{currentColumn?.title || 'Não definido'}</p>
+        {/* Status Atual Box */}
+        <div className="mx-6 bg-muted/50 rounded-lg p-4 mb-4">
+          <Label className="text-xs text-muted-foreground uppercase tracking-wide">Status Atual</Label>
+          <p className="font-medium mt-1">{currentColumn?.title || 'Não definido'}</p>
+        </div>
+
+        <Separator />
+
+        {/* Grid de informações */}
+        <div className="p-6 pt-4 space-y-4">
+          <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+            {/* Contrato */}
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <FileText className="h-3.5 w-3.5" />
+                <span>Contrato</span>
+              </div>
+              <p className="text-sm font-medium">
+                {issue.contracts?.client_name || 'Não informado'}
+              </p>
+            </div>
+
+            {/* Equipamento */}
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Radio className="h-3.5 w-3.5" />
+                <span>Equipamento</span>
+              </div>
+              <p className="text-sm font-medium">
+                {issue.equipment?.serial_number || 'Não informado'}
+              </p>
+            </div>
+
+            {/* Localidade */}
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <MapPin className="h-3.5 w-3.5" />
+                <span>Localidade</span>
+              </div>
+              <p className="text-sm font-medium">
+                {issue.address || 'Não informado'}
+              </p>
+            </div>
+
+            {/* Prazo SLA */}
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Calendar className="h-3.5 w-3.5" />
+                <span>Prazo SLA</span>
+              </div>
+              <p className="text-sm font-medium">
+                {issue.due_date
+                  ? format(new Date(issue.due_date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
+                  : 'Não informado'}
+              </p>
+            </div>
+
+            {/* Equipe */}
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Users className="h-3.5 w-3.5" />
+                <span>Equipe</span>
+              </div>
+              <p className="text-sm font-medium">
+                {issue.team || 'Não informado'}
+              </p>
+            </div>
+
+            {/* Responsável */}
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Users className="h-3.5 w-3.5" />
+                <span>Responsável</span>
+              </div>
+              <p className="text-sm font-medium">
+                {issue.employees?.full_name || 'Não informado'}
+              </p>
+            </div>
           </div>
 
-          {/* Substatus de Aferição - Select para alterar */}
-          <div className="space-y-2">
-            <Label className="text-primary text-sm">Substatus de Aferição</Label>
+          {/* Substatus de Aferição */}
+          <div className="pt-2 space-y-2">
+            <Label className="text-xs text-muted-foreground uppercase tracking-wide">
+              Substatus de Aferição
+            </Label>
             <Select value={issue.type || ''} onValueChange={handleTypeChange}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Selecione o substatus" />
@@ -107,66 +185,32 @@ export function KanbanDetailModal({
             </Select>
           </div>
 
-          {/* Informações em grid */}
-          <div className="grid grid-cols-2 gap-4">
-            {issue.equipment?.serial_number && (
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <MessageSquare className="h-3 w-3" />
-                  <span>DR</span>
+          {/* Histórico de Alterações */}
+          <div className="pt-2">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
+              <Clock className="h-3.5 w-3.5" />
+              <span>Histórico de Alterações</span>
+            </div>
+            <div className="relative pl-4 border-l-2 border-primary/30">
+              <div className="flex items-start gap-3">
+                <div className="absolute -left-[7px] top-1.5 w-3 h-3 rounded-full bg-primary" />
+                <div>
+                  <p className="text-sm font-medium">Demanda criada</p>
+                  <p className="text-xs text-muted-foreground">
+                    {issue.created_at
+                      ? format(new Date(issue.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })
+                      : 'Data não disponível'}
+                  </p>
                 </div>
-                <p className="text-sm font-medium">{issue.equipment.serial_number}</p>
               </div>
-            )}
-
-            {issue.due_date && (
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Calendar className="h-3 w-3" />
-                  <span>Data Limite</span>
-                </div>
-                <p className="text-sm font-medium">
-                  {format(new Date(issue.due_date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-                </p>
-              </div>
-            )}
-
-            {issue.address && (
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <MapPin className="h-3 w-3" />
-                  <span>Endereço</span>
-                </div>
-                <p className="text-sm font-medium">{issue.address}</p>
-              </div>
-            )}
-
-            {issue.team && (
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Users className="h-3 w-3" />
-                  <span>Equipe</span>
-                </div>
-                <p className="text-sm font-medium">{issue.team}</p>
-              </div>
-            )}
-
-            {issue.employees?.full_name && (
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Users className="h-3 w-3" />
-                  <span>Responsável</span>
-                </div>
-                <p className="text-sm font-medium">{issue.employees.full_name}</p>
-              </div>
-            )}
+            </div>
           </div>
 
           {/* Observações */}
           {issue.description && (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <FileText className="h-3 w-3" />
+            <div className="pt-2">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
+                <FileText className="h-3.5 w-3.5" />
                 <span>Observações</span>
               </div>
               <p className="text-sm bg-muted/30 p-3 rounded-lg">{issue.description}</p>
@@ -174,7 +218,7 @@ export function KanbanDetailModal({
           )}
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="p-6 pt-0">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Fechar
           </Button>

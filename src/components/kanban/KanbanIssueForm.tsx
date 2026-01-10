@@ -178,7 +178,7 @@ export function KanbanIssueForm({
                       <SelectContent>
                         {contracts.map((c) => (
                           <SelectItem key={c.id} value={c.id}>
-                            {c.number}
+                            {c.client_name}
                           </SelectItem>
                         ))}
                       </SelectContent>
