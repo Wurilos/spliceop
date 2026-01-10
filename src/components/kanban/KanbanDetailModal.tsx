@@ -41,16 +41,43 @@ const priorityLabels: Record<string, string> = {
   low: 'Baixa',
 };
 
-const substatusOptions = [
-  'Rompimento de Lacres',
-  'Aguardando Lacres',
-  'Aguardando Infraestrutura',
-  'Solicitado GRU',
-  'Fechamento de OS',
-  'Aferição',
-  'Manutenção Preventiva',
-  'Manutenção Corretiva',
-];
+// Mapeamento de substatus por tipo de demanda
+const substatusByType: Record<string, string[]> = {
+  'Aferição': [
+    'Rompimento de Lacres',
+    'Aguardando lacres',
+    'Fechamento de O.S',
+    'Aguardando GRU',
+    'Aguardando pagamento de GRU',
+    'Aguardando data de aferição',
+  ],
+  'Energia': [
+    'Conjunta com fornecedor',
+    'Falta de pagamento',
+    'Vandalismo',
+    'Pausa temporária',
+  ],
+  'Internet': [
+    'Conjunta com fornecedor',
+    'Falta de pagamento',
+    'Vandalismo',
+  ],
+  'Infraestrutura': [
+    'Aguardando material',
+    'Aguardando Adiantamento',
+  ],
+  'Manutenção Veicular': [
+    'Aguardando setor de transporte',
+    'Aguardando Locadora',
+    'Aguardando Oficina',
+  ],
+};
+
+// Helper para obter substatus options baseado no tipo
+const getSubstatusOptions = (type: string | null | undefined): string[] => {
+  if (!type) return [];
+  return substatusByType[type] || [];
+};
 
 export function KanbanDetailModal({
   issue,
@@ -166,24 +193,26 @@ export function KanbanDetailModal({
             </div>
           </div>
 
-          {/* Substatus de Aferição */}
-          <div className="pt-2 space-y-2">
-            <Label className="text-xs text-muted-foreground uppercase tracking-wide">
-              Substatus de Aferição
-            </Label>
-            <Select value={issue.type || ''} onValueChange={handleTypeChange}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Selecione o substatus" />
-              </SelectTrigger>
-              <SelectContent>
-                {substatusOptions.map((option) => (
-                  <SelectItem key={option} value={option}>
-                    {option}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {/* Substatus baseado no tipo de demanda */}
+          {issue.type && getSubstatusOptions(issue.type).length > 0 && (
+            <div className="pt-2 space-y-2">
+              <Label className="text-xs text-muted-foreground uppercase tracking-wide">
+                Substatus - {issue.type}
+              </Label>
+              <Select value={issue.status || ''} onValueChange={handleTypeChange}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Selecione o substatus" />
+                </SelectTrigger>
+                <SelectContent>
+                  {getSubstatusOptions(issue.type).map((option) => (
+                    <SelectItem key={option} value={option}>
+                      {option}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           {/* Histórico de Alterações */}
           <div className="pt-2">

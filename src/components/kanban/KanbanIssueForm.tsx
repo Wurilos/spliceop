@@ -44,14 +44,37 @@ const formSchema = z.object({
   vehicle_id: z.string().optional(),
 });
 
-const afericaoSubstatusOptions = [
-  'Rompimento de Lacres',
-  'Aguardando lacres',
-  'Fechamento de O.S',
-  'Aguardando GRU',
-  'Aguardando pagamento de GRU',
-  'Aguardando data de aferição',
-];
+// Mapeamento de substatus por tipo de demanda
+const substatusByType: Record<string, string[]> = {
+  'Aferição': [
+    'Rompimento de Lacres',
+    'Aguardando lacres',
+    'Fechamento de O.S',
+    'Aguardando GRU',
+    'Aguardando pagamento de GRU',
+    'Aguardando data de aferição',
+  ],
+  'Energia': [
+    'Conjunta com fornecedor',
+    'Falta de pagamento',
+    'Vandalismo',
+    'Pausa temporária',
+  ],
+  'Internet': [
+    'Conjunta com fornecedor',
+    'Falta de pagamento',
+    'Vandalismo',
+  ],
+  'Infraestrutura': [
+    'Aguardando material',
+    'Aguardando Adiantamento',
+  ],
+  'Manutenção Veicular': [
+    'Aguardando setor de transporte',
+    'Aguardando Locadora',
+    'Aguardando Oficina',
+  ],
+};
 
 type FormData = z.infer<typeof formSchema>;
 
@@ -208,8 +231,8 @@ export function KanbanIssueForm({
               />
             </div>
 
-            {/* Substatus para Aferição */}
-            {selectedType === 'Aferição' && (
+            {/* Substatus baseado no tipo de demanda */}
+            {selectedType && substatusByType[selectedType] && (
               <FormField
                 control={form.control}
                 name="status"
@@ -223,7 +246,7 @@ export function KanbanIssueForm({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {afericaoSubstatusOptions.map((option) => (
+                        {substatusByType[selectedType].map((option) => (
                           <SelectItem key={option} value={option}>
                             {option}
                           </SelectItem>

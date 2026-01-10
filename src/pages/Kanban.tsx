@@ -68,11 +68,11 @@ export default function Kanban() {
     setShowDetailModal(true);
   };
 
-  const handleUpdateType = (id: string, type: string) => {
-    updateIssue({ id, type });
+  const handleUpdateSubstatus = (id: string, status: string) => {
+    updateIssue({ id, status });
     // Update local state to reflect change immediately
     if (selectedIssue && selectedIssue.id === id) {
-      setSelectedIssue({ ...selectedIssue, type });
+      setSelectedIssue({ ...selectedIssue, status });
     }
   };
 
@@ -153,7 +153,7 @@ export default function Kanban() {
         columns={activeColumns}
         open={showDetailModal}
         onOpenChange={setShowDetailModal}
-        onUpdateType={handleUpdateType}
+        onUpdateType={handleUpdateSubstatus}
         onEdit={handleEditIssue}
       />
     </AppLayout>
