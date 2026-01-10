@@ -34,6 +34,7 @@ interface DataTableProps<T> {
   columns: Column<T>[];
   loading?: boolean;
   searchPlaceholder?: string;
+  searchKey?: string;
   onEdit?: (row: T) => void;
   onDelete?: (row: T) => void;
   onDeleteMany?: (ids: string[]) => void;
@@ -47,6 +48,7 @@ export function DataTable<T extends { id: string }>({
   columns,
   loading = false,
   searchPlaceholder = 'Buscar...',
+  searchKey,
   onEdit,
   onDelete,
   onDeleteMany,
@@ -61,21 +63,7 @@ export function DataTable<T extends { id: string }>({
   const [deleteAllDialogOpen, setDeleteAllDialogOpen] = useState(false);
   const [rowToDelete, setRowToDelete] = useState<T | null>(null);
 
-  const filteredData = data.filter((row) =>
-    Object.values(row).some(
-      (value) =>
-        value &&
-        value.toString().toLowerCase().includes(search.toLowerCase())
-    )
-  );
-
-  const totalPages = Math.ceil(filteredData.length / pageSize);
-  const paginatedData = filteredData.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
-
-  const getValue = (row: T, key: string): unknown => {
+  const getNestedValue = (row: T, key: string): unknown => {
     const keys = key.split('.');
     let value: unknown = row;
     for (const k of keys) {
@@ -87,6 +75,27 @@ export function DataTable<T extends { id: string }>({
     }
     return value;
   };
+
+  const filteredData = data.filter((row) => {
+    if (searchKey) {
+      // Search by specific key (supports nested keys like 'equipment.serial_number')
+      const value = getNestedValue(row, searchKey);
+      return value && String(value).toLowerCase().includes(search.toLowerCase());
+    }
+    // Default: search all values
+    return Object.values(row).some(
+      (value) =>
+        value &&
+        value.toString().toLowerCase().includes(search.toLowerCase())
+    );
+  });
+
+  const totalPages = Math.ceil(filteredData.length / pageSize);
+  const paginatedData = filteredData.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
 
   const allPageSelected = paginatedData.length > 0 && paginatedData.every(row => selectedIds.has(row.id));
   const somePageSelected = paginatedData.some(row => selectedIds.has(row.id));
@@ -280,7 +289,7 @@ export function DataTable<T extends { id: string }>({
                     />
                   </TableCell>
                   {columns.map((col) => {
-                    const value = getValue(row, String(col.key));
+                    const value = getNestedValue(row, String(col.key));
                     return (
                       <TableCell key={String(col.key)}>
                         {col.render ? col.render(value, row) : String(value ?? '-')}
