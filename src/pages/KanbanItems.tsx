@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Plus, Pencil, Trash2, GripVertical } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
@@ -18,11 +18,13 @@ import { useKanbanColumns, KanbanColumn } from '@/hooks/useKanbanColumns';
 import { useKanbanSubitems } from '@/hooks/useKanbanSubitems';
 
 export default function KanbanItems() {
-  const { columns, isLoading, createColumnAsync, updateColumn, deleteColumn } = useKanbanColumns();
+  const { columns, isLoading, createColumnAsync, updateColumn, deleteColumn, reorderColumns } = useKanbanColumns();
   const { createSubitem } = useKanbanSubitems();
   const [showForm, setShowForm] = useState(false);
   const [editingColumn, setEditingColumn] = useState<KanbanColumn | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
 
   const handleCreate = async (data: any) => {
     const { subitems, ...columnData } = data;
@@ -72,6 +74,78 @@ export default function KanbanItems() {
     }
   };
 
+  // Drag and Drop handlers
+  const handleDragStart = useCallback((e: React.DragEvent, columnId: string) => {
+    setDraggedId(columnId);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', columnId);
+    
+    // Add visual feedback
+    const row = e.currentTarget.closest('tr');
+    if (row) {
+      row.classList.add('opacity-50');
+    }
+  }, []);
+
+  const handleDragEnd = useCallback((e: React.DragEvent) => {
+    setDraggedId(null);
+    setDragOverId(null);
+    
+    // Remove visual feedback
+    const row = e.currentTarget.closest('tr');
+    if (row) {
+      row.classList.remove('opacity-50');
+    }
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent, columnId: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    
+    if (draggedId && draggedId !== columnId) {
+      setDragOverId(columnId);
+    }
+  }, [draggedId]);
+
+  const handleDragLeave = useCallback(() => {
+    setDragOverId(null);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent, targetId: string) => {
+    e.preventDefault();
+    
+    if (!draggedId || draggedId === targetId) {
+      setDraggedId(null);
+      setDragOverId(null);
+      return;
+    }
+
+    const draggedIndex = columns.findIndex(c => c.id === draggedId);
+    const targetIndex = columns.findIndex(c => c.id === targetId);
+
+    if (draggedIndex === -1 || targetIndex === -1) {
+      setDraggedId(null);
+      setDragOverId(null);
+      return;
+    }
+
+    // Create new order
+    const newColumns = [...columns];
+    const [draggedColumn] = newColumns.splice(draggedIndex, 1);
+    newColumns.splice(targetIndex, 0, draggedColumn);
+
+    // Update order_index for all affected columns
+    const updates = newColumns.map((col, index) => ({
+      id: col.id,
+      order_index: index + 1,
+    }));
+
+    reorderColumns(updates);
+    
+    setDraggedId(null);
+    setDragOverId(null);
+  }, [draggedId, columns, reorderColumns]);
+
   return (
     <AppLayout>
       <div className="p-6">
@@ -89,7 +163,7 @@ export default function KanbanItems() {
         </div>
 
         <p className="text-sm text-primary mb-6">
-          Configure as colunas que aparecem no Kanban e os tipos de demanda disponíveis.
+          Configure as colunas que aparecem no Kanban e os tipos de demanda disponíveis. Arraste os itens para reordenar.
         </p>
 
         {isLoading ? (
@@ -109,9 +183,24 @@ export default function KanbanItems() {
               </TableHeader>
               <TableBody>
                 {columns.map((column) => (
-                  <TableRow key={column.id}>
+                  <TableRow 
+                    key={column.id}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, column.id)}
+                    onDragEnd={handleDragEnd}
+                    onDragOver={(e) => handleDragOver(e, column.id)}
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => handleDrop(e, column.id)}
+                    className={`transition-all duration-200 ${
+                      draggedId === column.id ? 'opacity-50' : ''
+                    } ${
+                      dragOverId === column.id ? 'bg-primary/10 border-t-2 border-primary' : ''
+                    }`}
+                  >
                     <TableCell>
-                      <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab" />
+                      <GripVertical 
+                        className="h-4 w-4 text-muted-foreground cursor-grab active:cursor-grabbing hover:text-foreground transition-colors" 
+                      />
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
