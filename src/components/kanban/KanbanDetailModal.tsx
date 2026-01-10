@@ -14,12 +14,13 @@ import {
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { FileText, MapPin, Users, Calendar, Radio, Clock } from 'lucide-react';
+import { FileText, MapPin, Users, Calendar, Radio, Clock, ArrowRight, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { KanbanIssue } from '@/hooks/useKanbanIssues';
 import { KanbanColumn } from '@/hooks/useKanbanColumns';
 import { useAllKanbanSubitems } from '@/hooks/useKanbanSubitems';
+import { useIssueHistory } from '@/hooks/useIssueHistory';
 
 interface KanbanDetailModalProps {
   issue: KanbanIssue | null;
@@ -42,6 +43,20 @@ const priorityLabels: Record<string, string> = {
   low: 'Baixa',
 };
 
+const actionLabels: Record<string, string> = {
+  created: 'Demanda criada',
+  moved: 'Movida para',
+  status_changed: 'Status alterado para',
+  updated: 'Demanda atualizada',
+};
+
+const actionIcons: Record<string, React.ReactNode> = {
+  created: <div className="w-3 h-3 rounded-full bg-primary" />,
+  moved: <ArrowRight className="h-3 w-3 text-blue-500" />,
+  status_changed: <RefreshCw className="h-3 w-3 text-amber-500" />,
+  updated: <RefreshCw className="h-3 w-3 text-muted-foreground" />,
+};
+
 export function KanbanDetailModal({
   issue,
   columns,
@@ -51,6 +66,7 @@ export function KanbanDetailModal({
   onEdit,
 }: KanbanDetailModalProps) {
   const { subitemsByType } = useAllKanbanSubitems();
+  const { history, isLoading: historyLoading } = useIssueHistory(issue?.id);
   
   if (!issue) return null;
 
@@ -62,7 +78,7 @@ export function KanbanDetailModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg p-0 overflow-hidden">
+      <DialogContent className="max-w-lg p-0 overflow-hidden max-h-[90vh] overflow-y-auto">
         {/* Header com badges */}
         <div className="p-6 pb-4">
           <div className="flex items-center gap-2 mb-3">
@@ -185,18 +201,50 @@ export function KanbanDetailModal({
               <Clock className="h-3.5 w-3.5" />
               <span>Histórico de Alterações</span>
             </div>
-            <div className="relative pl-4 border-l-2 border-primary/30">
-              <div className="flex items-start gap-3">
-                <div className="absolute -left-[7px] top-1.5 w-3 h-3 rounded-full bg-primary" />
-                <div>
-                  <p className="text-sm font-medium">Demanda criada</p>
-                  <p className="text-xs text-muted-foreground">
-                    {issue.created_at
-                      ? format(new Date(issue.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })
-                      : 'Data não disponível'}
-                  </p>
+            <div className="relative pl-4 border-l-2 border-primary/30 space-y-4">
+              {/* Dynamic history entries */}
+              {!historyLoading && history.map((entry, index) => (
+                <div key={entry.id} className="flex items-start gap-3">
+                  <div className="absolute -left-[7px] mt-1.5 w-3 h-3 rounded-full bg-background border-2 border-primary/50 flex items-center justify-center">
+                    {index === 0 && <div className="w-1.5 h-1.5 rounded-full bg-primary" />}
+                  </div>
+                  <div className="ml-2">
+                    <p className="text-sm font-medium">
+                      {actionLabels[entry.action] || entry.action}
+                      {entry.new_value && entry.action !== 'created' && (
+                        <span className="text-primary ml-1">{entry.new_value}</span>
+                      )}
+                    </p>
+                    {entry.action === 'moved' && entry.old_value && (
+                      <p className="text-xs text-muted-foreground">
+                        De: {entry.old_value}
+                      </p>
+                    )}
+                    <p className="text-xs text-muted-foreground">
+                      {format(new Date(entry.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                    </p>
+                  </div>
                 </div>
-              </div>
+              ))}
+              
+              {/* Fallback: show creation date if no history */}
+              {!historyLoading && history.length === 0 && (
+                <div className="flex items-start gap-3">
+                  <div className="absolute -left-[7px] mt-1.5 w-3 h-3 rounded-full bg-primary" />
+                  <div className="ml-2">
+                    <p className="text-sm font-medium">Demanda criada</p>
+                    <p className="text-xs text-muted-foreground">
+                      {issue.created_at
+                        ? format(new Date(issue.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })
+                        : 'Data não disponível'}
+                    </p>
+                  </div>
+                </div>
+              )}
+              
+              {historyLoading && (
+                <p className="text-xs text-muted-foreground ml-2">Carregando histórico...</p>
+              )}
             </div>
           </div>
 
