@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useContracts } from '@/hooks/useContracts';
 import { useInvoices } from '@/hooks/useInvoices';
+import { useContractAmendments } from '@/hooks/useContractAmendments';
 import {
   BarChart,
   Bar,
@@ -30,12 +31,24 @@ const STATUS_COLORS: Record<string, string> = {
 export function ContractsDashboard() {
   const { contracts, loading } = useContracts();
   const { invoices } = useInvoices();
+  const { allAmendments, allLoading } = useContractAmendments();
 
-  if (loading) {
+  if (loading || allLoading) {
     return <div className="flex items-center justify-center h-64">Carregando...</div>;
   }
 
   const today = new Date();
+
+  // Função para obter o valor efetivo do contrato (último aditivo ou valor original)
+  const getEffectiveValue = (contractId: string, originalValue: number): number => {
+    const contractAmendments = allAmendments.filter(a => a.contract_id === contractId);
+    if (contractAmendments.length === 0) return originalValue;
+    // Pega o aditivo com maior número (mais recente)
+    const latestAmendment = contractAmendments.reduce((prev, curr) => 
+      curr.amendment_number > prev.amendment_number ? curr : prev
+    );
+    return Number(latestAmendment.value) || originalValue;
+  };
 
   // Stats calculations
   const totalContracts = contracts.length;
@@ -49,8 +62,11 @@ export function ContractsDashboard() {
     return daysUntilExpiry >= 0 && daysUntilExpiry <= 90;
   });
 
-  // Total contract value
-  const totalValue = contracts.reduce((acc, c) => acc + (Number(c.value) || 0), 0);
+  // Total contract value - AGORA CONSIDERA OS ADITIVOS
+  const totalValue = contracts.reduce((acc, c) => {
+    const effectiveValue = getEffectiveValue(c.id, Number(c.value) || 0);
+    return acc + effectiveValue;
+  }, 0);
 
   // Total invoiced
   const totalInvoiced = invoices.reduce((acc, inv) => acc + (Number(inv.value) || 0), 0);
@@ -94,13 +110,17 @@ export function ContractsDashboard() {
     };
   });
 
-  // Top contracts by value
+  // Top contracts by value - AGORA CONSIDERA OS ADITIVOS
   const topContractsByValue = [...contracts]
-    .sort((a, b) => (Number(b.value) || 0) - (Number(a.value) || 0))
+    .map((c) => ({
+      ...c,
+      effectiveValue: getEffectiveValue(c.id, Number(c.value) || 0),
+    }))
+    .sort((a, b) => b.effectiveValue - a.effectiveValue)
     .slice(0, 5)
     .map((c) => ({
       name: c.client_name.length > 15 ? c.client_name.substring(0, 15) + '...' : c.client_name,
-      valor: Number(c.value) || 0,
+      valor: c.effectiveValue,
     }));
 
   // Revenue by contract (from invoices)
@@ -181,10 +201,15 @@ export function ContractsDashboard() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Valor Total Contratos</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <DollarSign className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
             <div className="text-xl font-bold">{formatCurrency(totalValue)}</div>
+            {allAmendments.length > 0 && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Inclui valores de aditivos
+              </p>
+            )}
           </CardContent>
         </Card>
 
