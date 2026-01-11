@@ -2232,6 +2232,7 @@ export type Database = {
           model: string | null
           monthly_balance: number | null
           notes: string | null
+          ownership: string | null
           plate: string
           renavam: string | null
           rental_company: string | null
@@ -2257,6 +2258,7 @@ export type Database = {
           model?: string | null
           monthly_balance?: number | null
           notes?: string | null
+          ownership?: string | null
           plate: string
           renavam?: string | null
           rental_company?: string | null
@@ -2282,6 +2284,7 @@ export type Database = {
           model?: string | null
           monthly_balance?: number | null
           notes?: string | null
+          ownership?: string | null
           plate?: string
           renavam?: string | null
           rental_company?: string | null
