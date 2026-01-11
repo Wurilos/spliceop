@@ -23,7 +23,7 @@ export default function Tolls() {
   const { vehicles } = useVehicles();
   const { contracts } = useContracts();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState('data');
+  const [activeTab, setActiveTab] = useState('dashboard');
   const [formOpen, setFormOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
@@ -159,10 +159,10 @@ export default function Tolls() {
           <p className="text-muted-foreground">Gerencie as informações de TAG dos veículos</p>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="dashboard">
           <TabsList className="w-full justify-start">
-            <TabsTrigger value="data" className="flex-1 max-w-xs">Dados</TabsTrigger>
             <TabsTrigger value="dashboard" className="flex-1 max-w-xs">Dashboard</TabsTrigger>
+            <TabsTrigger value="data" className="flex-1 max-w-xs">Dados</TabsTrigger>
           </TabsList>
 
           <TabsContent value="data" className="space-y-4">
