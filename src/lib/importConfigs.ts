@@ -225,6 +225,7 @@ export const vehicleImportConfig = {
 // Fuel records import config
 export const fuelImportConfig = {
   mappings: [
+    { excelColumn: 'Veículo', dbColumn: 'vehicle_plate', required: true, transform: toString },
     { excelColumn: 'Data', dbColumn: 'date', required: true, transform: toDate },
     { excelColumn: 'Litros', dbColumn: 'liters', required: true, transform: toNumber },
     { excelColumn: 'Preço/Litro', dbColumn: 'price_per_liter', transform: toNumber },
@@ -234,6 +235,7 @@ export const fuelImportConfig = {
     { excelColumn: 'Posto', dbColumn: 'station', transform: toString },
   ] as ColumnMapping[],
   templateColumns: [
+    { key: 'vehicle_plate', label: 'Veículo' },
     { key: 'date', label: 'Data' },
     { key: 'liters', label: 'Litros' },
     { key: 'price_per_liter', label: 'Preço/Litro' },

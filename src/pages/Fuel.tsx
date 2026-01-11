@@ -44,9 +44,13 @@ export default function Fuel() {
   };
 
   const handleImport = async (data: any[]) => {
-    const firstVehicle = vehicles[0];
-    if (!firstVehicle) throw new Error('Cadastre um veículo primeiro');
-    const dataWithVehicle = data.map(d => ({ ...d, vehicle_id: firstVehicle.id }));
+    const dataWithVehicle = await Promise.all(data.map(async (d) => {
+      const plate = d.vehicle_plate?.toUpperCase().trim();
+      const vehicle = vehicles.find(v => v.plate?.toUpperCase() === plate);
+      if (!vehicle) throw new Error(`Veículo não encontrado: ${plate || 'placa não informada'}`);
+      const { vehicle_plate, ...rest } = d;
+      return { ...rest, vehicle_id: vehicle.id };
+    }));
     const { error } = await supabase.from('fuel_records').insert(dataWithVehicle);
     if (error) throw error;
   };
