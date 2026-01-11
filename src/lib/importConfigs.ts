@@ -398,10 +398,8 @@ export const energyImportConfig = {
 export const internetProviderImportConfig = {
   mappings: [
     { excelColumn: 'Provedor', dbColumn: 'name', required: true, transform: toString },
-    { excelColumn: 'Nome', dbColumn: 'name', required: true, transform: toString },
     { excelColumn: 'Endereço', dbColumn: 'address', transform: toString },
     { excelColumn: 'Município', dbColumn: 'city', transform: toString },
-    { excelColumn: 'Cidade', dbColumn: 'city', transform: toString },
   ] as ColumnMapping[],
   templateColumns: [
     { key: 'name', label: 'Provedor' },
