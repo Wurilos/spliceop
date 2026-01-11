@@ -1,7 +1,9 @@
-import { useEffect } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { toast } from 'sonner';
+import { Check, ChevronsUpDown } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -25,13 +27,28 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
 import { useEnergyBills } from '@/hooks/useEnergyBills';
+import { useEnergyConsumerUnits } from '@/hooks/useEnergyConsumerUnits';
 import { useContracts } from '@/hooks/useContracts';
 
 const formSchema = z.object({
+  contract_id: z.string().min(1, 'Contrato é obrigatório'),
   consumer_unit: z.string().min(1, 'Unidade consumidora é obrigatória'),
   reference_month: z.string().min(1, 'Mês de referência é obrigatório'),
-  contract_id: z.string().nullable().optional(),
   value: z.coerce.number().nullable().optional(),
   due_date: z.string().nullable().optional(),
   status: z.string().nullable().optional().default('pending'),
@@ -46,36 +63,51 @@ interface EnergyFormProps {
 }
 
 export function EnergyForm({ open, onOpenChange, bill }: EnergyFormProps) {
-  const { createEnergyBill, updateEnergyBill } = useEnergyBills();
+  const { energyBills, createEnergyBill, updateEnergyBill } = useEnergyBills();
+  const { consumerUnits } = useEnergyConsumerUnits();
   const { contracts } = useContracts();
+  const [consumerUnitOpen, setConsumerUnitOpen] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      contract_id: '',
       consumer_unit: '',
       reference_month: new Date().toISOString().slice(0, 7) + '-01',
-      contract_id: '',
       value: 0,
       due_date: '',
       status: 'pending',
     },
   });
 
+  const selectedContractId = form.watch('contract_id');
+
+  // Filter consumer units by selected contract
+  const filteredConsumerUnits = useMemo(() => {
+    if (!selectedContractId) return consumerUnits;
+    return consumerUnits.filter((cu: any) => cu.contract_id === selectedContractId);
+  }, [consumerUnits, selectedContractId]);
+
+  // Get unique consumer unit codes for autocomplete
+  const consumerUnitOptions = useMemo(() => {
+    return filteredConsumerUnits.map((cu: any) => cu.consumer_unit);
+  }, [filteredConsumerUnits]);
+
   useEffect(() => {
     if (bill) {
       form.reset({
+        contract_id: bill.contract_id || '',
         consumer_unit: bill.consumer_unit,
         reference_month: bill.reference_month,
-        contract_id: bill.contract_id || '',
         value: bill.value || 0,
         due_date: bill.due_date || '',
         status: bill.status || 'pending',
       });
     } else {
       form.reset({
+        contract_id: '',
         consumer_unit: '',
         reference_month: new Date().toISOString().slice(0, 7) + '-01',
-        contract_id: '',
         value: 0,
         due_date: '',
         status: 'pending',
@@ -84,10 +116,22 @@ export function EnergyForm({ open, onOpenChange, bill }: EnergyFormProps) {
   }, [bill, form]);
 
   const onSubmit = (values: FormValues) => {
+    // Check for duplicate: same consumer_unit and reference_month
+    const isDuplicate = energyBills.some((b: any) => {
+      if (bill && b.id === bill.id) return false; // Exclude current bill when editing
+      return b.consumer_unit === values.consumer_unit && 
+             b.reference_month === values.reference_month;
+    });
+
+    if (isDuplicate) {
+      toast.error('Já existe uma conta cadastrada para esta unidade consumidora e mês de referência.');
+      return;
+    }
+
     const data = {
+      contract_id: values.contract_id || null,
       consumer_unit: values.consumer_unit,
       reference_month: values.reference_month,
-      contract_id: values.contract_id || null,
       value: values.value || null,
       due_date: values.due_date || null,
       status: values.status || 'pending',
@@ -116,13 +160,109 @@ export function EnergyForm({ open, onOpenChange, bill }: EnergyFormProps) {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
-              name="consumer_unit"
+              name="contract_id"
               render={({ field }) => (
                 <FormItem>
+                  <FormLabel>Contrato</FormLabel>
+                  <Select 
+                    onValueChange={(value) => {
+                      field.onChange(value);
+                      // Clear consumer unit when contract changes
+                      form.setValue('consumer_unit', '');
+                    }} 
+                    value={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione um contrato" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {contracts.map((c) => (
+                        <SelectItem key={c.id} value={c.id}>
+                          {c.number} - {c.client_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="consumer_unit"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
                   <FormLabel>Unidade Consumidora</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Número da UC" {...field} />
-                  </FormControl>
+                  <Popover open={consumerUnitOpen} onOpenChange={setConsumerUnitOpen}>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={consumerUnitOpen}
+                          className={cn(
+                            "w-full justify-between",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          {field.value || "Digite ou selecione uma UC"}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-full p-0" align="start">
+                      <Command>
+                        <CommandInput 
+                          placeholder="Buscar unidade consumidora..." 
+                          value={field.value}
+                          onValueChange={(value) => {
+                            field.onChange(value);
+                          }}
+                        />
+                        <CommandList>
+                          <CommandEmpty>
+                            <div className="p-2 text-sm">
+                              Nenhuma UC encontrada. 
+                              {field.value && (
+                                <Button
+                                  variant="link"
+                                  className="p-0 h-auto ml-1"
+                                  onClick={() => {
+                                    setConsumerUnitOpen(false);
+                                  }}
+                                >
+                                  Usar "{field.value}"
+                                </Button>
+                              )}
+                            </div>
+                          </CommandEmpty>
+                          <CommandGroup>
+                            {consumerUnitOptions.map((uc: string) => (
+                              <CommandItem
+                                key={uc}
+                                value={uc}
+                                onSelect={() => {
+                                  field.onChange(uc);
+                                  setConsumerUnitOpen(false);
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    field.value === uc ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                {uc}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                   <FormMessage />
                 </FormItem>
               )}
@@ -137,31 +277,6 @@ export function EnergyForm({ open, onOpenChange, bill }: EnergyFormProps) {
                   <FormControl>
                     <Input type="date" {...field} />
                   </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="contract_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Contrato (opcional)</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione um contrato" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {contracts.map((c) => (
-                        <SelectItem key={c.id} value={c.id}>
-                          {c.number} - {c.client_name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
