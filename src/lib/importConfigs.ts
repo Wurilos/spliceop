@@ -686,7 +686,7 @@ export const componentImportConfig = {
 // Chip numbers import config
 export const chipNumberImportConfig = {
   mappings: [
-    { excelColumn: 'Número Linha', dbColumn: 'line_number', required: true, transform: toString },
+    { excelColumn: 'Numero Linha', dbColumn: 'line_number', required: true, transform: (v: any) => String(v).trim() },
     { excelColumn: 'Operadora', dbColumn: 'carrier', required: true, transform: (v: string) => {
       const carrierMap: Record<string, string> = {
         'vivo': 'Vivo',
@@ -700,7 +700,7 @@ export const chipNumberImportConfig = {
     }},
   ] as ColumnMapping[],
   templateColumns: [
-    { key: 'line_number', label: 'Número Linha' },
+    { key: 'line_number', label: 'Numero Linha' },
     { key: 'carrier', label: 'Operadora' },
   ],
 };
