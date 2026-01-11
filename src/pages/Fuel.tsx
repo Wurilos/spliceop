@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { DataTable, Column } from '@/components/shared/DataTable';
@@ -31,6 +32,7 @@ const columns: Column<FuelRecord>[] = [
 export default function Fuel() {
   const { records, loading, create, update, delete: deleteRecord, isCreating, isUpdating, isDeleting } = useFuelRecords();
   const { vehicles } = useVehicles();
+  const queryClient = useQueryClient();
   const [formOpen, setFormOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [editing, setEditing] = useState<FuelRecord | null>(null);
@@ -53,6 +55,7 @@ export default function Fuel() {
     }));
     const { error } = await supabase.from('fuel_records').insert(dataWithVehicle);
     if (error) throw error;
+    queryClient.invalidateQueries({ queryKey: ['fuel_records'] });
   };
 
   return (
