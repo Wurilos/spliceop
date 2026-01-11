@@ -394,6 +394,40 @@ export const energyImportConfig = {
   ],
 };
 
+// Internet providers import config
+export const internetProviderImportConfig = {
+  mappings: [
+    { excelColumn: 'Provedor', dbColumn: 'name', required: true, transform: toString },
+    { excelColumn: 'Nome', dbColumn: 'name', required: true, transform: toString },
+    { excelColumn: 'Endereço', dbColumn: 'address', transform: toString },
+    { excelColumn: 'Município', dbColumn: 'city', transform: toString },
+    { excelColumn: 'Cidade', dbColumn: 'city', transform: toString },
+  ] as ColumnMapping[],
+  templateColumns: [
+    { key: 'name', label: 'Provedor' },
+    { key: 'address', label: 'Endereço' },
+    { key: 'city', label: 'Município' },
+  ],
+};
+
+// Internet connections import config
+export const internetConnectionImportConfig = {
+  mappings: [
+    { excelColumn: 'Contrato', dbColumn: 'contract_ref', transform: toString },
+    { excelColumn: 'Número de Série', dbColumn: 'serial_number', required: true, transform: toString },
+    { excelColumn: 'Serial', dbColumn: 'serial_number', required: true, transform: toString },
+    { excelColumn: 'Provedor', dbColumn: 'provider_name', transform: toString },
+    { excelColumn: 'Código do Cliente', dbColumn: 'client_code', transform: toString },
+    { excelColumn: 'Código Cliente', dbColumn: 'client_code', transform: toString },
+  ] as ColumnMapping[],
+  templateColumns: [
+    { key: 'contract_ref', label: 'Contrato' },
+    { key: 'serial_number', label: 'Número de Série' },
+    { key: 'provider_name', label: 'Provedor' },
+    { key: 'client_code', label: 'Código do Cliente' },
+  ],
+};
+
 // Internet bills import config
 export const internetImportConfig = {
   mappings: [
