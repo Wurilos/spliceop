@@ -61,11 +61,18 @@ export default function Mileage() {
     return time.substring(0, 5);
   };
 
+  const formatDate = (dateStr: string) => {
+    // Parse date as local time to avoid timezone issues
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
+    return format(date, 'dd/MM/yyyy', { locale: ptBR });
+  };
+
   const columns = [
     {
       key: 'date',
       label: 'Data',
-      render: (value: string) => format(new Date(value), 'dd/MM/yyyy', { locale: ptBR }),
+      render: (value: string) => formatDate(value),
     },
     {
       key: 'vehicle_id',
