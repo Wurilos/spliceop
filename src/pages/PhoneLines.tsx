@@ -6,6 +6,7 @@ import { DeleteDialog } from '@/components/shared/DeleteDialog';
 import { ImportDialog } from '@/components/shared/ImportDialog';
 import { PhoneLineForm } from '@/components/phone-lines/PhoneLineForm';
 import { PhoneLinesDashboard } from '@/components/phone-lines/PhoneLinesDashboard';
+import { ChipNumbersTab } from '@/components/phone-lines/ChipNumbersTab';
 import { usePhoneLines, type PhoneLine } from '@/hooks/usePhoneLines';
 import { useContracts } from '@/hooks/useContracts';
 import { useEquipment } from '@/hooks/useEquipment';
@@ -160,7 +161,7 @@ export default function PhoneLines() {
           title="Linhas / Chip"
           description="Gerenciamento de linhas telefônicas dos equipamentos"
           onAdd={handleCreate}
-          addLabel="Nova Linha"
+          addLabel="Nova Linha / Equipamento"
           onExport={handleExport}
           onImport={() => setImportOpen(true)}
         />
@@ -168,11 +169,16 @@ export default function PhoneLines() {
         <Tabs defaultValue="dashboard" className="space-y-4">
           <TabsList>
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-            <TabsTrigger value="list">Listagem</TabsTrigger>
+            <TabsTrigger value="chips">Cadastro de Chips</TabsTrigger>
+            <TabsTrigger value="list">Linha / Equipamento</TabsTrigger>
           </TabsList>
 
           <TabsContent value="dashboard">
             <PhoneLinesDashboard phoneLines={phoneLines} />
+          </TabsContent>
+
+          <TabsContent value="chips">
+            <ChipNumbersTab />
           </TabsContent>
 
           <TabsContent value="list">
