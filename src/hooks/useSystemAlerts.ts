@@ -1,7 +1,6 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
-import { format, differenceInDays, parseISO, isAfter, isBefore, addDays, startOfMonth, endOfMonth } from 'date-fns';
+import { format, differenceInDays, parseISO, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 export interface SystemAlert {
@@ -19,16 +18,19 @@ export interface SystemAlert {
 }
 
 const ALERT_THRESHOLDS = {
-  critical: 0,   // Already expired/overdue
-  high: 15,      // Within 15 days
-  medium: 30,    // Within 30 days
-  low: 60,       // Within 60 days
+  critical: 0,
+  high: 15,
+  medium: 30,
+  low: 60,
 };
 
 const MILEAGE_THRESHOLDS = {
   monthlyLimit: 3000,
   warningLimit: 2000,
 };
+
+// Threshold for value anomaly detection (percentage deviation from average)
+const VALUE_ANOMALY_THRESHOLD = 0.3; // 30% deviation
 
 function getAlertType(daysUntil: number): SystemAlert['type'] {
   if (daysUntil <= ALERT_THRESHOLDS.critical) return 'critical';
@@ -43,19 +45,23 @@ function getMileageAlertType(totalKm: number): SystemAlert['type'] {
   return 'medium';
 }
 
-function formatDate(date: string): string {
-  return format(parseISO(date), "dd/MM/yyyy", { locale: ptBR });
+function getCurrentReferenceMonth(): string {
+  return format(new Date(), 'yyyy-MM');
+}
+
+function getPreviousReferenceMonth(): string {
+  return format(subMonths(new Date(), 1), 'yyyy-MM');
 }
 
 export function useSystemAlerts() {
-  const queryClient = useQueryClient();
-
   const { data: alerts = [], isLoading, refetch } = useQuery({
     queryKey: ['system-alerts'],
     queryFn: async (): Promise<SystemAlert[]> => {
       const allAlerts: SystemAlert[] = [];
       const today = new Date();
       const detectedAt = new Date();
+      const currentMonth = getCurrentReferenceMonth();
+      const previousMonth = getPreviousReferenceMonth();
 
       // 1. Check expiring contracts
       const { data: contracts } = await supabase
@@ -178,12 +184,12 @@ export function useSystemAlerts() {
       });
 
       // 5. Check equipment in maintenance for too long
-      const { data: equipment } = await supabase
+      const { data: equipmentMaintenance } = await supabase
         .from('equipment')
         .select('id, serial_number, status, updated_at')
         .eq('status', 'maintenance');
 
-      equipment?.forEach(equip => {
+      equipmentMaintenance?.forEach(equip => {
         if (!equip.updated_at) return;
         const updateDate = parseISO(equip.updated_at);
         const daysInMaintenance = differenceInDays(today, updateDate);
@@ -271,7 +277,6 @@ export function useSystemAlerts() {
         .gte('date', monthStart)
         .lte('date', monthEnd);
 
-      // Group mileage by vehicle
       const vehicleMileage: Record<string, { 
         vehicleId: string; 
         plate: string; 
@@ -301,7 +306,6 @@ export function useSystemAlerts() {
         vehicleMileage[record.vehicle_id].records.push(record.id);
       });
 
-      // Create alerts for vehicles exceeding 2000 km
       Object.values(vehicleMileage).forEach(vehicle => {
         if (vehicle.totalKm >= MILEAGE_THRESHOLDS.warningLimit) {
           const remaining = MILEAGE_THRESHOLDS.monthlyLimit - vehicle.totalKm;
@@ -325,13 +329,284 @@ export function useSystemAlerts() {
         }
       });
 
+      // ============ NEW ANOMALY DETECTIONS ============
+
+      // 9. Check for energy bill value anomalies (value outside average)
+      const { data: allEnergyBills } = await supabase
+        .from('energy_bills')
+        .select('id, consumer_unit, value, reference_month, contract_id')
+        .order('reference_month', { ascending: false });
+
+      if (allEnergyBills && allEnergyBills.length > 0) {
+        // Group bills by consumer_unit to calculate averages
+        const billsByUnit: Record<string, { values: number[]; bills: typeof allEnergyBills }> = {};
+        
+        allEnergyBills.forEach(bill => {
+          if (!bill.consumer_unit || bill.value === null) return;
+          if (!billsByUnit[bill.consumer_unit]) {
+            billsByUnit[bill.consumer_unit] = { values: [], bills: [] };
+          }
+          billsByUnit[bill.consumer_unit].values.push(bill.value);
+          billsByUnit[bill.consumer_unit].bills.push(bill);
+        });
+
+        Object.entries(billsByUnit).forEach(([consumerUnit, data]) => {
+          if (data.values.length < 3) return; // Need at least 3 months for comparison
+          
+          // Calculate average excluding the most recent bill
+          const recentBill = data.bills[0];
+          const historicalValues = data.values.slice(1);
+          const average = historicalValues.reduce((a, b) => a + b, 0) / historicalValues.length;
+          
+          if (recentBill.value !== null && average > 0) {
+            const deviation = Math.abs(recentBill.value - average) / average;
+            
+            if (deviation > VALUE_ANOMALY_THRESHOLD) {
+              const isHigher = recentBill.value > average;
+              const percentChange = Math.round(deviation * 100);
+              
+              allAlerts.push({
+                id: `energy-anomaly-${recentBill.id}`,
+                type: deviation > 0.5 ? 'high' : 'medium',
+                category: 'energy',
+                title: isHigher ? 'Conta de Energia Acima da Média' : 'Conta de Energia Abaixo da Média',
+                description: `A UC ${consumerUnit} (${recentBill.reference_month}) teve valor de R$ ${recentBill.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}, ${percentChange}% ${isHigher ? 'acima' : 'abaixo'} da média histórica (R$ ${average.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}).`,
+                suggestion: isHigher 
+                  ? 'Verificar possíveis causas: aumento de consumo, vazamento, furto de energia ou erro de leitura.'
+                  : 'Verificar se houve redução de operação, desligamento de equipamentos ou possível erro de leitura.',
+                detectedAt,
+                entityId: recentBill.id,
+                entityType: 'energy_bills',
+              });
+            }
+          }
+        });
+      }
+
+      // 10. Check for internet bill value anomalies
+      const { data: allInternetBills } = await supabase
+        .from('internet_bills')
+        .select('id, provider, value, reference_month, connection_id')
+        .order('reference_month', { ascending: false });
+
+      if (allInternetBills && allInternetBills.length > 0) {
+        // Group bills by connection_id to calculate averages
+        const billsByConnection: Record<string, { values: number[]; bills: typeof allInternetBills; provider: string }> = {};
+        
+        allInternetBills.forEach(bill => {
+          const key = bill.connection_id || bill.provider;
+          if (!key || bill.value === null) return;
+          if (!billsByConnection[key]) {
+            billsByConnection[key] = { values: [], bills: [], provider: bill.provider };
+          }
+          billsByConnection[key].values.push(bill.value);
+          billsByConnection[key].bills.push(bill);
+        });
+
+        Object.entries(billsByConnection).forEach(([connectionKey, data]) => {
+          if (data.values.length < 3) return;
+          
+          const recentBill = data.bills[0];
+          const historicalValues = data.values.slice(1);
+          const average = historicalValues.reduce((a, b) => a + b, 0) / historicalValues.length;
+          
+          if (recentBill.value !== null && average > 0) {
+            const deviation = Math.abs(recentBill.value - average) / average;
+            
+            if (deviation > VALUE_ANOMALY_THRESHOLD) {
+              const isHigher = recentBill.value > average;
+              const percentChange = Math.round(deviation * 100);
+              
+              allAlerts.push({
+                id: `internet-anomaly-${recentBill.id}`,
+                type: deviation > 0.5 ? 'high' : 'medium',
+                category: 'internet',
+                title: isHigher ? 'Conta de Internet Acima da Média' : 'Conta de Internet Abaixo da Média',
+                description: `A conta ${data.provider} (${recentBill.reference_month}) teve valor de R$ ${recentBill.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}, ${percentChange}% ${isHigher ? 'acima' : 'abaixo'} da média histórica (R$ ${average.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}).`,
+                suggestion: isHigher 
+                  ? 'Verificar se houve mudança de plano, cobrança adicional ou erro na fatura.'
+                  : 'Verificar se há créditos aplicados ou possível erro de faturamento.',
+                detectedAt,
+                entityId: recentBill.id,
+                entityType: 'internet_bills',
+              });
+            }
+          }
+        });
+      }
+
+      // 11. Check for missing energy bills for consumer units
+      const { data: consumerUnits } = await supabase
+        .from('energy_consumer_units')
+        .select('id, consumer_unit, contract_id, contracts:contract_id!fk_energy_consumer_units_contract(number, client_name)');
+
+      if (consumerUnits && consumerUnits.length > 0) {
+        const { data: recentEnergyBills } = await supabase
+          .from('energy_bills')
+          .select('consumer_unit, reference_month')
+          .in('reference_month', [currentMonth, previousMonth]);
+
+        const billsByUnit = new Set(
+          recentEnergyBills?.map(b => `${b.consumer_unit}-${b.reference_month}`) || []
+        );
+
+        consumerUnits.forEach(unit => {
+          const hasPreviousMonth = billsByUnit.has(`${unit.consumer_unit}-${previousMonth}`);
+          const hasCurrentMonth = billsByUnit.has(`${unit.consumer_unit}-${currentMonth}`);
+          const contractInfo = unit.contracts as any;
+          
+          if (!hasPreviousMonth) {
+            allAlerts.push({
+              id: `missing-energy-prev-${unit.id}`,
+              type: 'high',
+              category: 'energy',
+              title: 'Fatura de Energia Não Lançada',
+              description: `A UC ${unit.consumer_unit}${contractInfo ? ` (${contractInfo.number} - ${contractInfo.client_name})` : ''} não possui fatura lançada para ${previousMonth}.`,
+              suggestion: 'Verificar se a fatura foi recebida e lançar no sistema.',
+              detectedAt,
+              entityId: unit.id,
+              entityType: 'energy_consumer_units',
+            });
+          }
+
+          // Only check current month if we're past day 10
+          if (!hasCurrentMonth && today.getDate() > 10) {
+            allAlerts.push({
+              id: `missing-energy-curr-${unit.id}`,
+              type: 'medium',
+              category: 'energy',
+              title: 'Fatura de Energia Pendente',
+              description: `A UC ${unit.consumer_unit}${contractInfo ? ` (${contractInfo.number} - ${contractInfo.client_name})` : ''} ainda não possui fatura para ${currentMonth}.`,
+              suggestion: 'Verificar se a fatura já chegou e lançar quando disponível.',
+              detectedAt,
+              entityId: unit.id,
+              entityType: 'energy_consumer_units',
+            });
+          }
+        });
+      }
+
+      // 12. Check for missing internet bills for connections
+      const { data: internetConnections } = await supabase
+        .from('internet_connections')
+        .select('id, serial_number, contract_id, provider_id, providers:provider_id(name), contracts:contract_id(number, client_name)');
+
+      if (internetConnections && internetConnections.length > 0) {
+        const { data: recentInternetBills } = await supabase
+          .from('internet_bills')
+          .select('connection_id, reference_month')
+          .in('reference_month', [currentMonth, previousMonth]);
+
+        const billsByConnection = new Set(
+          recentInternetBills?.map(b => `${b.connection_id}-${b.reference_month}`) || []
+        );
+
+        internetConnections.forEach(conn => {
+          const hasPreviousMonth = billsByConnection.has(`${conn.id}-${previousMonth}`);
+          const hasCurrentMonth = billsByConnection.has(`${conn.id}-${currentMonth}`);
+          const providerInfo = conn.providers as any;
+          const contractInfo = conn.contracts as any;
+          
+          if (!hasPreviousMonth) {
+            allAlerts.push({
+              id: `missing-internet-prev-${conn.id}`,
+              type: 'high',
+              category: 'internet',
+              title: 'Fatura de Internet Não Lançada',
+              description: `A conexão ${conn.serial_number}${providerInfo ? ` (${providerInfo.name})` : ''}${contractInfo ? ` - ${contractInfo.client_name}` : ''} não possui fatura lançada para ${previousMonth}.`,
+              suggestion: 'Verificar se a fatura foi recebida e lançar no sistema.',
+              detectedAt,
+              entityId: conn.id,
+              entityType: 'internet_connections',
+            });
+          }
+
+          if (!hasCurrentMonth && today.getDate() > 10) {
+            allAlerts.push({
+              id: `missing-internet-curr-${conn.id}`,
+              type: 'medium',
+              category: 'internet',
+              title: 'Fatura de Internet Pendente',
+              description: `A conexão ${conn.serial_number}${providerInfo ? ` (${providerInfo.name})` : ''}${contractInfo ? ` - ${contractInfo.client_name}` : ''} ainda não possui fatura para ${currentMonth}.`,
+              suggestion: 'Verificar se a fatura já chegou e lançar quando disponível.',
+              detectedAt,
+              entityId: conn.id,
+              entityType: 'internet_connections',
+            });
+          }
+        });
+      }
+
+      // 13. Check for equipment without recent calibration records
+      const { data: activeEquipment } = await supabase
+        .from('equipment')
+        .select('id, serial_number, contract_id, next_calibration_date, contracts:contract_id!fk_equipment_contract(number, client_name)')
+        .eq('status', 'active');
+
+      if (activeEquipment) {
+        const { data: validCalibrations } = await supabase
+          .from('calibrations')
+          .select('equipment_id')
+          .eq('status', 'valid');
+
+        const equipmentWithCalibration = new Set(validCalibrations?.map(c => c.equipment_id) || []);
+
+        activeEquipment.forEach(equip => {
+          if (!equipmentWithCalibration.has(equip.id)) {
+            const contractInfo = equip.contracts as any;
+            allAlerts.push({
+              id: `no-calibration-${equip.id}`,
+              type: 'high',
+              category: 'calibrations',
+              title: 'Equipamento Sem Aferição Válida',
+              description: `O equipamento ${equip.serial_number}${contractInfo ? ` (${contractInfo.number} - ${contractInfo.client_name})` : ''} não possui aferição válida cadastrada.`,
+              suggestion: 'Cadastrar a aferição vigente ou verificar status do equipamento.',
+              detectedAt,
+              entityId: equip.id,
+              entityType: 'equipment',
+            });
+          }
+        });
+      }
+
+      // 14. Check for contracts without recent invoices
+      const { data: activeContracts } = await supabase
+        .from('contracts')
+        .select('id, number, client_name')
+        .eq('status', 'active');
+
+      if (activeContracts && activeContracts.length > 0) {
+        const { data: recentInvoices } = await supabase
+          .from('invoices')
+          .select('contract_id, issue_date')
+          .gte('issue_date', format(subMonths(today, 2), 'yyyy-MM-dd'));
+
+        const contractsWithInvoice = new Set(recentInvoices?.map(i => i.contract_id) || []);
+
+        activeContracts.forEach(contract => {
+          if (!contractsWithInvoice.has(contract.id)) {
+            allAlerts.push({
+              id: `no-invoice-${contract.id}`,
+              type: 'medium',
+              category: 'invoices',
+              title: 'Contrato Sem Faturamento Recente',
+              description: `O contrato ${contract.number} - ${contract.client_name} não possui fatura emitida nos últimos 2 meses.`,
+              suggestion: 'Verificar se há pendência de faturamento ou se o contrato está pausado.',
+              detectedAt,
+              entityId: contract.id,
+              entityType: 'contracts',
+            });
+          }
+        });
+      }
+
       // Sort by type priority (critical first, then high, etc.)
       const typePriority = { critical: 0, high: 1, medium: 2, low: 3 };
       allAlerts.sort((a, b) => typePriority[a.type] - typePriority[b.type]);
 
       return allAlerts;
     },
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 60 * 5,
   });
 
   const alertsByCategory = alerts.reduce((acc, alert) => {
