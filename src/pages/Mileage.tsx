@@ -35,14 +35,20 @@ export default function Mileage() {
   const [selectedTeam, setSelectedTeam] = useState('');
 
   const filteredRecords = useMemo(() => {
-    return mileageRecords.filter((record: any) => {
-      if (startDate && record.date < startDate) return false;
-      if (endDate && record.date > endDate) return false;
-      if (selectedVehicle && record.vehicle_id !== selectedVehicle) return false;
-      if (selectedTeam && record.team_id !== selectedTeam) return false;
-      return true;
-    });
-  }, [mileageRecords, startDate, endDate, selectedVehicle, selectedTeam]);
+    return mileageRecords
+      .filter((record: any) => {
+        if (startDate && record.date < startDate) return false;
+        if (endDate && record.date > endDate) return false;
+        if (selectedVehicle && record.vehicle_id !== selectedVehicle) return false;
+        if (selectedTeam && record.team_id !== selectedTeam) return false;
+        return true;
+      })
+      .map((record: any) => ({
+        ...record,
+        vehicle_plate: record.vehicles?.plate || vehicles.find(v => v.id === record.vehicle_id)?.plate || '-',
+        team_name: record.teams?.name || teams.find(t => t.id === record.team_id)?.name || '-',
+      }));
+  }, [mileageRecords, startDate, endDate, selectedVehicle, selectedTeam, vehicles, teams]);
 
   const getVehiclePlate = (vehicleId: string) => {
     const vehicle = vehicles.find((v) => v.id === vehicleId);
@@ -75,9 +81,8 @@ export default function Mileage() {
       render: (value: string) => formatDate(value),
     },
     {
-      key: 'vehicle_id',
+      key: 'vehicle_plate',
       label: 'Veículo',
-      render: (value: string) => getVehiclePlate(value),
     },
     {
       key: 'start_time',
@@ -97,9 +102,8 @@ export default function Mileage() {
       render: (_: unknown, row: any) => row.final_km - row.initial_km,
     },
     {
-      key: 'team_id',
+      key: 'team_name',
       label: 'Equipe',
-      render: (_: string | null, row: any) => getTeamName(row),
     },
   ];
 
