@@ -563,12 +563,26 @@ export const imageMetricImportConfig = {
 // Satisfaction import config
 export const satisfactionImportConfig = {
   mappings: [
-    { excelColumn: 'Trimestre', dbColumn: 'quarter', required: true, transform: toString },
+    { excelColumn: 'Contrato', dbColumn: 'contract_id', required: true, transform: toString },
+    {
+      excelColumn: 'Trimestre',
+      dbColumn: 'quarter',
+      required: true,
+      transform: (v: any) => {
+        const s = toString(v).toLowerCase();
+        if (s.startsWith('q1') || s.includes('1')) return 'Q1';
+        if (s.startsWith('q2') || s.includes('2')) return 'Q2';
+        if (s.startsWith('q3') || s.includes('3')) return 'Q3';
+        if (s.startsWith('q4') || s.includes('4')) return 'Q4';
+        return toString(v);
+      },
+    },
     { excelColumn: 'Ano', dbColumn: 'year', required: true, transform: toInteger },
     { excelColumn: 'Nota', dbColumn: 'score', transform: toNumber },
     { excelColumn: 'Feedback', dbColumn: 'feedback', transform: toString },
   ] as ColumnMapping[],
   templateColumns: [
+    { key: 'contract_id', label: 'Contrato' },
     { key: 'quarter', label: 'Trimestre' },
     { key: 'year', label: 'Ano' },
     { key: 'score', label: 'Nota' },

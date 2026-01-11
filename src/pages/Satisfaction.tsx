@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { DataTable } from '@/components/shared/DataTable';
@@ -17,6 +18,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 export default function Satisfaction() {
   const { satisfactionRecords, isLoading, deleteSatisfaction } = useCustomerSatisfaction();
   const { contracts } = useContracts();
+  const queryClient = useQueryClient();
   const [formOpen, setFormOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
@@ -84,9 +86,41 @@ export default function Satisfaction() {
   };
 
   const handleImport = async (data: any[]) => {
-    const { error } = await supabase.from('customer_satisfaction').insert(data);
+    const resolvedData = data.map((row, index) => {
+      const rowNumber = index + 2;
+      const contractText = String(row.contract_id || '').trim();
+      if (!contractText) throw new Error(`Linha ${rowNumber}: Campo "Contrato" é obrigatório`);
+
+      const normalized = contractText.toLowerCase();
+      const contractNumber = (normalized.match(/ctr-\d+/)?.[0] || '').toLowerCase();
+
+      const contract = contracts.find((c) => {
+        const number = (c.number || '').toLowerCase();
+        const name = (c.client_name || '').toLowerCase();
+        const combined = `${c.number} - ${c.client_name}`.toLowerCase();
+        return (
+          combined === normalized ||
+          name === normalized ||
+          number === normalized ||
+          (contractNumber && number === contractNumber)
+        );
+      });
+
+      if (!contract) throw new Error(`Linha ${rowNumber}: Contrato "${contractText}" não encontrado`);
+
+      return {
+        contract_id: contract.id,
+        quarter: row.quarter,
+        year: row.year,
+        score: row.score ?? null,
+        feedback: row.feedback ?? null,
+      };
+    });
+
+    const { error } = await supabase.from('customer_satisfaction').insert(resolvedData);
     if (error) throw error;
-    toast.success(`${data.length} registros importados com sucesso!`);
+    queryClient.invalidateQueries({ queryKey: ['customer_satisfaction'] });
+    toast.success(`${resolvedData.length} registros importados com sucesso!`);
   };
 
   return (
