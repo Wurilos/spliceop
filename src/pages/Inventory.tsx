@@ -1,11 +1,13 @@
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { DataTable, Column } from '@/components/shared/DataTable';
 import { DeleteDialog } from '@/components/shared/DeleteDialog';
+import { ImportDialog } from '@/components/shared/ImportDialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, TrendingUp, Package, BarChart3, Wrench } from 'lucide-react';
+import { Plus, TrendingUp, Package, BarChart3, Wrench, Upload } from 'lucide-react';
 import { useComponents, Component } from '@/hooks/useComponents';
 import { useStock, Stock } from '@/hooks/useStock';
 import { useStockMaintenance, StockMaintenance } from '@/hooks/useStockMaintenance';
@@ -15,6 +17,9 @@ import { MaintenanceForm } from '@/components/inventory/MaintenanceForm';
 import { InventoryDashboard } from '@/components/inventory/InventoryDashboard';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
+import { supabase } from '@/integrations/supabase/client';
+import { componentImportConfig } from '@/lib/importConfigs';
+import { useToast } from '@/hooks/use-toast';
 
 const componentColumns: Column<Component>[] = [
   { key: 'code', label: 'Código' },
@@ -44,6 +49,9 @@ const maintenanceColumns: Column<StockMaintenance>[] = [
 ];
 
 export default function InventoryPage() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
   const {
     components,
     loading: loadingComponents,
@@ -80,6 +88,7 @@ export default function InventoryPage() {
   const [componentFormOpen, setComponentFormOpen] = useState(false);
   const [stockFormOpen, setStockFormOpen] = useState(false);
   const [maintenanceFormOpen, setMaintenanceFormOpen] = useState(false);
+  const [componentImportOpen, setComponentImportOpen] = useState(false);
 
   const [editingComponent, setEditingComponent] = useState<Component | null>(null);
   const [editingStock, setEditingStock] = useState<Stock | null>(null);
@@ -88,6 +97,19 @@ export default function InventoryPage() {
   const [deletingComponent, setDeletingComponent] = useState<Component | null>(null);
   const [deletingStock, setDeletingStock] = useState<Stock | null>(null);
   const [deletingMaintenance, setDeletingMaintenance] = useState<StockMaintenance | null>(null);
+
+  const handleComponentImport = async (records: Record<string, any>[]) => {
+    const validRecords = records.map(r => ({
+      code: r.code || null,
+      name: r.name,
+      type: r.type || null,
+      value: r.value || null,
+    }));
+    const { error } = await supabase.from('components').insert(validRecords);
+    if (error) throw error;
+    queryClient.invalidateQueries({ queryKey: ['components'] });
+    toast({ title: 'Componentes importados com sucesso!' });
+  };
 
   return (
     <AppLayout title="Estoque e Manutenções">
@@ -123,9 +145,14 @@ export default function InventoryPage() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>Cadastro de Componentes</CardTitle>
-                <Button onClick={() => { setEditingComponent(null); setComponentFormOpen(true); }}>
-                  <Plus className="h-4 w-4 mr-2" /> Adicionar
-                </Button>
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={() => setComponentImportOpen(true)}>
+                    <Upload className="h-4 w-4 mr-2" /> Importar
+                  </Button>
+                  <Button onClick={() => { setEditingComponent(null); setComponentFormOpen(true); }}>
+                    <Plus className="h-4 w-4 mr-2" /> Adicionar
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 <DataTable
@@ -249,6 +276,17 @@ export default function InventoryPage() {
           onOpenChange={(o) => !o && setDeletingMaintenance(null)}
           onConfirm={() => { if (deletingMaintenance) { deleteMaintenance(deletingMaintenance.id); setDeletingMaintenance(null); } }}
           loading={isDeletingMaintenance}
+        />
+
+        {/* Import Dialog */}
+        <ImportDialog
+          open={componentImportOpen}
+          onOpenChange={setComponentImportOpen}
+          onImport={handleComponentImport}
+          columnMappings={componentImportConfig.mappings}
+          templateColumns={componentImportConfig.templateColumns}
+          templateFilename="componentes_template"
+          title="Importar Componentes"
         />
       </div>
     </AppLayout>
