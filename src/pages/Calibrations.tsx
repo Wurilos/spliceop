@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { DataTable, Column } from '@/components/shared/DataTable';
 import { DeleteDialog } from '@/components/shared/DeleteDialog';
@@ -15,15 +15,32 @@ import { supabase } from '@/integrations/supabase/client';
 import { useEquipment } from '@/hooks/useEquipment';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Plus, LayoutDashboard, List, FileDown } from 'lucide-react';
+import { Plus, LayoutDashboard, List, FileDown, Filter } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 
-type Calibration = Tables<'calibrations'> & { equipment?: { serial_number: string; type: string | null; brand: string | null; contract_id?: string | null } | null };
+type Calibration = Tables<'calibrations'> & { 
+  equipment?: { 
+    serial_number: string; 
+    type: string | null; 
+    brand: string | null; 
+    contract_id?: string | null;
+    lanes_qty?: number | null;
+  } | null;
+  contract_name?: string;
+};
 
 // Custom status badge with color scale for calibrations
 function CalibrationStatusBadge({ status }: { status: string }) {
@@ -37,6 +54,7 @@ function CalibrationStatusBadge({ status }: { status: string }) {
 }
 
 const columns: Column<Calibration>[] = [
+  { key: 'contract_name', label: 'Contrato' },
   { key: 'equipment.serial_number', label: 'Equipamento', render: (_, row) => row.equipment?.serial_number || '-' },
   { key: 'equipment.type', label: 'Tipo', render: (_, row) => row.equipment?.type || '-' },
   { key: 'calibration_date', label: 'Data Aferição', render: (v) => format(new Date(String(v)), 'dd/MM/yyyy') },
@@ -55,15 +73,64 @@ export default function Calibrations() {
   const [editing, setEditing] = useState<Calibration | null>(null);
   const [deleting, setDeleting] = useState<Calibration | null>(null);
   const [activeTab, setActiveTab] = useState('dashboard');
+  
+  // Filters
+  const [contractFilter, setContractFilter] = useState<string>('all');
+  const [expirationFilter, setExpirationFilter] = useState<string>('all');
 
-  // Add contract_id to calibrations based on equipment
-  const calibrationsWithContract = calibrations.map(cal => ({
-    ...cal,
-    equipment: cal.equipment ? {
-      ...cal.equipment,
-      contract_id: equipment.find(e => e.serial_number === cal.equipment?.serial_number)?.contract_id
-    } : null
-  }));
+  // Add contract info to calibrations based on equipment
+  const calibrationsWithContract = useMemo(() => {
+    return calibrations.map(cal => {
+      const equipmentItem = equipment.find(e => e.serial_number === cal.equipment?.serial_number);
+      const contract = contracts.find(c => c.id === equipmentItem?.contract_id);
+      return {
+        ...cal,
+        equipment: cal.equipment ? {
+          ...cal.equipment,
+          contract_id: equipmentItem?.contract_id
+        } : null,
+        contract_name: contract?.client_name || 'Sem Contrato'
+      };
+    });
+  }, [calibrations, equipment, contracts]);
+
+  // Filter calibrations based on selected filters
+  const filteredCalibrations = useMemo(() => {
+    let filtered = calibrationsWithContract;
+
+    // Filter by contract
+    if (contractFilter !== 'all') {
+      filtered = filtered.filter(cal => {
+        const equipmentItem = equipment.find(e => e.serial_number === cal.equipment?.serial_number);
+        return equipmentItem?.contract_id === contractFilter;
+      });
+    }
+
+    // Filter by expiration status
+    if (expirationFilter !== 'all') {
+      const today = new Date();
+      const next30Days = new Date();
+      next30Days.setDate(today.getDate() + 30);
+
+      filtered = filtered.filter(cal => {
+        if (!cal.expiration_date) return false;
+        const expDate = new Date(cal.expiration_date);
+
+        switch (expirationFilter) {
+          case 'expired':
+            return expDate < today;
+          case 'expiring_30':
+            return expDate >= today && expDate <= next30Days;
+          case 'valid':
+            return expDate > next30Days;
+          default:
+            return true;
+        }
+      });
+    }
+
+    return filtered;
+  }, [calibrationsWithContract, contractFilter, expirationFilter, equipment]);
 
   const handleExport = (type: 'pdf' | 'excel' | 'csv') => {
     const exportColumns = columns.map(c => ({ key: String(c.key), label: c.label }));
@@ -173,9 +240,57 @@ export default function Calibrations() {
           </TabsContent>
 
           {/* List Tab */}
-          <TabsContent value="list" className="mt-6">
+          <TabsContent value="list" className="mt-6 space-y-4">
+            {/* Filters */}
+            <div className="flex flex-wrap items-end gap-4 p-4 bg-muted/50 rounded-lg border">
+              <div className="flex items-center gap-2">
+                <Filter className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm font-medium">Filtros:</span>
+              </div>
+              
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="contract-filter" className="text-xs">Contrato</Label>
+                <Select value={contractFilter} onValueChange={setContractFilter}>
+                  <SelectTrigger id="contract-filter" className="w-[200px]">
+                    <SelectValue placeholder="Todos os contratos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os contratos</SelectItem>
+                    {contracts.map(c => (
+                      <SelectItem key={c.id} value={c.id}>{c.client_name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="expiration-filter" className="text-xs">Vencimento</Label>
+                <Select value={expirationFilter} onValueChange={setExpirationFilter}>
+                  <SelectTrigger id="expiration-filter" className="w-[180px]">
+                    <SelectValue placeholder="Todos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="expired">Vencidos</SelectItem>
+                    <SelectItem value="expiring_30">Próximos 30 dias</SelectItem>
+                    <SelectItem value="valid">Válidos</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {(contractFilter !== 'all' || expirationFilter !== 'all') && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => { setContractFilter('all'); setExpirationFilter('all'); }}
+                >
+                  Limpar filtros
+                </Button>
+              )}
+            </div>
+
             <DataTable 
-              data={calibrations} 
+              data={filteredCalibrations} 
               columns={columns} 
               loading={loading} 
               searchPlaceholder="Buscar por Nº equipamento..." 
