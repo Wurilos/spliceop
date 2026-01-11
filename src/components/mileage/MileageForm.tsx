@@ -162,14 +162,17 @@ export function MileageForm({ open, onOpenChange, record }: MileageFormProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Equipe</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value || ''}>
+                    <Select 
+                      onValueChange={(value) => field.onChange(value === '_none' ? null : value)} 
+                      value={field.value || '_none'}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione equipe" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">Nenhuma</SelectItem>
+                        <SelectItem value="_none">Nenhuma</SelectItem>
                         {teams.map((t) => (
                           <SelectItem key={t.id} value={t.id}>
                             {t.name}
