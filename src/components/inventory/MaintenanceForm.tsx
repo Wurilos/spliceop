@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useContracts } from '@/hooks/useContracts';
 import { useComponents } from '@/hooks/useComponents';
+import { useEquipment } from '@/hooks/useEquipment';
 import { StockMaintenance, MaintenanceItem } from '@/hooks/useStockMaintenance';
 import { Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -48,6 +49,7 @@ interface MaintenanceFormProps {
 export function MaintenanceForm({ open, onOpenChange, onSubmit, initialData, loading }: MaintenanceFormProps) {
   const { contracts } = useContracts();
   const { components } = useComponents();
+  const { equipment } = useEquipment();
   const [items, setItems] = useState<ExtendedMaintenanceItem[]>([{ 
     component_id: '', 
     quantity: 1,
@@ -174,7 +176,12 @@ export function MaintenanceForm({ open, onOpenChange, onSubmit, initialData, loa
   };
 
   // Auto-fill centro_custo from selected contract
-  const selectedContract = contracts.find(c => c.id === form.watch('contract_id'));
+  const selectedContractId = form.watch('contract_id');
+  const selectedContract = contracts.find(c => c.id === selectedContractId);
+  
+  // Filter equipment by selected contract
+  const filteredEquipment = equipment.filter(e => e.contract_id === selectedContractId);
+  
   useEffect(() => {
     if (selectedContract && !initialData) {
       form.setValue('centro_custo', selectedContract.cost_center || '');
@@ -472,11 +479,22 @@ export function MaintenanceForm({ open, onOpenChange, onSubmit, initialData, loa
                     </div>
                     <div>
                       <FormLabel className="text-xs">Nº Série do Equipamento</FormLabel>
-                      <Input
-                        placeholder="Ex: 1687"
+                      <Select
                         value={item.equipment_serial || ''}
-                        onChange={(e) => updateItem(index, 'equipment_serial', e.target.value)}
-                      />
+                        onValueChange={(value) => updateItem(index, 'equipment_serial', value)}
+                        disabled={!selectedContractId}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder={selectedContractId ? "Selecione o equipamento" : "Selecione um contrato primeiro"} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {filteredEquipment.map((equip) => (
+                            <SelectItem key={equip.id} value={equip.serial_number || equip.id}>
+                              {equip.serial_number} {equip.model ? `- ${equip.model}` : ''}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
 
