@@ -30,7 +30,7 @@ export default function Internet() {
   const { internetBills, isLoading: loadingBills, deleteInternetBill } = useInternetBills();
   const { contracts } = useContracts();
 
-  const [activeTab, setActiveTab] = useState('providers');
+  const [activeTab, setActiveTab] = useState('dashboard');
   
   // Provider state
   const [providerFormOpen, setProviderFormOpen] = useState(false);
@@ -200,12 +200,12 @@ export default function Internet() {
       <div className="space-y-6">
         <h1 className="text-2xl font-bold">Internet</h1>
         
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="dashboard">
           <TabsList>
+            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="providers">Provedores</TabsTrigger>
             <TabsTrigger value="connections">Cadastro de Internet</TabsTrigger>
             <TabsTrigger value="bills">Faturas</TabsTrigger>
-            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           </TabsList>
 
           <TabsContent value="providers" className="space-y-4">

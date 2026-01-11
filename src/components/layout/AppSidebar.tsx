@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
@@ -132,6 +133,7 @@ const menuGroups = [
 export function AppSidebar() {
   const location = useLocation();
   const { user, signOut, isAdmin, role } = useAuth();
+  const activeItemRef = useRef<HTMLLIElement>(null);
 
   const userInitials = user?.user_metadata?.full_name
     ?.split(' ')
@@ -139,6 +141,13 @@ export function AppSidebar() {
     .join('')
     .toUpperCase()
     .slice(0, 2) || user?.email?.slice(0, 2).toUpperCase() || 'U';
+
+  // Scroll to active menu item when location changes
+  useEffect(() => {
+    if (activeItemRef.current) {
+      activeItemRef.current.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }
+  }, [location.pathname]);
 
   return (
     <Sidebar>
@@ -158,19 +167,25 @@ export function AppSidebar() {
             <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {group.items.map((item) => (
-                  <SidebarMenuItem key={item.href}>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={location.pathname === item.href}
+                {group.items.map((item) => {
+                  const isActive = location.pathname === item.href;
+                  return (
+                    <SidebarMenuItem 
+                      key={item.href}
+                      ref={isActive ? activeItemRef : null}
                     >
-                      <NavLink to={item.href}>
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.title}</span>
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
+                      <SidebarMenuButton
+                        asChild
+                        isActive={isActive}
+                      >
+                        <NavLink to={item.href}>
+                          <item.icon className="h-4 w-4" />
+                          <span>{item.title}</span>
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>

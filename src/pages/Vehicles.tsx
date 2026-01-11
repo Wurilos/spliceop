@@ -82,7 +82,7 @@ export default function Vehicles() {
   const [deleteManyDialogOpen, setDeleteManyDialogOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [activeTab, setActiveTab] = useState('list');
+  const [activeTab, setActiveTab] = useState('dashboard');
   const itemsPerPage = 10;
 
   const handleAdd = () => {
@@ -246,10 +246,10 @@ export default function Vehicles() {
           onExport={handleExport}
         />
 
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="dashboard">
           <TabsList>
-            <TabsTrigger value="list">Listagem</TabsTrigger>
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+            <TabsTrigger value="list">Listagem</TabsTrigger>
           </TabsList>
 
           <TabsContent value="dashboard" className="mt-6">
