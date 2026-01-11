@@ -2,9 +2,16 @@ import { ColumnMapping } from './import';
 
 // Common transformers
 const toNumber = (v: any) => {
-  if (!v) return 0;
-  // Remove currency symbols, spaces, and handle Brazilian number format (R$ 23.000,00)
-  const cleaned = String(v)
+  if (!v && v !== 0) return 0;
+  const str = String(v).trim();
+  
+  // Check if it's already a plain number (no formatting)
+  if (/^-?\d+\.?\d*$/.test(str)) {
+    return parseFloat(str) || 0;
+  }
+  
+  // Handle Brazilian currency format (R$ 23.000,00)
+  const cleaned = str
     .replace(/[R$\s]/g, '')  // Remove R$, spaces
     .replace(/\./g, '')       // Remove thousand separators (dots)
     .replace(',', '.');       // Convert decimal comma to dot
