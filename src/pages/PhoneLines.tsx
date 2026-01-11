@@ -120,37 +120,148 @@ export default function PhoneLines() {
   };
 
   const handleImport = async (data: any[]) => {
-    const dataWithIds = data.map(d => {
-      // Resolve contract by number or client name
-      const contract = contracts.find(c => 
-        c.number?.toLowerCase() === d.contract_ref?.toLowerCase() ||
-        c.client_name?.toLowerCase() === d.contract_ref?.toLowerCase()
-      );
-      
-      if (!contract) {
-        throw new Error(`Contrato não encontrado: ${d.contract_ref}`);
-      }
+    // Normalizações / validações básicas
+    const carrierMap: Record<string, string> = {
+      vivo: 'Vivo',
+      oi: 'Oi',
+      tim: 'TIM',
+      claro: 'Claro',
+      datatem: 'DATATEM',
+    };
+    const subCarrierMap: Record<string, string> = {
+      vivo: 'Vivo',
+      oi: 'Oi',
+      tim: 'TIM',
+      claro: 'Claro',
+    };
 
-      // Find equipment by serial within the contract
-      const equipmentItem = equipment.find(e => 
-        e.serial_number?.toLowerCase() === d.equipment_serial?.toLowerCase() &&
-        e.contract_id === contract.id
-      );
-      
-      if (!equipmentItem) {
-        throw new Error(`Equipamento "${d.equipment_serial}" não encontrado no contrato "${d.contract_ref}"`);
-      }
+    const rows = data.map((d) => {
+      const carrier = carrierMap[String(d.carrier ?? '').trim().toLowerCase()] || String(d.carrier ?? '').trim();
+      const subCarrierRaw = String(d.sub_carrier ?? '').trim();
+      const sub_carrier = subCarrierRaw
+        ? (subCarrierMap[subCarrierRaw.toLowerCase()] || subCarrierRaw)
+        : null;
 
-      const { contract_ref, equipment_serial, ...rest } = d;
-      return { 
-        ...rest, 
-        contract_id: contract.id,
-        equipment_id: equipmentItem.id,
+      return {
+        contract_ref: String(d.contract_ref ?? '').trim(),
+        equipment_serial: String(d.equipment_serial ?? '').trim(),
+        line_number: String(d.line_number ?? '').trim(),
+        carrier,
+        sub_carrier,
+        status: d.status ? String(d.status).trim() : null,
       };
     });
-    
-    const { error } = await supabase.from('phone_lines').insert(dataWithIds);
+
+    // Duplicados na planilha
+    const lineNumbersLower = rows.map((r) => r.line_number.toLowerCase());
+    const duplicated = lineNumbersLower.filter((v, i) => lineNumbersLower.indexOf(v) !== i);
+    if (duplicated.length > 0) {
+      throw new Error(`Números de linha duplicados na planilha: ${[...new Set(duplicated)].join(', ')}`);
+    }
+
+    // Resolver contrato/equipamento + validar conciliação e preparar criação de chips
+    const prepared = rows.map((r) => {
+      const contract = contracts.find(
+        (c) =>
+          c.number?.toLowerCase() === r.contract_ref.toLowerCase() ||
+          c.client_name?.toLowerCase() === r.contract_ref.toLowerCase()
+      );
+      if (!contract) throw new Error(`Contrato não encontrado: ${r.contract_ref}`);
+
+      const equipmentItem = equipment.find(
+        (e) => e.serial_number?.toLowerCase() === r.equipment_serial.toLowerCase() && e.contract_id === contract.id
+      );
+      if (!equipmentItem) {
+        throw new Error(`Equipamento "${r.equipment_serial}" não encontrado no contrato "${r.contract_ref}"`);
+      }
+
+      // Se DATATEM, sub operadora é obrigatória
+      if (r.carrier === 'DATATEM') {
+        if (!r.sub_carrier) {
+          throw new Error(`Linha ${r.line_number}: para operadora DATATEM informe "Sub Operadora" (Vivo/Oi/TIM/Claro)`);
+        }
+        const allowed = ['Vivo', 'Oi', 'TIM', 'Claro'];
+        if (!allowed.includes(r.sub_carrier)) {
+          throw new Error(`Linha ${r.line_number}: Sub Operadora inválida. Use: ${allowed.join(', ')}`);
+        }
+      }
+
+      // Conciliação: não permitir mesma linha em equipamentos diferentes
+      const existing = phoneLines.find((pl) => pl.line_number?.toLowerCase() === r.line_number.toLowerCase());
+      if (existing && existing.equipment_id !== equipmentItem.id) {
+        const eq = existing.equipment?.serial_number || 'equipamento';
+        throw new Error(`Linha já vinculada a outro equipamento (${eq})`);
+      }
+
+      return { ...r, contract_id: contract.id, equipment_id: equipmentItem.id };
+    });
+
+    // 1) Garantir chips cadastrados
+    const uniqueLineNumbers = [...new Set(prepared.map((r) => r.line_number))];
+    const { data: existingChips, error: chipsFetchError } = await supabase
+      .from('chip_numbers')
+      .select('id, line_number, carrier')
+      .in('line_number', uniqueLineNumbers);
+    if (chipsFetchError) throw chipsFetchError;
+
+    const chipByLine = new Map<string, { id: string; line_number: string; carrier: string }>();
+    (existingChips || []).forEach((c) => chipByLine.set(c.line_number.toLowerCase(), c));
+
+    // Se já existe chip com a mesma linha, mas operadora diferente, bloquear
+    for (const r of prepared) {
+      const existingChip = chipByLine.get(r.line_number.toLowerCase());
+      if (existingChip && existingChip.carrier !== r.carrier) {
+        throw new Error(
+          `Linha ${r.line_number}: já cadastrada com operadora "${existingChip.carrier}" (na planilha: "${r.carrier}")`
+        );
+      }
+    }
+
+    const missingChips = prepared
+      .filter((r) => !chipByLine.has(r.line_number.toLowerCase()))
+      .map((r) => ({ line_number: r.line_number, carrier: r.carrier }));
+
+    if (missingChips.length > 0) {
+      const { error: chipsInsertError } = await supabase.from('chip_numbers').insert(missingChips);
+      if (chipsInsertError) throw chipsInsertError;
+    }
+
+    // Recarrega chips para obter IDs
+    const { data: allChips, error: chipsFetch2Error } = await supabase
+      .from('chip_numbers')
+      .select('id, line_number, carrier')
+      .in('line_number', uniqueLineNumbers);
+    if (chipsFetch2Error) throw chipsFetch2Error;
+
+    const chipByLine2 = new Map<string, { id: string; line_number: string; carrier: string }>();
+    (allChips || []).forEach((c) => chipByLine2.set(c.line_number.toLowerCase(), c));
+
+    // 2) Criar vínculos linha/equipamento
+    const inserts = prepared.map((r) => {
+      const chip = chipByLine2.get(r.line_number.toLowerCase());
+      if (!chip) throw new Error(`Falha ao localizar chip para a linha ${r.line_number}`);
+
+      // Conciliação por chip_id também
+      const existingByChip = phoneLines.find((pl) => pl.chip_id === chip.id);
+      if (existingByChip && existingByChip.equipment_id !== r.equipment_id) {
+        const eq = existingByChip.equipment?.serial_number || 'equipamento';
+        throw new Error(`Linha já vinculada a outro equipamento (${eq})`);
+      }
+
+      return {
+        contract_id: r.contract_id,
+        equipment_id: r.equipment_id,
+        chip_id: chip.id,
+        line_number: chip.line_number,
+        carrier: chip.carrier,
+        sub_carrier: r.carrier === 'DATATEM' ? r.sub_carrier : null,
+        status: r.status === 'inactive' ? 'inactive' : 'active',
+      };
+    });
+
+    const { error } = await supabase.from('phone_lines').insert(inserts);
     if (error) throw error;
+
     window.location.reload();
   };
 
