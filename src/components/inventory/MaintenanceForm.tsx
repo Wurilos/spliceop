@@ -177,7 +177,7 @@ export function MaintenanceForm({ open, onOpenChange, onSubmit, initialData, loa
   const selectedContract = contracts.find(c => c.id === form.watch('contract_id'));
   useEffect(() => {
     if (selectedContract && !initialData) {
-      form.setValue('centro_custo', selectedContract.number || '');
+      form.setValue('centro_custo', selectedContract.cost_center || '');
       form.setValue('remetente', selectedContract.client_name || '');
     }
   }, [selectedContract, form, initialData]);
