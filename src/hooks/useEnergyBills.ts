@@ -8,6 +8,7 @@ export interface EnergyBill {
   consumer_unit: string;
   reference_month: string;
   value: number | null;
+  zero_invoice: boolean | null;
   due_date: string | null;
   status: string | null;
   supplier_id: string | null;

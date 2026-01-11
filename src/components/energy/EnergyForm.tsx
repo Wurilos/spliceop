@@ -19,6 +19,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -50,6 +51,7 @@ const formSchema = z.object({
   consumer_unit: z.string().min(1, 'Unidade consumidora é obrigatória'),
   reference_month: z.string().min(1, 'Mês de referência é obrigatório'),
   value: z.coerce.number().nullable().optional(),
+  zero_invoice: z.boolean().optional().default(false),
   due_date: z.string().nullable().optional(),
   status: z.string().nullable().optional().default('pending'),
 });
@@ -75,10 +77,20 @@ export function EnergyForm({ open, onOpenChange, bill }: EnergyFormProps) {
       consumer_unit: '',
       reference_month: new Date().toISOString().slice(0, 7) + '-01',
       value: 0,
+      zero_invoice: false,
       due_date: '',
       status: 'pending',
     },
   });
+
+  const zeroInvoice = form.watch('zero_invoice');
+
+  // When zero_invoice is checked, set value to 0
+  useEffect(() => {
+    if (zeroInvoice) {
+      form.setValue('value', 0);
+    }
+  }, [zeroInvoice, form]);
 
   const selectedContractId = form.watch('contract_id');
 
@@ -100,6 +112,7 @@ export function EnergyForm({ open, onOpenChange, bill }: EnergyFormProps) {
         consumer_unit: bill.consumer_unit,
         reference_month: bill.reference_month,
         value: bill.value || 0,
+        zero_invoice: bill.zero_invoice || false,
         due_date: bill.due_date || '',
         status: bill.status || 'pending',
       });
@@ -109,6 +122,7 @@ export function EnergyForm({ open, onOpenChange, bill }: EnergyFormProps) {
         consumer_unit: '',
         reference_month: new Date().toISOString().slice(0, 7) + '-01',
         value: 0,
+        zero_invoice: false,
         due_date: '',
         status: 'pending',
       });
@@ -132,7 +146,8 @@ export function EnergyForm({ open, onOpenChange, bill }: EnergyFormProps) {
       contract_id: values.contract_id || null,
       consumer_unit: values.consumer_unit,
       reference_month: values.reference_month,
-      value: values.value || null,
+      value: values.zero_invoice ? 0 : (values.value || null),
+      zero_invoice: values.zero_invoice || false,
       due_date: values.due_date || null,
       status: values.status || 'pending',
       supplier_id: null,
@@ -289,9 +304,32 @@ export function EnergyForm({ open, onOpenChange, bill }: EnergyFormProps) {
                 <FormItem>
                   <FormLabel>Valor (R$)</FormLabel>
                   <FormControl>
-                    <Input type="number" step="0.01" {...field} />
+                    <Input 
+                      type="number" 
+                      step="0.01" 
+                      {...field} 
+                      disabled={zeroInvoice}
+                    />
                   </FormControl>
                   <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="zero_invoice"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel>Fatura Zerada</FormLabel>
+                  </div>
                 </FormItem>
               )}
             />
