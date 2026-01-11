@@ -211,28 +211,34 @@ export type Database = {
       }
       components: {
         Row: {
-          category: string | null
+          code: string | null
           created_at: string | null
           description: string | null
           id: string
           name: string
+          type: string | null
           updated_at: string | null
+          value: number | null
         }
         Insert: {
-          category?: string | null
+          code?: string | null
           created_at?: string | null
           description?: string | null
           id?: string
           name: string
+          type?: string | null
           updated_at?: string | null
+          value?: number | null
         }
         Update: {
-          category?: string | null
+          code?: string | null
           created_at?: string | null
           description?: string | null
           id?: string
           name?: string
+          type?: string | null
           updated_at?: string | null
+          value?: number | null
         }
         Relationships: []
       }

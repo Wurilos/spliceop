@@ -4,9 +4,11 @@ import { useToast } from '@/hooks/use-toast';
 
 export interface Component {
   id: string;
+  code: string | null;
   name: string;
-  category: string | null;
+  type: string | null;
   description: string | null;
+  value: number | null;
   created_at: string | null;
   updated_at: string | null;
 }
@@ -28,7 +30,7 @@ export function useComponents() {
   });
 
   const createMutation = useMutation({
-    mutationFn: async (record: { name: string; category?: string; description?: string }) => {
+    mutationFn: async (record: { code?: string; name: string; type?: string; description?: string; value?: number }) => {
       const { data, error } = await supabase.from('components').insert(record).select().single();
       if (error) throw error;
       return data;

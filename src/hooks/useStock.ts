@@ -10,7 +10,7 @@ export interface Stock {
   created_at: string | null;
   updated_at: string | null;
   contracts?: { client_name: string; number: string } | null;
-  components?: { name: string; category: string | null } | null;
+  components?: { name: string; type: string | null } | null;
 }
 
 export function useStock() {
@@ -22,7 +22,7 @@ export function useStock() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('stock')
-        .select('*, contracts(client_name, number), components(name, category)')
+        .select('*, contracts(client_name, number), components(name, type)')
         .order('created_at', { ascending: false });
       if (error) throw error;
       return data as Stock[];

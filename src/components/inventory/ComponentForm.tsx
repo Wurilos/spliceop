@@ -11,14 +11,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Component } from '@/hooks/useComponents';
 
 const schema = z.object({
-  name: z.string().min(1, 'Nome é obrigatório'),
-  category: z.string().optional(),
-  description: z.string().optional(),
+  code: z.string().optional(),
+  name: z.string().min(1, 'Descrição é obrigatória'),
+  type: z.string().optional(),
+  value: z.coerce.number().optional(),
 });
 
 type FormData = z.infer<typeof schema>;
 
-const categories = [
+const types = [
   'Eletrônicos',
   'Mecânicos',
   'Ópticos',
@@ -41,21 +42,23 @@ export function ComponentForm({ open, onOpenChange, onSubmit, initialData, loadi
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
+      code: '',
       name: '',
-      category: '',
-      description: '',
+      type: '',
+      value: undefined,
     },
   });
 
   useEffect(() => {
     if (initialData) {
       form.reset({
+        code: initialData.code || '',
         name: initialData.name,
-        category: initialData.category || '',
-        description: initialData.description || '',
+        type: initialData.type || '',
+        value: initialData.value ?? undefined,
       });
     } else {
-      form.reset({ name: '', category: '', description: '' });
+      form.reset({ code: '', name: '', type: '', value: undefined });
     }
   }, [initialData, form]);
 
@@ -69,12 +72,12 @@ export function ComponentForm({ open, onOpenChange, onSubmit, initialData, loadi
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
-              name="name"
+              name="code"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nome *</FormLabel>
+                  <FormLabel>Código do Componente</FormLabel>
                   <FormControl>
-                    <Input placeholder="Nome do componente" {...field} />
+                    <Input placeholder="Ex: COMP-001" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -82,19 +85,32 @@ export function ComponentForm({ open, onOpenChange, onSubmit, initialData, loadi
             />
             <FormField
               control={form.control}
-              name="category"
+              name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Categoria</FormLabel>
+                  <FormLabel>Descrição *</FormLabel>
+                  <FormControl>
+                    <Textarea placeholder="Descrição do componente" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tipo</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecione a categoria" />
+                        <SelectValue placeholder="Selecione o tipo" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {categories.map((cat) => (
-                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                      {types.map((t) => (
+                        <SelectItem key={t} value={t}>{t}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -104,12 +120,12 @@ export function ComponentForm({ open, onOpenChange, onSubmit, initialData, loadi
             />
             <FormField
               control={form.control}
-              name="description"
+              name="value"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Descrição</FormLabel>
+                  <FormLabel>Valor (R$)</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Descrição do componente" {...field} />
+                    <Input type="number" step="0.01" placeholder="0.00" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
