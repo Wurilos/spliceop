@@ -63,36 +63,108 @@ export function useSystemAlerts() {
       const currentMonth = getCurrentReferenceMonth();
       const previousMonth = getPreviousReferenceMonth();
 
-      // 1. Check expiring contracts
+      // 1. Check expiring contracts (considering amendments)
       const { data: contracts } = await supabase
         .from('contracts')
         .select('id, number, client_name, end_date, status')
         .eq('status', 'active')
         .not('end_date', 'is', null);
 
+      // Fetch all contract amendments
+      const { data: contractAmendments } = await supabase
+        .from('contract_amendments')
+        .select('*')
+        .order('amendment_number', { ascending: false });
+
+      // Helper to get effective end date considering amendments
+      const getEffectiveEndDate = (contractId: string, originalEndDate: string | null): string | null => {
+        const amendments = contractAmendments?.filter(a => a.contract_id === contractId) || [];
+        if (amendments.length === 0) return originalEndDate;
+        const latest = amendments.reduce((prev, curr) => 
+          curr.amendment_number > prev.amendment_number ? curr : prev
+        );
+        return latest.end_date || originalEndDate;
+      };
+
+      // Helper to check if contract has amendments
+      const getContractAmendments = (contractId: string) => 
+        contractAmendments?.filter(a => a.contract_id === contractId) || [];
+
       contracts?.forEach(contract => {
-        if (!contract.end_date) return;
-        const endDate = parseISO(contract.end_date);
+        const effectiveEndDate = getEffectiveEndDate(contract.id, contract.end_date);
+        if (!effectiveEndDate) return;
+        
+        const endDate = parseISO(effectiveEndDate);
         const daysUntil = differenceInDays(endDate, today);
+        const amendments = getContractAmendments(contract.id);
+        const hasAmendment = amendments.length > 0;
         
         if (daysUntil <= ALERT_THRESHOLDS.low) {
+          const amendmentInfo = hasAmendment ? ` (${amendments.length} aditivo${amendments.length > 1 ? 's' : ''})` : '';
+          
           allAlerts.push({
             id: `contract-${contract.id}`,
             type: getAlertType(daysUntil),
             category: 'contracts',
             title: daysUntil < 0 ? 'Contrato Vencido' : 'Contrato Próximo do Vencimento',
             description: daysUntil < 0 
-              ? `O contrato ${contract.number} - ${contract.client_name} venceu há ${Math.abs(daysUntil)} dias.`
-              : `O contrato ${contract.number} - ${contract.client_name} vence em ${daysUntil} dias.`,
+              ? `O contrato ${contract.number} - ${contract.client_name}${amendmentInfo} venceu há ${Math.abs(daysUntil)} dias.`
+              : `O contrato ${contract.number} - ${contract.client_name}${amendmentInfo} vence em ${daysUntil} dias.`,
             suggestion: daysUntil < 0 
-              ? 'Renovar contrato imediatamente ou encerrar formalmente.'
-              : 'Iniciar processo de renovação ou negociação.',
+              ? hasAmendment ? 'Renovar contrato com novo aditivo ou encerrar formalmente.' : 'Renovar contrato imediatamente ou encerrar formalmente.'
+              : hasAmendment ? 'Iniciar processo de renovação ou novo aditivo.' : 'Iniciar processo de renovação ou negociação.',
             detectedAt,
             entityId: contract.id,
             entityType: 'contracts',
           });
         }
       });
+
+      // NEW: Check for contracts with amendments expiring soon (based on amendment dates)
+      if (contractAmendments && contractAmendments.length > 0) {
+        // Group amendments by contract
+        const amendmentsByContract = new Map<string, typeof contractAmendments[0][]>();
+        contractAmendments.forEach(amendment => {
+          if (!amendmentsByContract.has(amendment.contract_id)) {
+            amendmentsByContract.set(amendment.contract_id, []);
+          }
+          amendmentsByContract.get(amendment.contract_id)!.push(amendment);
+        });
+
+        // For each contract with amendments, check if the latest amendment is expiring
+        for (const [contractId, amendments] of amendmentsByContract) {
+          const contract = contracts?.find(c => c.id === contractId);
+          if (!contract) continue;
+          
+          const latestAmendment = amendments.reduce((prev, curr) => 
+            curr.amendment_number > prev.amendment_number ? curr : prev
+          );
+          
+          if (!latestAmendment.end_date) continue;
+          
+          const endDate = parseISO(latestAmendment.end_date);
+          const daysUntil = differenceInDays(endDate, today);
+          
+          // Only create alert if within 90 days and not already covered by contract expiration
+          if (daysUntil > 0 && daysUntil <= 90) {
+            // Check if we already have a contract expiration alert for this
+            const hasContractAlert = allAlerts.some(a => a.id === `contract-${contractId}`);
+            if (!hasContractAlert) {
+              allAlerts.push({
+                id: `amendment-${latestAmendment.id}`,
+                type: daysUntil <= 30 ? 'high' : 'medium',
+                category: 'contracts',
+                title: 'Aditivo de Contrato Próximo do Vencimento',
+                description: `O aditivo #${latestAmendment.amendment_number} do contrato ${contract.number} - ${contract.client_name} vence em ${daysUntil} dias.`,
+                suggestion: 'Iniciar processo de renovação ou negociação de novo aditivo.',
+                detectedAt,
+                entityId: contractId,
+                entityType: 'contracts',
+              });
+            }
+          }
+        }
+      }
 
       // 2. Check expiring calibrations
       const { data: calibrations } = await supabase
