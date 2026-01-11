@@ -72,6 +72,28 @@ export function mapExcelData<T>(
     return foundKey ? row[foundKey] : undefined;
   };
 
+  // Validação de cabeçalhos (evita erro repetido em todas as linhas quando uma coluna não existe)
+  if (rawData.length > 0) {
+    const headers = Object.keys(rawData[0] ?? {});
+    const hasHeader = (excelColumn: string) =>
+      headers.some((h) => normalizeHeader(h) === normalizeHeader(excelColumn));
+
+    for (const m of mappings) {
+      if (m.required && !hasHeader(m.excelColumn)) {
+        errors.push(`Coluna obrigatória não encontrada: "${m.excelColumn}"`);
+      }
+    }
+
+    if (errors.length > 0) {
+      return {
+        success: false,
+        data: [],
+        errors,
+        totalRows: rawData.length,
+        validRows: 0,
+      };
+    }
+  }
   rawData.forEach((row, index) => {
     const rowNumber = index + 2; // +2 because Excel is 1-indexed and has header row
     const mappedRow: Record<string, any> = {};
@@ -96,7 +118,11 @@ export function mapExcelData<T>(
           isValid = false;
         }
       } else if (!mapping.required) {
-        mappedRow[mapping.dbColumn] = null;
+        // Não sobrescrever um valor já preenchido (útil quando há múltiplas variações de cabeçalho
+        // mapeando para o mesmo dbColumn, ex: "Status" vs "Status (Ativa/Inativa)")
+        if (!Object.prototype.hasOwnProperty.call(mappedRow, mapping.dbColumn)) {
+          mappedRow[mapping.dbColumn] = null;
+        }
       }
     }
 

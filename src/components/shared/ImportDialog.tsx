@@ -196,6 +196,13 @@ export function ImportDialog({
               </div>
             </div>
 
+            {importError && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{importError}</AlertDescription>
+              </Alert>
+            )}
+
             {result.validRows < result.totalRows && (
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
