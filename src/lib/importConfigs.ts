@@ -664,3 +664,19 @@ export const phoneLineImportConfig = {
     { key: 'status', label: 'Status (Ativa/Inativa)' },
   ],
 };
+
+// Component import config
+export const componentImportConfig = {
+  mappings: [
+    { excelColumn: 'Código', dbColumn: 'code', transform: toString },
+    { excelColumn: 'Descrição', dbColumn: 'name', required: true, transform: toString },
+    { excelColumn: 'Tipo', dbColumn: 'type', transform: toString },
+    { excelColumn: 'Valor', dbColumn: 'value', transform: toNumber },
+  ] as ColumnMapping[],
+  templateColumns: [
+    { key: 'code', label: 'Código' },
+    { key: 'name', label: 'Descrição' },
+    { key: 'type', label: 'Tipo' },
+    { key: 'value', label: 'Valor' },
+  ],
+};
