@@ -513,6 +513,20 @@ export type Database = {
             referencedRelation: "energy_suppliers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_energy_consumer_units_contract"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_energy_consumer_units_equipment"
+            columns: ["equipment_id"]
+            isOneToOne: false
+            referencedRelation: "equipment"
+            referencedColumns: ["id"]
+          },
         ]
       }
       energy_suppliers: {
