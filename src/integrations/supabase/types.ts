@@ -512,6 +512,7 @@ export type Database = {
           status: string | null
           supplier_id: string | null
           value: number | null
+          zero_invoice: boolean | null
         }
         Insert: {
           consumer_unit: string
@@ -524,6 +525,7 @@ export type Database = {
           status?: string | null
           supplier_id?: string | null
           value?: number | null
+          zero_invoice?: boolean | null
         }
         Update: {
           consumer_unit?: string
@@ -536,6 +538,7 @@ export type Database = {
           status?: string | null
           supplier_id?: string | null
           value?: number | null
+          zero_invoice?: boolean | null
         }
         Relationships: [
           {
