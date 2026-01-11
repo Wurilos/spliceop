@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { CalendarIcon, TrendingUp, TrendingDown, Target, ThumbsUp, ThumbsDown, Minus } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Legend } from 'recharts';
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Legend, Cell } from 'recharts';
 import { useCustomerSatisfaction } from '@/hooks/useCustomerSatisfaction';
 import { useContracts } from '@/hooks/useContracts';
 import { DateRange } from 'react-day-picker';
@@ -102,6 +102,44 @@ export function SatisfactionDashboard() {
       }))
       .sort((a, b) => a.key.localeCompare(b.key));
   }, [filteredRecords]);
+
+  // Chart data: contracts by quarter (bar chart)
+  const contractsByQuarterData = useMemo(() => {
+    // Group by quarter, each contract as a separate entry
+    const quarters = ['Q1', 'Q2', 'Q3', 'Q4'];
+    const years = [...new Set(satisfactionRecords.map(r => r.year))].sort();
+    
+    // Get unique contracts from filtered records
+    const contractIds = [...new Set(filteredRecords.map(r => r.contract_id))];
+    
+    const data: { quarter: string; [key: string]: any }[] = [];
+    
+    years.forEach(year => {
+      quarters.forEach(quarter => {
+        const entry: { quarter: string; [key: string]: any } = {
+          quarter: `${quarter}/${year}`,
+        };
+        
+        contractIds.forEach(contractId => {
+          const record = filteredRecords.find(
+            r => r.contract_id === contractId && r.quarter === quarter && r.year === year
+          );
+          const contractName = contracts.find(c => c.id === contractId)?.client_name || 'Desconhecido';
+          entry[contractName] = record?.score ?? null;
+        });
+        
+        // Only add if at least one contract has data
+        if (contractIds.some(id => {
+          const name = contracts.find(c => c.id === id)?.client_name || 'Desconhecido';
+          return entry[name] != null;
+        })) {
+          data.push(entry);
+        }
+      });
+    });
+    
+    return { data, contractNames: contractIds.map(id => contracts.find(c => c.id === id)?.client_name || 'Desconhecido') };
+  }, [filteredRecords, satisfactionRecords, contracts]);
 
   // Score status indicator
   const getScoreStatus = (score: number) => {
@@ -348,6 +386,82 @@ export function SatisfactionDashboard() {
             </div>
           ) : (
             <div className="h-80 flex items-center justify-center text-muted-foreground">
+              Nenhum dado encontrado para o período selecionado
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Contracts by Quarter Bar Chart */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Satisfação por Contrato e Trimestre</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {contractsByQuarterData.data.length > 0 ? (
+            <div className="h-96">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart 
+                  data={contractsByQuarterData.data} 
+                  margin={{ top: 20, right: 30, left: 0, bottom: 60 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis 
+                    dataKey="quarter" 
+                    className="text-xs"
+                    angle={-45}
+                    textAnchor="end"
+                    height={60}
+                  />
+                  <YAxis domain={[0, 100]} className="text-xs" />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--background))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px',
+                    }}
+                    formatter={(value: number) => [`${value?.toFixed(1) ?? '-'}`, 'Nota']}
+                  />
+                  <Legend wrapperStyle={{ paddingTop: 20 }} />
+                  <ReferenceLine 
+                    y={GOAL_TARGET} 
+                    stroke="hsl(var(--destructive))" 
+                    strokeDasharray="5 5"
+                    label={{ 
+                      value: `Meta: ${GOAL_TARGET}`, 
+                      position: 'right',
+                      fill: 'hsl(var(--destructive))',
+                      fontSize: 12
+                    }}
+                  />
+                  {contractsByQuarterData.contractNames.map((name, index) => {
+                    const colors = [
+                      'hsl(var(--primary))',
+                      'hsl(var(--chart-2))',
+                      'hsl(var(--chart-3))',
+                      'hsl(var(--chart-4))',
+                      'hsl(var(--chart-5))',
+                      '#8884d8',
+                      '#82ca9d',
+                      '#ffc658',
+                      '#ff7300',
+                      '#00C49F',
+                    ];
+                    return (
+                      <Bar
+                        key={name}
+                        dataKey={name}
+                        fill={colors[index % colors.length]}
+                        name={name}
+                        radius={[4, 4, 0, 0]}
+                      />
+                    );
+                  })}
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <div className="h-96 flex items-center justify-center text-muted-foreground">
               Nenhum dado encontrado para o período selecionado
             </div>
           )}
