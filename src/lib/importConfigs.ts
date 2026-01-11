@@ -682,3 +682,25 @@ export const componentImportConfig = {
     { key: 'value', label: 'Valor' },
   ],
 };
+
+// Chip numbers import config
+export const chipNumberImportConfig = {
+  mappings: [
+    { excelColumn: 'Número Linha', dbColumn: 'line_number', required: true, transform: toString },
+    { excelColumn: 'Operadora', dbColumn: 'carrier', required: true, transform: (v: string) => {
+      const carrierMap: Record<string, string> = {
+        'vivo': 'Vivo',
+        'oi': 'Oi',
+        'tim': 'TIM',
+        'claro': 'Claro',
+        'datatem': 'DATATEM',
+      };
+      const normalized = v?.toLowerCase().trim();
+      return carrierMap[normalized] || v?.trim() || '';
+    }},
+  ] as ColumnMapping[],
+  templateColumns: [
+    { key: 'line_number', label: 'Número Linha' },
+    { key: 'carrier', label: 'Operadora' },
+  ],
+};
