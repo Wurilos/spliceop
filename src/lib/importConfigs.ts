@@ -67,6 +67,7 @@ export const contractImportConfig = {
   mappings: [
     { excelColumn: 'Número', dbColumn: 'number', required: true, transform: toString },
     { excelColumn: 'Cliente', dbColumn: 'client_name', required: true, transform: toString },
+    { excelColumn: 'Centro de Custo', dbColumn: 'cost_center', transform: toString },
     { excelColumn: 'Descrição', dbColumn: 'description', transform: toString },
     { excelColumn: 'Valor', dbColumn: 'value', transform: toNumber },
     { excelColumn: 'Data Início', dbColumn: 'start_date', transform: toDate },
@@ -87,6 +88,7 @@ export const contractImportConfig = {
   templateColumns: [
     { key: 'number', label: 'Número' },
     { key: 'client_name', label: 'Cliente' },
+    { key: 'cost_center', label: 'Centro de Custo' },
     { key: 'description', label: 'Descrição' },
     { key: 'value', label: 'Valor' },
     { key: 'start_date', label: 'Data Início' },

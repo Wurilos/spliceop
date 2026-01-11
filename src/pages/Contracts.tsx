@@ -17,6 +17,7 @@ type Contract = Tables<'contracts'>;
 
 const columns: Column<Contract>[] = [
   { key: 'client_name', label: 'Cliente' },
+  { key: 'cost_center', label: 'Centro de Custo' },
   {
     key: 'value',
     label: 'Valor',
@@ -44,6 +45,7 @@ const columns: Column<Contract>[] = [
 
 const exportColumns = [
   { key: 'Cliente', label: 'Cliente' },
+  { key: 'Centro de Custo', label: 'Centro de Custo' },
   { key: 'Valor', label: 'Valor' },
   { key: 'Data de Início', label: 'Data de Início' },
   { key: 'Data de Fim', label: 'Data de Fim' },
@@ -86,6 +88,7 @@ export default function Contracts() {
   const handleExport = (type: 'pdf' | 'excel' | 'csv') => {
     const data = contracts.map((c) => ({
       'Cliente': c.client_name,
+      'Centro de Custo': c.cost_center || '',
       'Valor': c.value || 0,
       'Data de Início': c.start_date || '',
       'Data de Fim': c.end_date || '',
