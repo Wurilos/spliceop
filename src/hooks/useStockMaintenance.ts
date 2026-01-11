@@ -5,18 +5,27 @@ import { useToast } from '@/hooks/use-toast';
 export interface MaintenanceItem {
   component_id: string;
   quantity: number;
+  barcode?: string;
+  defect_description?: string;
+  field_service_code?: string;
+  equipment_serial?: string;
 }
 
 export interface StockMaintenance {
   id: string;
   contract_id: string | null;
-  om_number: string;
-  nf_number: string;
+  om_number: string | null;
+  nf_number: string | null;
   send_date: string;
   return_date: string | null;
   return_nf: string | null;
   observations: string | null;
   status: string | null;
+  status_nf: string | null;
+  solicitante: string | null;
+  centro_custo: string | null;
+  destinatario: string | null;
+  remetente: string | null;
   created_at: string | null;
   updated_at: string | null;
   contracts?: { client_name: string; number: string } | null;
@@ -24,7 +33,11 @@ export interface StockMaintenance {
     id: string;
     component_id: string;
     quantity: number;
-    components?: { name: string } | null;
+    barcode: string | null;
+    defect_description: string | null;
+    field_service_code: string | null;
+    equipment_serial: string | null;
+    components?: { name: string; code: string | null; value: number | null } | null;
   }>;
 }
 
@@ -37,7 +50,7 @@ export function useStockMaintenance() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('stock_maintenance')
-        .select('*, contracts(client_name, number), stock_maintenance_items(id, component_id, quantity, components(name))')
+        .select('*, contracts(client_name, number), stock_maintenance_items(id, component_id, quantity, barcode, defect_description, field_service_code, equipment_serial, components(name, code, value))')
         .order('created_at', { ascending: false });
       if (error) throw error;
       return data as StockMaintenance[];
@@ -47,12 +60,17 @@ export function useStockMaintenance() {
   const createMutation = useMutation({
     mutationFn: async (record: {
       contract_id: string | null;
-      om_number: string;
-      nf_number: string;
+      om_number?: string | null;
+      nf_number?: string | null;
       send_date: string;
       return_date?: string | null;
       return_nf?: string | null;
       observations?: string | null;
+      solicitante?: string | null;
+      centro_custo?: string | null;
+      destinatario?: string | null;
+      remetente?: string | null;
+      status_nf?: string | null;
       items: MaintenanceItem[];
     }) => {
       const { items, ...maintenanceData } = record;
@@ -60,7 +78,10 @@ export function useStockMaintenance() {
       // Create maintenance record
       const { data: maintenance, error: maintenanceError } = await supabase
         .from('stock_maintenance')
-        .insert(maintenanceData)
+        .insert({
+          ...maintenanceData,
+          status_nf: maintenanceData.status_nf || 'pendente_nf',
+        })
         .select()
         .single();
       
@@ -72,6 +93,10 @@ export function useStockMaintenance() {
           maintenance_id: maintenance.id,
           component_id: item.component_id,
           quantity: item.quantity,
+          barcode: item.barcode || null,
+          defect_description: item.defect_description || null,
+          field_service_code: item.field_service_code || null,
+          equipment_serial: item.equipment_serial || null,
         }));
 
         const { error: itemsError } = await supabase
@@ -97,13 +122,18 @@ export function useStockMaintenance() {
     mutationFn: async ({ id, items, ...record }: {
       id: string;
       contract_id?: string | null;
-      om_number?: string;
-      nf_number?: string;
+      om_number?: string | null;
+      nf_number?: string | null;
       send_date?: string;
       return_date?: string | null;
       return_nf?: string | null;
       observations?: string | null;
+      solicitante?: string | null;
+      centro_custo?: string | null;
+      destinatario?: string | null;
+      remetente?: string | null;
       status?: string;
+      status_nf?: string;
       items?: MaintenanceItem[];
     }) => {
       const { data, error } = await supabase
@@ -126,6 +156,10 @@ export function useStockMaintenance() {
             maintenance_id: id,
             component_id: item.component_id,
             quantity: item.quantity,
+            barcode: item.barcode || null,
+            defect_description: item.defect_description || null,
+            field_service_code: item.field_service_code || null,
+            equipment_serial: item.equipment_serial || null,
           }));
 
           const { error: itemsError } = await supabase
