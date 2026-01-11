@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, CartesianGrid, Legend, PieChart, Pie, Cell } from 'recharts';
@@ -6,6 +6,7 @@ import { ClipboardCheck, AlertTriangle, Clock, CheckCircle2 } from 'lucide-react
 import { Tables } from '@/integrations/supabase/types';
 import { addDays, isAfter, isBefore, format, addMonths, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 type Calibration = Tables<'calibrations'> & { 
   equipment?: { 
@@ -13,6 +14,7 @@ type Calibration = Tables<'calibrations'> & {
     type: string | null; 
     brand: string | null;
     contract_id?: string | null;
+    lanes_qty?: number | null;
   } | null 
 };
 
@@ -41,6 +43,7 @@ const CHART_COLORS = [
 export function CalibrationsDashboard({ calibrations, contracts = [] }: CalibrationsDashboardProps) {
   const today = new Date();
   const next30Days = addDays(today, 30);
+  const [viewMode, setViewMode] = useState<'equipment' | 'lanes'>('equipment');
 
   // Calculate statistics
   const stats = useMemo(() => {
@@ -81,7 +84,12 @@ export function CalibrationsDashboard({ calibrations, contracts = [] }: Calibrat
         const contractName = contract?.client_name || 'Sem Contrato';
         contractNames.add(contractName);
         
-        monthsData[monthKey][contractName] = (monthsData[monthKey][contractName] || 0) + 1;
+        // Calculate count based on view mode
+        const countValue = viewMode === 'lanes' 
+          ? (cal.equipment?.lanes_qty || 1) 
+          : 1;
+        
+        monthsData[monthKey][contractName] = (monthsData[monthKey][contractName] || 0) + countValue;
       }
     });
 
@@ -92,7 +100,7 @@ export function CalibrationsDashboard({ calibrations, contracts = [] }: Calibrat
       })),
       contractNames: Array.from(contractNames),
     };
-  }, [calibrations, contracts]);
+  }, [calibrations, contracts, viewMode]);
 
   // Data for horizontal bar chart - Expirations by Contract (next 6 months)
   const expirationsByContract = useMemo(() => {
@@ -222,8 +230,22 @@ export function CalibrationsDashboard({ calibrations, contracts = [] }: Calibrat
       {/* Stacked Bar Chart - Expirations by Contract and Month */}
       <Card>
         <CardHeader>
-          <CardTitle translate="no">Vencimentos por Contrato e Mês</CardTitle>
-          <CardDescription>Quantidade de equipamentos com vencimento de aferição nos próximos 6 meses</CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle translate="no">Vencimentos por Contrato e Mês</CardTitle>
+              <CardDescription>
+                {viewMode === 'equipment' 
+                  ? 'Quantidade de equipamentos com vencimento de aferição nos próximos 6 meses'
+                  : 'Quantidade de faixas com vencimento de aferição nos próximos 6 meses'}
+              </CardDescription>
+            </div>
+            <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as 'equipment' | 'lanes')}>
+              <TabsList>
+                <TabsTrigger value="equipment">Equipamentos</TabsTrigger>
+                <TabsTrigger value="lanes">Faixas</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
         </CardHeader>
         <CardContent>
           <ChartContainer config={chartConfig} className="h-[300px] w-full">
