@@ -266,6 +266,50 @@ export type Database = {
         }
         Relationships: []
       }
+      contract_amendments: {
+        Row: {
+          amendment_number: number
+          contract_id: string
+          created_at: string
+          description: string | null
+          end_date: string
+          id: string
+          start_date: string
+          updated_at: string
+          value: number
+        }
+        Insert: {
+          amendment_number?: number
+          contract_id: string
+          created_at?: string
+          description?: string | null
+          end_date: string
+          id?: string
+          start_date: string
+          updated_at?: string
+          value: number
+        }
+        Update: {
+          amendment_number?: number
+          contract_id?: string
+          created_at?: string
+          description?: string | null
+          end_date?: string
+          id?: string
+          start_date?: string
+          updated_at?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_amendments_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contracts: {
         Row: {
           city: string | null
