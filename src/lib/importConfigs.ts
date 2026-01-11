@@ -650,6 +650,13 @@ export const phoneLineImportConfig = {
     { excelColumn: 'Número Linha', dbColumn: 'line_number', required: true, transform: toString },
     { excelColumn: 'Operadora', dbColumn: 'carrier', required: true, transform: toString },
     { excelColumn: 'Sub Operadora', dbColumn: 'sub_carrier', transform: toString },
+    // Aceita tanto "Status" quanto "Status (Ativa/Inativa)" (planilhas legadas)
+    { excelColumn: 'Status (Ativa/Inativa)', dbColumn: 'status', transform: (v: string) => {
+      const lower = v?.toLowerCase()?.trim();
+      if (lower === 'ativa' || lower === 'active') return 'active';
+      if (lower === 'inativa' || lower === 'inactive') return 'inactive';
+      return 'active';
+    }},
     { excelColumn: 'Status', dbColumn: 'status', transform: (v: string) => {
       const lower = v?.toLowerCase()?.trim();
       if (lower === 'ativa' || lower === 'active') return 'active';
