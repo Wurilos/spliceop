@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Filter, Car, Route, TrendingUp, Clock } from 'lucide-react';
 import { useVehicles } from '@/hooks/useVehicles';
 import { useTeams } from '@/hooks/useTeams';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, Legend } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, Legend, ReferenceLine, ComposedChart } from 'recharts';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -189,27 +189,45 @@ export function MileageDashboard({ records }: MileageDashboardProps) {
         </Card>
       </div>
 
+      {/* Km per Vehicle with Goal Line */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Km por Veículo</CardTitle>
+          <CardDescription>Quilometragem por veículo com meta de 3.000 km</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={350}>
+            <ComposedChart data={kmByVehicle} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis 
+                dataKey="name" 
+                angle={-45} 
+                textAnchor="end" 
+                height={60}
+                tick={{ fontSize: 11 }}
+              />
+              <YAxis tickFormatter={(v) => `${v.toLocaleString('pt-BR')}`} />
+              <Tooltip formatter={(value: number) => [`${value.toLocaleString('pt-BR')} km`, 'Km']} />
+              <ReferenceLine 
+                y={3000} 
+                stroke="#ef4444" 
+                strokeWidth={2} 
+                strokeDasharray="5 5"
+                label={{ value: 'Meta: 3.000 km', position: 'right', fill: '#ef4444', fontSize: 12 }}
+              />
+              <Bar 
+                dataKey="km" 
+                fill="#3b82f6" 
+                radius={[4, 4, 0, 0]}
+                label={{ position: 'top', fontSize: 10, formatter: (v: number) => v.toLocaleString('pt-BR') }}
+              />
+            </ComposedChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
+
       {/* Charts Row */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Km by Vehicle */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Km por Veículo</CardTitle>
-            <CardDescription>Top 10 veículos com mais km rodados</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={kmByVehicle} layout="vertical" margin={{ left: 60, right: 20 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
-                <YAxis type="category" dataKey="name" width={55} tick={{ fontSize: 11 }} />
-                <Tooltip formatter={(value: number) => [`${value.toLocaleString('pt-BR')} km`, 'Km']} />
-                <Bar dataKey="km" fill="#3b82f6" radius={[0, 4, 4, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
         {/* Km by Team */}
         <Card>
           <CardHeader>
@@ -234,6 +252,25 @@ export function MileageDashboard({ records }: MileageDashboardProps) {
                 <Tooltip formatter={(value: number) => [`${value.toLocaleString('pt-BR')} km`, 'Km']} />
                 <Legend />
               </PieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Km by Vehicle Horizontal */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Top 10 Veículos</CardTitle>
+            <CardDescription>Veículos com mais km rodados</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={kmByVehicle} layout="vertical" margin={{ left: 60, right: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis type="number" tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
+                <YAxis type="category" dataKey="name" width={55} tick={{ fontSize: 11 }} />
+                <Tooltip formatter={(value: number) => [`${value.toLocaleString('pt-BR')} km`, 'Km']} />
+                <Bar dataKey="km" fill="#22c55e" radius={[0, 4, 4, 0]} />
+              </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
