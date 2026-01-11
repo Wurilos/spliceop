@@ -28,9 +28,11 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { useMileageRecords } from '@/hooks/useMileageRecords';
 import { useVehicles } from '@/hooks/useVehicles';
+import { useTeams } from '@/hooks/useTeams';
 
 const formSchema = z.object({
   vehicle_id: z.string().min(1, 'Selecione um veículo'),
+  team_id: z.string().nullable().optional(),
   date: z.string().min(1, 'Data é obrigatória'),
   start_time: z.string().min(1, 'Horário de início é obrigatório'),
   initial_km: z.coerce.number().min(0, 'Km inicial inválido'),
@@ -50,11 +52,13 @@ interface MileageFormProps {
 export function MileageForm({ open, onOpenChange, record }: MileageFormProps) {
   const { create, update } = useMileageRecords();
   const { vehicles } = useVehicles();
+  const { teams } = useTeams();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       vehicle_id: '',
+      team_id: null,
       date: new Date().toISOString().split('T')[0],
       start_time: '',
       initial_km: 0,
@@ -72,6 +76,7 @@ export function MileageForm({ open, onOpenChange, record }: MileageFormProps) {
     if (record) {
       form.reset({
         vehicle_id: record.vehicle_id,
+        team_id: record.team_id || null,
         date: record.date,
         start_time: record.start_time || '',
         initial_km: record.initial_km,
@@ -82,6 +87,7 @@ export function MileageForm({ open, onOpenChange, record }: MileageFormProps) {
     } else {
       form.reset({
         vehicle_id: '',
+        team_id: null,
         date: new Date().toISOString().split('T')[0],
         start_time: '',
         initial_km: 0,
@@ -95,6 +101,7 @@ export function MileageForm({ open, onOpenChange, record }: MileageFormProps) {
   const onSubmit = (values: FormValues) => {
     const data = {
       vehicle_id: values.vehicle_id,
+      team_id: values.team_id || null,
       date: values.date,
       start_time: values.start_time,
       initial_km: values.initial_km,
@@ -151,18 +158,44 @@ export function MileageForm({ open, onOpenChange, record }: MileageFormProps) {
 
               <FormField
                 control={form.control}
-                name="date"
+                name="team_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Data *</FormLabel>
-                    <FormControl>
-                      <Input type="date" {...field} />
-                    </FormControl>
+                    <FormLabel>Equipe</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value || ''}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione equipe" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="">Nenhuma</SelectItem>
+                        {teams.map((t) => (
+                          <SelectItem key={t.id} value={t.id}>
+                            {t.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
+
+            <FormField
+              control={form.control}
+              name="date"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Data *</FormLabel>
+                  <FormControl>
+                    <Input type="date" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <div className="grid grid-cols-2 gap-4">
               <FormField

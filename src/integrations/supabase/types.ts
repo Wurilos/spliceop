@@ -1299,6 +1299,7 @@ export type Database = {
           initial_km: number
           notes: string | null
           start_time: string | null
+          team_id: string | null
           vehicle_id: string
         }
         Insert: {
@@ -1311,6 +1312,7 @@ export type Database = {
           initial_km: number
           notes?: string | null
           start_time?: string | null
+          team_id?: string | null
           vehicle_id: string
         }
         Update: {
@@ -1323,6 +1325,7 @@ export type Database = {
           initial_km?: number
           notes?: string | null
           start_time?: string | null
+          team_id?: string | null
           vehicle_id?: string
         }
         Relationships: [
@@ -1345,6 +1348,13 @@ export type Database = {
             columns: ["employee_id"]
             isOneToOne: false
             referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mileage_records_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
             referencedColumns: ["id"]
           },
           {
@@ -2091,6 +2101,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      teams: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       toll_tags: {
         Row: {
