@@ -27,6 +27,7 @@ import {
 } from '@/components/ui/select';
 import { Tables } from '@/integrations/supabase/types';
 import { useContracts } from '@/hooks/useContracts';
+import { useTeams } from '@/hooks/useTeams';
 
 type Employee = Tables<'employees'>;
 
@@ -44,6 +45,7 @@ const schema = z.object({
   termination_date: z.string().optional(),
   re: z.string().optional(),
   contract_id: z.string().optional(),
+  team_id: z.string().optional(),
   status: z.enum(['active', 'inactive', 'vacation', 'terminated']).optional(),
 });
 
@@ -65,6 +67,7 @@ export function EmployeeForm({
   loading,
 }: EmployeeFormProps) {
   const { contracts } = useContracts();
+  const { teams } = useTeams();
 
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -82,6 +85,7 @@ export function EmployeeForm({
       termination_date: '',
       re: '',
       contract_id: '',
+      team_id: '',
       status: 'active',
     },
   });
@@ -102,6 +106,7 @@ export function EmployeeForm({
         termination_date: (initialData as any).termination_date || '',
         re: (initialData as any).re || '',
         contract_id: initialData.contract_id || '',
+        team_id: (initialData as any).team_id || '',
         status: initialData.status || 'active',
       });
     } else {
@@ -119,6 +124,7 @@ export function EmployeeForm({
         termination_date: '',
         re: '',
         contract_id: '',
+        team_id: '',
         status: 'active',
       });
     }
@@ -128,6 +134,7 @@ export function EmployeeForm({
     const cleanData = {
       ...data,
       contract_id: data.contract_id || null,
+      team_id: data.team_id || null,
       email: data.email || null,
       termination_date: data.termination_date || null,
     };
@@ -233,19 +240,50 @@ export function EmployeeForm({
               />
             </div>
 
-            <FormField
-              control={form.control}
-              name="role"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Cargo</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Técnico Eletrônico" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="role"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Cargo</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Técnico Eletrônico" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="team_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Equipe</FormLabel>
+                    <Select 
+                      onValueChange={(value) => field.onChange(value === '_none' ? '' : value)} 
+                      value={field.value || '_none'}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione a equipe" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="_none">Nenhuma</SelectItem>
+                        {teams.map((team) => (
+                          <SelectItem key={team.id} value={team.id}>
+                            {team.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             <div className="grid grid-cols-3 gap-4">
               <FormField

@@ -424,6 +424,7 @@ export type Database = {
           salary: number | null
           state: string | null
           status: Database["public"]["Enums"]["employee_status"] | null
+          team_id: string | null
           termination_date: string | null
           updated_at: string | null
         }
@@ -447,6 +448,7 @@ export type Database = {
           salary?: number | null
           state?: string | null
           status?: Database["public"]["Enums"]["employee_status"] | null
+          team_id?: string | null
           termination_date?: string | null
           updated_at?: string | null
         }
@@ -470,6 +472,7 @@ export type Database = {
           salary?: number | null
           state?: string | null
           status?: Database["public"]["Enums"]["employee_status"] | null
+          team_id?: string | null
           termination_date?: string | null
           updated_at?: string | null
         }
@@ -479,6 +482,13 @@ export type Database = {
             columns: ["contract_id"]
             isOneToOne: false
             referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employees_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
             referencedColumns: ["id"]
           },
           {

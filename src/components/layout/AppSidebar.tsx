@@ -27,6 +27,7 @@ import {
   LayoutDashboard,
   FileText,
   Users,
+  UsersRound,
   Radar,
   Car,
   Fuel,
@@ -80,6 +81,7 @@ const menuGroups = [
     items: [
       { title: 'Contratos', href: '/contracts', icon: FileText },
       { title: 'Colaboradores', href: '/employees', icon: Users },
+      { title: 'Equipes', href: '/teams', icon: UsersRound },
       { title: 'Equipamentos', href: '/equipment', icon: Radar },
       { title: 'Veículos', href: '/vehicles', icon: Car },
     ],

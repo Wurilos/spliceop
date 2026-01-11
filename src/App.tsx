@@ -28,6 +28,7 @@ import Infractions from "./pages/Infractions";
 import Satisfaction from "./pages/Satisfaction";
 import Sla from "./pages/Sla";
 import Goals from "./pages/Goals";
+import Teams from "./pages/Teams";
 
 import Seals from "./pages/Seals";
 import AuditLog from "./pages/AuditLog";
@@ -57,6 +58,7 @@ const App = () => (
             <Route path="/issues-dashboard" element={<ProtectedRoute><IssuesDashboard /></ProtectedRoute>} />
             <Route path="/contracts" element={<ProtectedRoute><Contracts /></ProtectedRoute>} />
             <Route path="/employees" element={<ProtectedRoute><Employees /></ProtectedRoute>} />
+            <Route path="/teams" element={<ProtectedRoute><Teams /></ProtectedRoute>} />
             <Route path="/equipment" element={<ProtectedRoute><Equipment /></ProtectedRoute>} />
             <Route path="/vehicles" element={<ProtectedRoute><Vehicles /></ProtectedRoute>} />
             <Route path="/fuel" element={<ProtectedRoute><Fuel /></ProtectedRoute>} />
