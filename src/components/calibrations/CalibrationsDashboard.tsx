@@ -78,7 +78,7 @@ export function CalibrationsDashboard({ calibrations, contracts = [] }: Calibrat
       if (monthsData[monthKey] !== undefined) {
         // Get contract name from equipment's contract
         const contract = contracts.find(c => c.id === cal.equipment?.contract_id);
-        const contractName = contract?.number || 'Sem Contrato';
+        const contractName = contract?.client_name || 'Sem Contrato';
         contractNames.add(contractName);
         
         monthsData[monthKey][contractName] = (monthsData[monthKey][contractName] || 0) + 1;
@@ -103,7 +103,7 @@ export function CalibrationsDashboard({ calibrations, contracts = [] }: Calibrat
       const expDate = new Date(cal.expiration_date);
       if (isAfter(expDate, today) && isBefore(expDate, sixMonthsFromNow)) {
         const contract = contracts.find(c => c.id === cal.equipment?.contract_id);
-        const contractName = contract?.number || 'Sem Contrato';
+        const contractName = contract?.client_name || 'Sem Contrato';
         contractCounts[contractName] = (contractCounts[contractName] || 0) + 1;
       }
     });
