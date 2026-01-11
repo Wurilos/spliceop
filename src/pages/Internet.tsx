@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { DataTable } from '@/components/shared/DataTable';
 import { DeleteDialog } from '@/components/shared/DeleteDialog';
+import { ImportDialog } from '@/components/shared/ImportDialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ProviderForm } from '@/components/internet/ProviderForm';
 import { ConnectionForm } from '@/components/internet/ConnectionForm';
@@ -14,8 +17,14 @@ import { useInternetProviders, InternetProvider } from '@/hooks/useInternetProvi
 import { useInternetConnections, InternetConnection } from '@/hooks/useInternetConnections';
 import { useInternetBills, InternetBill } from '@/hooks/useInternetBills';
 import { useContracts } from '@/hooks/useContracts';
+import { supabase } from '@/integrations/supabase/client';
+import { 
+  internetProviderImportConfig, 
+  internetConnectionImportConfig 
+} from '@/lib/importConfigs';
 
 export default function Internet() {
+  const queryClient = useQueryClient();
   const { providers, isLoading: loadingProviders, deleteProvider } = useInternetProviders();
   const { connections, isLoading: loadingConnections, deleteConnection } = useInternetConnections();
   const { internetBills, isLoading: loadingBills, deleteInternetBill } = useInternetBills();
@@ -26,11 +35,13 @@ export default function Internet() {
   // Provider state
   const [providerFormOpen, setProviderFormOpen] = useState(false);
   const [providerDeleteOpen, setProviderDeleteOpen] = useState(false);
+  const [providerImportOpen, setProviderImportOpen] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState<InternetProvider | null>(null);
 
   // Connection state
   const [connectionFormOpen, setConnectionFormOpen] = useState(false);
   const [connectionDeleteOpen, setConnectionDeleteOpen] = useState(false);
+  const [connectionImportOpen, setConnectionImportOpen] = useState(false);
   const [selectedConnection, setSelectedConnection] = useState<InternetConnection | null>(null);
 
   // Bill state
@@ -83,6 +94,107 @@ export default function Internet() {
     },
   ];
 
+  // Import handlers
+  const handleProviderImport = async (data: Record<string, any>[]) => {
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (const row of data) {
+      try {
+        const providerData = {
+          name: row.name,
+          address: row.address || null,
+          city: row.city || null,
+        };
+
+        const { error } = await supabase
+          .from('internet_providers')
+          .insert(providerData);
+
+        if (error) throw error;
+        successCount++;
+      } catch (error) {
+        console.error('Error importing provider:', error);
+        errorCount++;
+      }
+    }
+
+    queryClient.invalidateQueries({ queryKey: ['internet_providers'] });
+    
+    if (errorCount > 0) {
+      toast.warning(`Importação concluída: ${successCount} sucessos, ${errorCount} erros`);
+    } else {
+      toast.success(`${successCount} provedores importados com sucesso!`);
+    }
+  };
+
+  const handleConnectionImport = async (data: Record<string, any>[]) => {
+    let successCount = 0;
+    let errorCount = 0;
+    const errors: string[] = [];
+
+    for (const row of data) {
+      try {
+        // Resolve contract_id from contract_ref (number or client_name)
+        let contractId: string | null = null;
+        if (row.contract_ref) {
+          const contractRef = String(row.contract_ref).toLowerCase().trim();
+          const contract = contracts.find(c => 
+            c.number.toLowerCase() === contractRef || 
+            c.client_name.toLowerCase() === contractRef
+          );
+          if (contract) {
+            contractId = contract.id;
+          } else {
+            errors.push(`Contrato não encontrado: ${row.contract_ref}`);
+          }
+        }
+
+        // Resolve provider_id from provider_name
+        let providerId: string | null = null;
+        if (row.provider_name) {
+          const providerName = String(row.provider_name).toLowerCase().trim();
+          const provider = providers.find(p => 
+            p.name.toLowerCase() === providerName
+          );
+          if (provider) {
+            providerId = provider.id;
+          } else {
+            errors.push(`Provedor não encontrado: ${row.provider_name}`);
+          }
+        }
+
+        const connectionData = {
+          serial_number: row.serial_number,
+          contract_id: contractId,
+          provider_id: providerId,
+          client_code: row.client_code || null,
+        };
+
+        const { error } = await supabase
+          .from('internet_connections')
+          .insert(connectionData);
+
+        if (error) throw error;
+        successCount++;
+      } catch (error) {
+        console.error('Error importing connection:', error);
+        errorCount++;
+      }
+    }
+
+    queryClient.invalidateQueries({ queryKey: ['internet_connections'] });
+    
+    if (errorCount > 0 || errors.length > 0) {
+      toast.warning(`Importação: ${successCount} sucessos, ${errorCount} erros`);
+      if (errors.length > 0) {
+        console.warn('Import warnings:', errors);
+      }
+    } else {
+      toast.success(`${successCount} cadastros importados com sucesso!`);
+    }
+  };
+
   return (
     <AppLayout>
       <div className="space-y-6">
@@ -103,6 +215,7 @@ export default function Internet() {
                 setSelectedProvider(null);
                 setProviderFormOpen(true);
               }}
+              onImport={() => setProviderImportOpen(true)}
             />
             <DataTable
               data={providers}
@@ -127,6 +240,7 @@ export default function Internet() {
                 setSelectedConnection(null);
                 setConnectionFormOpen(true);
               }}
+              onImport={() => setConnectionImportOpen(true)}
             />
             <DataTable
               data={connections}
@@ -192,6 +306,16 @@ export default function Internet() {
         title="Excluir Provedor"
         description="Tem certeza que deseja excluir este provedor?"
       />
+      <ImportDialog
+        open={providerImportOpen}
+        onOpenChange={setProviderImportOpen}
+        title="Importar Provedores"
+        description="Importe provedores de internet a partir de um arquivo Excel."
+        columnMappings={internetProviderImportConfig.mappings}
+        templateColumns={internetProviderImportConfig.templateColumns}
+        templateFilename="modelo_provedores_internet"
+        onImport={handleProviderImport}
+      />
 
       {/* Connection dialogs */}
       <ConnectionForm
@@ -210,6 +334,16 @@ export default function Internet() {
         }}
         title="Excluir Cadastro"
         description="Tem certeza que deseja excluir este cadastro?"
+      />
+      <ImportDialog
+        open={connectionImportOpen}
+        onOpenChange={setConnectionImportOpen}
+        title="Importar Cadastros de Internet"
+        description="Importe cadastros de internet. O sistema resolve automaticamente contratos e provedores pelos nomes."
+        columnMappings={internetConnectionImportConfig.mappings}
+        templateColumns={internetConnectionImportConfig.templateColumns}
+        templateFilename="modelo_cadastro_internet"
+        onImport={handleConnectionImport}
       />
 
       {/* Bill dialogs */}
