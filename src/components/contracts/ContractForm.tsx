@@ -32,6 +32,7 @@ type Contract = Tables<'contracts'>;
 
 const schema = z.object({
   client_name: z.string().min(1, 'Cliente é obrigatório'),
+  cost_center: z.string().optional(),
   value: z.coerce.number().min(0, 'Valor é obrigatório'),
   start_date: z.string().min(1, 'Data de Início é obrigatória'),
   end_date: z.string().min(1, 'Data de Fim é obrigatória'),
@@ -60,6 +61,7 @@ export function ContractForm({
     resolver: zodResolver(schema),
     defaultValues: {
       client_name: '',
+      cost_center: '',
       value: 0,
       start_date: '',
       end_date: '',
@@ -72,6 +74,7 @@ export function ContractForm({
     if (initialData) {
       form.reset({
         client_name: initialData.client_name || '',
+        cost_center: initialData.cost_center || '',
         value: Number(initialData.value) || 0,
         start_date: initialData.start_date || '',
         end_date: initialData.end_date || '',
@@ -81,6 +84,7 @@ export function ContractForm({
     } else {
       form.reset({
         client_name: '',
+        cost_center: '',
         value: 0,
         start_date: '',
         end_date: '',
@@ -124,26 +128,40 @@ export function ContractForm({
 
               <FormField
                 control={form.control}
-                name="value"
+                name="cost_center"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-foreground">
-                      Valor <span className="text-destructive">*</span>
-                    </FormLabel>
+                    <FormLabel className="text-foreground">Centro de Custo</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="number" 
-                        step="0.01" 
-                        min="0" 
-                        placeholder="0.00"
-                        {...field} 
-                      />
+                      <Input placeholder="Ex: CC-001" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
+
+            <FormField
+              control={form.control}
+              name="value"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-foreground">
+                    Valor <span className="text-destructive">*</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="number" 
+                      step="0.01" 
+                      min="0" 
+                      placeholder="0.00"
+                      {...field} 
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <div className="grid grid-cols-2 gap-4">
               <FormField
