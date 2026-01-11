@@ -1900,42 +1900,57 @@ export type Database = {
       }
       stock_maintenance: {
         Row: {
+          centro_custo: string | null
           contract_id: string | null
           created_at: string | null
+          destinatario: string | null
           id: string
-          nf_number: string
+          nf_number: string | null
           observations: string | null
-          om_number: string
+          om_number: string | null
+          remetente: string | null
           return_date: string | null
           return_nf: string | null
           send_date: string
+          solicitante: string | null
           status: string | null
+          status_nf: string | null
           updated_at: string | null
         }
         Insert: {
+          centro_custo?: string | null
           contract_id?: string | null
           created_at?: string | null
+          destinatario?: string | null
           id?: string
-          nf_number: string
+          nf_number?: string | null
           observations?: string | null
-          om_number: string
+          om_number?: string | null
+          remetente?: string | null
           return_date?: string | null
           return_nf?: string | null
           send_date: string
+          solicitante?: string | null
           status?: string | null
+          status_nf?: string | null
           updated_at?: string | null
         }
         Update: {
+          centro_custo?: string | null
           contract_id?: string | null
           created_at?: string | null
+          destinatario?: string | null
           id?: string
-          nf_number?: string
+          nf_number?: string | null
           observations?: string | null
-          om_number?: string
+          om_number?: string | null
+          remetente?: string | null
           return_date?: string | null
           return_nf?: string | null
           send_date?: string
+          solicitante?: string | null
           status?: string | null
+          status_nf?: string | null
           updated_at?: string | null
         }
         Relationships: [
@@ -1950,22 +1965,34 @@ export type Database = {
       }
       stock_maintenance_items: {
         Row: {
+          barcode: string | null
           component_id: string
           created_at: string | null
+          defect_description: string | null
+          equipment_serial: string | null
+          field_service_code: string | null
           id: string
           maintenance_id: string
           quantity: number
         }
         Insert: {
+          barcode?: string | null
           component_id: string
           created_at?: string | null
+          defect_description?: string | null
+          equipment_serial?: string | null
+          field_service_code?: string | null
           id?: string
           maintenance_id: string
           quantity?: number
         }
         Update: {
+          barcode?: string | null
           component_id?: string
           created_at?: string | null
+          defect_description?: string | null
+          equipment_serial?: string | null
+          field_service_code?: string | null
           id?: string
           maintenance_id?: string
           quantity?: number

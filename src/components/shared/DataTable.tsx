@@ -41,6 +41,7 @@ interface DataTableProps<T> {
   onView?: (row: T) => void;
   pageSize?: number;
   entityName?: string;
+  customActions?: (row: T) => React.ReactNode;
 }
 
 export function DataTable<T extends { id: string }>({
@@ -55,6 +56,7 @@ export function DataTable<T extends { id: string }>({
   onView,
   pageSize = 10,
   entityName = 'registro',
+  customActions,
 }: DataTableProps<T>) {
   const [search, setSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -263,7 +265,7 @@ export function DataTable<T extends { id: string }>({
               {columns.map((col) => (
                 <TableHead key={String(col.key)}>{col.label}</TableHead>
               ))}
-              {(onEdit || onDelete || onView) && (
+              {(onEdit || onDelete || onView || customActions) && (
                 <TableHead className="w-[100px] text-center">Ações</TableHead>
               )}
             </TableRow>
@@ -296,9 +298,10 @@ export function DataTable<T extends { id: string }>({
                       </TableCell>
                     );
                   })}
-                  {(onEdit || onDelete || onView) && (
+                  {(onEdit || onDelete || onView || customActions) && (
                     <TableCell>
                       <div className="flex items-center justify-center gap-1">
+                        {customActions && customActions(row)}
                         {onEdit && (
                           <Button
                             variant="ghost"

@@ -7,7 +7,7 @@ import { ImportDialog } from '@/components/shared/ImportDialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, TrendingUp, Package, BarChart3, Wrench, Upload } from 'lucide-react';
+import { Plus, TrendingUp, Package, BarChart3, Wrench, Upload, FileSpreadsheet } from 'lucide-react';
 import { useComponents, Component } from '@/hooks/useComponents';
 import { useStock, Stock } from '@/hooks/useStock';
 import { useStockMaintenance, StockMaintenance } from '@/hooks/useStockMaintenance';
@@ -20,6 +20,7 @@ import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { componentImportConfig } from '@/lib/importConfigs';
 import { useToast } from '@/hooks/use-toast';
+import { generateMaintenanceNFRequest } from '@/lib/generateMaintenanceNF';
 
 const componentColumns: Column<Component>[] = [
   { key: 'code', label: 'Código' },
@@ -34,18 +35,29 @@ const stockColumns: Column<Stock>[] = [
   { key: 'quantity', label: 'Quantidade', render: (v) => <Badge variant="default">{v as number}</Badge> },
 ];
 
+const getStatusNFBadge = (status: string | null) => {
+  switch (status) {
+    case 'pendente_nf':
+      return <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-300">Pendente NF</Badge>;
+    case 'nf_gerada':
+      return <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-300">NF Gerada</Badge>;
+    case 'em_manutencao':
+      return <Badge variant="destructive">Em Manutenção</Badge>;
+    case 'retornado':
+      return <Badge variant="default" className="bg-green-600">Retornado</Badge>;
+    default:
+      return <Badge variant="outline">{status || '-'}</Badge>;
+  }
+};
+
 const maintenanceColumns: Column<StockMaintenance>[] = [
   { key: 'contracts', label: 'Contrato', render: (_, row) => row.contracts ? `${row.contracts.number}` : '-' },
-  { key: 'om_number', label: 'Nº O.M' },
-  { key: 'nf_number', label: 'Nº NF' },
+  { key: 'solicitante', label: 'Solicitante', render: (v) => (v as string) || '-' },
   { key: 'send_date', label: 'Data Envio', render: (v) => v ? format(new Date(v as string), 'dd/MM/yyyy') : '-' },
-  { key: 'return_date', label: 'Data Retorno', render: (v) => v ? format(new Date(v as string), 'dd/MM/yyyy') : '-' },
-  { key: 'status', label: 'Status', render: (v) => (
-    <Badge variant={v === 'em_manutencao' ? 'destructive' : 'default'}>
-      {v === 'em_manutencao' ? 'Em Manutenção' : 'Retornado'}
-    </Badge>
-  )},
-  { key: 'stock_maintenance_items', label: 'Componentes', render: (_, row) => row.stock_maintenance_items?.length || 0 },
+  { key: 'om_number', label: 'Nº O.M', render: (v) => (v as string) || '-' },
+  { key: 'nf_number', label: 'Nº NF', render: (v) => (v as string) || '-' },
+  { key: 'status_nf', label: 'Status', render: (v) => getStatusNFBadge(v as string | null) },
+  { key: 'stock_maintenance_items', label: 'Itens', render: (_, row) => row.stock_maintenance_items?.length || 0 },
 ];
 
 export default function InventoryPage() {
@@ -110,6 +122,65 @@ export default function InventoryPage() {
     queryClient.invalidateQueries({ queryKey: ['components'] });
     toast({ title: 'Componentes importados com sucesso!' });
   };
+
+  const handleGenerateNFRequest = (maintenance: StockMaintenance) => {
+    // Get component details for each item
+    const itemsData = maintenance.stock_maintenance_items?.map(item => {
+      const component = components.find(c => c.id === item.component_id);
+      return {
+        component_code: component?.code || '',
+        component_name: component?.name || '',
+        component_value: component?.value || 0,
+        quantity: item.quantity,
+        barcode: item.barcode || '',
+        defect_description: item.defect_description || '',
+        field_service_code: item.field_service_code || '',
+        equipment_serial: item.equipment_serial || '',
+      };
+    }) || [];
+
+    const data = {
+      id: maintenance.id,
+      contract_number: maintenance.contracts?.number || '',
+      contract_name: maintenance.contracts?.client_name || '',
+      centro_custo: maintenance.centro_custo || '',
+      remetente: maintenance.remetente || '',
+      destinatario: maintenance.destinatario || 'Matriz - Manutenção',
+      solicitante: maintenance.solicitante || '',
+      send_date: maintenance.send_date,
+      observations: maintenance.observations || '',
+      items: itemsData,
+    };
+
+    try {
+      const fileName = generateMaintenanceNFRequest(data);
+      toast({ title: 'Planilha gerada!', description: `Arquivo ${fileName} baixado com sucesso.` });
+      
+      // Update status to nf_gerada
+      updateMaintenance({ id: maintenance.id, status_nf: 'nf_gerada' });
+    } catch (error) {
+      toast({ title: 'Erro ao gerar planilha', description: String(error), variant: 'destructive' });
+    }
+  };
+
+  // Custom actions for maintenance table
+  const maintenanceActions = (row: StockMaintenance) => (
+    <div className="flex gap-2">
+      {(row.status_nf === 'pendente_nf' || !row.status_nf) && (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleGenerateNFRequest(row);
+          }}
+          title="Gerar Pedido NF"
+        >
+          <FileSpreadsheet className="h-4 w-4" />
+        </Button>
+      )}
+    </div>
+  );
 
   return (
     <AppLayout title="Estoque e Manutenções">
@@ -191,9 +262,9 @@ export default function InventoryPage() {
           <TabsContent value="maintenance">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>Cadastro de Manutenção</CardTitle>
+                <CardTitle>Solicitações de Manutenção</CardTitle>
                 <Button onClick={() => { setEditingMaintenance(null); setMaintenanceFormOpen(true); }}>
-                  <Plus className="h-4 w-4 mr-2" /> Adicionar
+                  <Plus className="h-4 w-4 mr-2" /> Nova Solicitação
                 </Button>
               </CardHeader>
               <CardContent>
@@ -204,6 +275,7 @@ export default function InventoryPage() {
                   searchPlaceholder="Buscar manutenções..."
                   onEdit={(r) => { setEditingMaintenance(r); setMaintenanceFormOpen(true); }}
                   onDelete={setDeletingMaintenance}
+                  customActions={maintenanceActions}
                 />
               </CardContent>
             </Card>
@@ -248,7 +320,20 @@ export default function InventoryPage() {
             if (editingMaintenance) {
               updateMaintenance({ id: editingMaintenance.id, ...data });
             } else {
-              createMaintenance(data as { contract_id: string | null; om_number: string; nf_number: string; send_date: string; return_date?: string | null; return_nf?: string | null; observations?: string | null; items: { component_id: string; quantity: number }[] });
+              createMaintenance({
+                contract_id: data.contract_id || null,
+                send_date: data.send_date,
+                om_number: data.om_number || null,
+                nf_number: data.nf_number || null,
+                return_date: data.return_date || null,
+                return_nf: data.return_nf || null,
+                observations: data.observations || null,
+                solicitante: data.solicitante || null,
+                centro_custo: data.centro_custo || null,
+                destinatario: data.destinatario || null,
+                remetente: data.remetente || null,
+                items: data.items,
+              });
             }
             setMaintenanceFormOpen(false);
           }}
