@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Filter, Car, Route, TrendingUp, Clock } from 'lucide-react';
 import { useVehicles } from '@/hooks/useVehicles';
-import { useEmployees } from '@/hooks/useEmployees';
+import { useTeams } from '@/hooks/useTeams';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, Legend } from 'recharts';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -13,13 +13,14 @@ import { ptBR } from 'date-fns/locale';
 interface MileageRecord {
   id: string;
   vehicle_id: string;
-  employee_id: string | null;
+  team_id: string | null;
   date: string;
   initial_km: number;
   final_km: number;
   start_time?: string | null;
   end_time?: string | null;
   notes?: string | null;
+  teams?: { id: string; name: string } | null;
 }
 
 interface MileageDashboardProps {
@@ -30,21 +31,21 @@ const COLORS = ['#3b82f6', '#22c55e', '#8b5cf6', '#f59e0b', '#ef4444', '#06b6d4'
 
 export function MileageDashboard({ records }: MileageDashboardProps) {
   const { vehicles } = useVehicles();
-  const { employees } = useEmployees();
+  const { teams } = useTeams();
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [selectedVehicle, setSelectedVehicle] = useState('all');
-  const [selectedEmployee, setSelectedEmployee] = useState('all');
+  const [selectedTeam, setSelectedTeam] = useState('all');
 
   const filteredRecords = useMemo(() => {
     return records.filter(record => {
       if (startDate && new Date(record.date) < new Date(startDate)) return false;
       if (endDate && new Date(record.date) > new Date(endDate)) return false;
       if (selectedVehicle !== 'all' && record.vehicle_id !== selectedVehicle) return false;
-      if (selectedEmployee !== 'all' && record.employee_id !== selectedEmployee) return false;
+      if (selectedTeam !== 'all' && record.team_id !== selectedTeam) return false;
       return true;
     });
-  }, [records, startDate, endDate, selectedVehicle, selectedEmployee]);
+  }, [records, startDate, endDate, selectedVehicle, selectedTeam]);
 
   // Stats calculations
   const stats = useMemo(() => {
@@ -79,19 +80,18 @@ export function MileageDashboard({ records }: MileageDashboardProps) {
     return Object.entries(grouped).map(([name, km]) => ({ name, km }));
   }, [filteredRecords]);
 
-  // Km by employee
-  const kmByEmployee = useMemo(() => {
+  // Km by team
+  const kmByTeam = useMemo(() => {
     const grouped: Record<string, number> = {};
     filteredRecords.forEach(r => {
-      const employee = employees.find(e => e.id === r.employee_id);
-      const name = employee?.full_name || 'Não atribuído';
-      grouped[name] = (grouped[name] || 0) + (r.final_km - r.initial_km);
+      const teamName = r.teams?.name || 'Não atribuído';
+      grouped[teamName] = (grouped[teamName] || 0) + (r.final_km - r.initial_km);
     });
     return Object.entries(grouped)
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value)
       .slice(0, 6);
-  }, [filteredRecords, employees]);
+  }, [filteredRecords]);
 
   return (
     <div className="space-y-6">
@@ -126,13 +126,13 @@ export function MileageDashboard({ records }: MileageDashboardProps) {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Colaborador</Label>
-              <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
-                <SelectTrigger><SelectValue placeholder="Todos os colaboradores" /></SelectTrigger>
+              <Label>Equipe</Label>
+              <Select value={selectedTeam} onValueChange={setSelectedTeam}>
+                <SelectTrigger><SelectValue placeholder="Todas as equipes" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos os colaboradores</SelectItem>
-                  {employees.map(e => (
-                    <SelectItem key={e.id} value={e.id}>{e.full_name}</SelectItem>
+                  <SelectItem value="all">Todas as equipes</SelectItem>
+                  {teams.map(t => (
+                    <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -210,24 +210,24 @@ export function MileageDashboard({ records }: MileageDashboardProps) {
           </CardContent>
         </Card>
 
-        {/* Km by Employee */}
+        {/* Km by Team */}
         <Card>
           <CardHeader>
-            <CardTitle>Km por Colaborador</CardTitle>
-            <CardDescription>Distribuição de km por colaborador</CardDescription>
+            <CardTitle>Km por Equipe</CardTitle>
+            <CardDescription>Distribuição de km por equipe</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie
-                  data={kmByEmployee}
+                  data={kmByTeam}
                   cx="50%"
                   cy="50%"
                   outerRadius={100}
                   dataKey="value"
                   label={({ name, value }) => `${name.split(' ')[0]}: ${(value / 1000).toFixed(1)}k`}
                 >
-                  {kmByEmployee.map((_, index) => (
+                  {kmByTeam.map((_, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>

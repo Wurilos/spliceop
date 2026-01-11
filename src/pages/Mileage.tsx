@@ -10,7 +10,7 @@ import { MileageForm } from '@/components/mileage/MileageForm';
 import { MileageDashboard } from '@/components/mileage/MileageDashboard';
 import { useMileageRecords } from '@/hooks/useMileageRecords';
 import { useVehicles } from '@/hooks/useVehicles';
-import { useEmployees } from '@/hooks/useEmployees';
+import { useTeams } from '@/hooks/useTeams';
 import { exportToPDF, exportToExcel, exportToCSV } from '@/lib/export';
 import { mileageImportConfig } from '@/lib/importConfigs';
 import { supabase } from '@/integrations/supabase/client';
@@ -19,7 +19,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 export default function Mileage() {
   const { records: mileageRecords, loading: isLoading, delete: deleteMileageRecord } = useMileageRecords();
   const { vehicles } = useVehicles();
-  const { employees } = useEmployees();
+  const { teams } = useTeams();
   const [formOpen, setFormOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -30,10 +30,11 @@ export default function Mileage() {
     return vehicle?.plate || '-';
   };
 
-  const getEmployeeName = (employeeId: string | null) => {
-    if (!employeeId) return '-';
-    const employee = employees.find((e) => e.id === employeeId);
-    return employee?.full_name || '-';
+  const getTeamName = (record: any) => {
+    if (record.teams?.name) return record.teams.name;
+    if (!record.team_id) return '-';
+    const team = teams.find((t) => t.id === record.team_id);
+    return team?.name || '-';
   };
 
   const formatTime = (time: string | null | undefined) => {
@@ -70,9 +71,9 @@ export default function Mileage() {
       render: (_: unknown, row: any) => row.final_km - row.initial_km,
     },
     {
-      key: 'employee_id',
-      label: 'Colaborador',
-      render: (value: string | null) => getEmployeeName(value),
+      key: 'team_id',
+      label: 'Equipe',
+      render: (_: string | null, row: any) => getTeamName(row),
     },
   ];
 
@@ -102,7 +103,7 @@ export default function Mileage() {
     { key: 'Hora Término', label: 'Hora Término' },
     { key: 'Km Término', label: 'Km Término' },
     { key: 'KM Rodado', label: 'KM Rodado' },
-    { key: 'Colaborador', label: 'Colaborador' },
+    { key: 'Equipe', label: 'Equipe' },
   ];
 
   const handleExport = (type: 'pdf' | 'excel' | 'csv') => {
@@ -114,7 +115,7 @@ export default function Mileage() {
       'Hora Término': formatTime(r.end_time),
       'Km Término': r.final_km,
       'KM Rodado': r.final_km - r.initial_km,
-      Colaborador: getEmployeeName(r.employee_id),
+      Equipe: getTeamName(r),
     }));
 
     if (type === 'pdf') exportToPDF(data, exportColumns, 'Quilometragem');
