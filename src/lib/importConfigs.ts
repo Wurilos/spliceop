@@ -326,15 +326,19 @@ export const inventoryImportConfig = {
 // Toll tags import config
 export const tollImportConfig = {
   mappings: [
-    { excelColumn: 'Número Tag', dbColumn: 'tag_number', required: true, transform: toString },
+    { excelColumn: 'Contrato', dbColumn: 'contract_id', transform: toString },
+    { excelColumn: 'Placa', dbColumn: 'vehicle_id', required: true, transform: toString },
     { excelColumn: 'Data Passagem', dbColumn: 'passage_date', required: true, transform: toDateTime },
     { excelColumn: 'Valor', dbColumn: 'value', required: true, transform: toNumber },
+    { excelColumn: 'Número Tag', dbColumn: 'tag_number', required: true, transform: toString },
     { excelColumn: 'Praça', dbColumn: 'toll_plaza', transform: toString },
   ] as ColumnMapping[],
   templateColumns: [
-    { key: 'tag_number', label: 'Número Tag' },
+    { key: 'contract_id', label: 'Contrato' },
+    { key: 'vehicle_id', label: 'Placa' },
     { key: 'passage_date', label: 'Data Passagem' },
     { key: 'value', label: 'Valor' },
+    { key: 'tag_number', label: 'Número Tag' },
     { key: 'toll_plaza', label: 'Praça' },
   ],
 };
