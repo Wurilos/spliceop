@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { AppLayout } from '@/components/layout/AppLayout';
@@ -15,6 +15,9 @@ import { exportToPDF, exportToExcel, exportToCSV } from '@/lib/export';
 import { mileageImportConfig } from '@/lib/importConfigs';
 import { supabase } from '@/integrations/supabase/client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function Mileage() {
   const { records: mileageRecords, loading: isLoading, delete: deleteMileageRecord } = useMileageRecords();
@@ -24,6 +27,22 @@ export default function Mileage() {
   const [importOpen, setImportOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<any>(null);
+  
+  // Filtros
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [selectedVehicle, setSelectedVehicle] = useState('');
+  const [selectedTeam, setSelectedTeam] = useState('');
+
+  const filteredRecords = useMemo(() => {
+    return mileageRecords.filter((record: any) => {
+      if (startDate && record.date < startDate) return false;
+      if (endDate && record.date > endDate) return false;
+      if (selectedVehicle && record.vehicle_id !== selectedVehicle) return false;
+      if (selectedTeam && record.team_id !== selectedTeam) return false;
+      return true;
+    });
+  }, [mileageRecords, startDate, endDate, selectedVehicle, selectedTeam]);
 
   const getVehiclePlate = (vehicleId: string) => {
     const vehicle = vehicles.find((v) => v.id === vehicleId);
@@ -155,9 +174,60 @@ export default function Mileage() {
             <MileageDashboard records={mileageRecords} />
           </TabsContent>
 
-          <TabsContent value="listagem">
+          <TabsContent value="listagem" className="space-y-4">
+            <Card>
+              <CardContent className="pt-6">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Data Início</label>
+                    <Input
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Data Fim</label>
+                    <Input
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Veículo</label>
+                    <Select value={selectedVehicle} onValueChange={(v) => setSelectedVehicle(v === '_all' ? '' : v)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Todos os veículos" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="_all">Todos os veículos</SelectItem>
+                        {vehicles.map((v) => (
+                          <SelectItem key={v.id} value={v.id}>{v.plate}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Equipe</label>
+                    <Select value={selectedTeam} onValueChange={(v) => setSelectedTeam(v === '_all' ? '' : v)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Todas as equipes" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="_all">Todas as equipes</SelectItem>
+                        {teams.map((t) => (
+                          <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
             <DataTable
-              data={mileageRecords}
+              data={filteredRecords}
               columns={columns}
               loading={isLoading}
               searchPlaceholder="Buscar por veículo..."
