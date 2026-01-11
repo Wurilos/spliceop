@@ -6,6 +6,7 @@ export interface PhoneLine {
   id: string;
   contract_id: string | null;
   equipment_id: string | null;
+  chip_id: string | null;
   line_number: string;
   carrier: string;
   sub_carrier: string | null;
@@ -14,6 +15,7 @@ export interface PhoneLine {
   updated_at: string | null;
   contracts?: { number: string; client_name: string } | null;
   equipment?: { serial_number: string } | null;
+  chip_numbers?: { line_number: string; carrier: string } | null;
 }
 
 export type PhoneLineInsert = Omit<PhoneLine, 'id' | 'created_at' | 'updated_at' | 'contracts' | 'equipment'>;
@@ -30,7 +32,8 @@ export function usePhoneLines() {
         .select(`
           *,
           contracts(number, client_name),
-          equipment(serial_number)
+          equipment(serial_number),
+          chip_numbers(line_number, carrier)
         `)
         .order('created_at', { ascending: false });
       

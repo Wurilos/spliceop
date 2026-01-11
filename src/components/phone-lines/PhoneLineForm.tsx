@@ -1,7 +1,7 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -23,13 +23,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertTriangle } from 'lucide-react';
 import { useContracts } from '@/hooks/useContracts';
 import { useEquipment } from '@/hooks/useEquipment';
-import type { PhoneLine } from '@/hooks/usePhoneLines';
+import { useChipNumbers } from '@/hooks/useChipNumbers';
+import { usePhoneLines, type PhoneLine } from '@/hooks/usePhoneLines';
 
-const CARRIERS = ['Vivo', 'Oi', 'TIM', 'Claro', 'DATATEM'] as const;
 const SUB_CARRIERS = ['Vivo', 'Oi', 'TIM', 'Claro'] as const;
 const STATUSES = [
   { value: 'active', label: 'Ativa' },
@@ -39,8 +40,7 @@ const STATUSES = [
 const formSchema = z.object({
   contract_id: z.string().min(1, 'Contrato é obrigatório'),
   equipment_id: z.string().min(1, 'Equipamento é obrigatório'),
-  line_number: z.string().min(1, 'Número da linha é obrigatório'),
-  carrier: z.string().min(1, 'Operadora é obrigatória'),
+  chip_id: z.string().min(1, 'Chip é obrigatório'),
   sub_carrier: z.string().nullable(),
   status: z.string().min(1, 'Status é obrigatório'),
 });
@@ -50,7 +50,7 @@ type FormData = z.infer<typeof formSchema>;
 interface PhoneLineFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (data: FormData) => void;
+  onSubmit: (data: any) => void;
   phoneLine?: PhoneLine | null;
   isLoading?: boolean;
 }
@@ -64,28 +64,73 @@ export function PhoneLineForm({
 }: PhoneLineFormProps) {
   const { contracts } = useContracts();
   const { equipment } = useEquipment();
+  const { chipNumbers } = useChipNumbers();
+  const { phoneLines } = usePhoneLines();
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       contract_id: '',
       equipment_id: '',
-      line_number: '',
-      carrier: '',
+      chip_id: '',
       sub_carrier: null,
       status: 'active',
     },
   });
 
-  const selectedCarrier = form.watch('carrier');
+  const selectedContractId = form.watch('contract_id');
+  const selectedChipId = form.watch('chip_id');
+
+  // Filter equipment by selected contract
+  const filteredEquipment = useMemo(() => {
+    if (!selectedContractId) return [];
+    return equipment.filter(eq => eq.contract_id === selectedContractId);
+  }, [equipment, selectedContractId]);
+
+  // Get selected chip info
+  const selectedChip = useMemo(() => {
+    return chipNumbers.find(c => c.id === selectedChipId);
+  }, [chipNumbers, selectedChipId]);
+
+  // Check if chip is already linked to another equipment
+  const chipConflict = useMemo(() => {
+    if (!selectedChipId) return null;
+    
+    const linkedPhoneLine = phoneLines.find(pl => 
+      pl.chip_id === selectedChipId && 
+      (!phoneLine || pl.id !== phoneLine.id) // Exclude current phone line when editing
+    );
+    
+    if (linkedPhoneLine) {
+      return {
+        equipmentSerial: linkedPhoneLine.equipment?.serial_number || 'Equipamento desconhecido',
+        contractInfo: linkedPhoneLine.contracts 
+          ? `${linkedPhoneLine.contracts.number} - ${linkedPhoneLine.contracts.client_name}`
+          : '',
+      };
+    }
+    
+    return null;
+  }, [selectedChipId, phoneLines, phoneLine]);
+
+  // Filter available chips (not linked to other equipment)
+  const availableChips = useMemo(() => {
+    return chipNumbers.filter(chip => {
+      const isLinked = phoneLines.some(pl => 
+        pl.chip_id === chip.id && 
+        (!phoneLine || pl.id !== phoneLine.id)
+      );
+      // Show if not linked OR if it's the chip of the current phone line being edited
+      return !isLinked || (phoneLine && phoneLine.chip_id === chip.id);
+    });
+  }, [chipNumbers, phoneLines, phoneLine]);
 
   useEffect(() => {
     if (phoneLine) {
       form.reset({
         contract_id: phoneLine.contract_id || '',
         equipment_id: phoneLine.equipment_id || '',
-        line_number: phoneLine.line_number,
-        carrier: phoneLine.carrier,
+        chip_id: phoneLine.chip_id || '',
         sub_carrier: phoneLine.sub_carrier,
         status: phoneLine.status || 'active',
       });
@@ -93,23 +138,44 @@ export function PhoneLineForm({
       form.reset({
         contract_id: '',
         equipment_id: '',
-        line_number: '',
-        carrier: '',
+        chip_id: '',
         sub_carrier: null,
         status: 'active',
       });
     }
   }, [phoneLine, form]);
 
-  // Clear sub_carrier when carrier changes to non-DATATEM
+  // Clear equipment when contract changes
   useEffect(() => {
-    if (selectedCarrier !== 'DATATEM') {
+    if (!phoneLine) {
+      form.setValue('equipment_id', '');
+    }
+  }, [selectedContractId, form, phoneLine]);
+
+  // Clear sub_carrier when chip carrier changes to non-DATATEM
+  useEffect(() => {
+    if (selectedChip && selectedChip.carrier !== 'DATATEM') {
       form.setValue('sub_carrier', null);
     }
-  }, [selectedCarrier, form]);
+  }, [selectedChip, form]);
 
   const handleSubmit = (data: FormData) => {
-    onSubmit(data);
+    if (chipConflict) {
+      return; // Don't submit if there's a conflict
+    }
+
+    // Get chip info to pass line_number and carrier
+    const chip = chipNumbers.find(c => c.id === data.chip_id);
+    
+    onSubmit({
+      contract_id: data.contract_id,
+      equipment_id: data.equipment_id,
+      chip_id: data.chip_id,
+      line_number: chip?.line_number || '',
+      carrier: chip?.carrier || '',
+      sub_carrier: data.sub_carrier,
+      status: data.status,
+    });
   };
 
   return (
@@ -117,7 +183,7 @@ export function PhoneLineForm({
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>
-            {phoneLine ? 'Editar Linha' : 'Nova Linha'}
+            {phoneLine ? 'Editar Linha / Equipamento' : 'Nova Linha / Equipamento'}
           </DialogTitle>
         </DialogHeader>
         <Form {...form}>
@@ -152,17 +218,25 @@ export function PhoneLineForm({
               name="equipment_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nº Equipamento</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
+                  <FormLabel>Equipamento</FormLabel>
+                  <Select 
+                    onValueChange={field.onChange} 
+                    value={field.value}
+                    disabled={!selectedContractId}
+                  >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecione o equipamento" />
+                        <SelectValue placeholder={
+                          selectedContractId 
+                            ? "Selecione o equipamento" 
+                            : "Selecione um contrato primeiro"
+                        } />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {equipment.map((eq) => (
+                      {filteredEquipment.map((eq) => (
                         <SelectItem key={eq.id} value={eq.id}>
-                          {eq.serial_number}
+                          {eq.serial_number} {eq.model ? `- ${eq.model}` : ''}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -174,34 +248,20 @@ export function PhoneLineForm({
 
             <FormField
               control={form.control}
-              name="line_number"
+              name="chip_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nº Linha</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Ex: (11) 99999-9999" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="carrier"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Operadora</FormLabel>
+                  <FormLabel>Chip / Linha</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecione a operadora" />
+                        <SelectValue placeholder="Selecione o chip" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {CARRIERS.map((carrier) => (
-                        <SelectItem key={carrier} value={carrier}>
-                          {carrier}
+                      {availableChips.map((chip) => (
+                        <SelectItem key={chip.id} value={chip.id}>
+                          {chip.line_number} ({chip.carrier})
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -211,7 +271,21 @@ export function PhoneLineForm({
               )}
             />
 
-            {selectedCarrier === 'DATATEM' && (
+            {chipConflict && (
+              <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>
+                  Linha já vinculada a outro equipamento: <strong>{chipConflict.equipmentSerial}</strong>
+                  {chipConflict.contractInfo && (
+                    <span className="block text-xs mt-1">
+                      Contrato: {chipConflict.contractInfo}
+                    </span>
+                  )}
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {selectedChip?.carrier === 'DATATEM' && (
               <FormField
                 control={form.control}
                 name="sub_carrier"
@@ -267,7 +341,7 @@ export function PhoneLineForm({
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancelar
               </Button>
-              <Button type="submit" disabled={isLoading}>
+              <Button type="submit" disabled={isLoading || !!chipConflict}>
                 {isLoading ? 'Salvando...' : 'Salvar'}
               </Button>
             </div>

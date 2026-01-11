@@ -209,6 +209,30 @@ export type Database = {
           },
         ]
       }
+      chip_numbers: {
+        Row: {
+          carrier: string
+          created_at: string
+          id: string
+          line_number: string
+          updated_at: string
+        }
+        Insert: {
+          carrier: string
+          created_at?: string
+          id?: string
+          line_number: string
+          updated_at?: string
+        }
+        Update: {
+          carrier?: string
+          created_at?: string
+          id?: string
+          line_number?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       components: {
         Row: {
           code: string | null
@@ -1439,6 +1463,7 @@ export type Database = {
       phone_lines: {
         Row: {
           carrier: string
+          chip_id: string | null
           contract_id: string | null
           created_at: string
           equipment_id: string | null
@@ -1450,6 +1475,7 @@ export type Database = {
         }
         Insert: {
           carrier: string
+          chip_id?: string | null
           contract_id?: string | null
           created_at?: string
           equipment_id?: string | null
@@ -1461,6 +1487,7 @@ export type Database = {
         }
         Update: {
           carrier?: string
+          chip_id?: string | null
           contract_id?: string | null
           created_at?: string
           equipment_id?: string | null
@@ -1471,6 +1498,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "phone_lines_chip_id_fkey"
+            columns: ["chip_id"]
+            isOneToOne: false
+            referencedRelation: "chip_numbers"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "phone_lines_contract_id_fkey"
             columns: ["contract_id"]
