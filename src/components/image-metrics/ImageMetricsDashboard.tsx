@@ -58,7 +58,7 @@ export function ImageMetricsDashboard() {
   // Get contract name
   const getContractName = (contractId: string) => {
     const contract = contracts.find(c => c.id === contractId);
-    return contract ? `${contract.number} - ${contract.client_name}` : contractId;
+    return contract?.client_name || contractId;
   };
 
   // Get equipment serial

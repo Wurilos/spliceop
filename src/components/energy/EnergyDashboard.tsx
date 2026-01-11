@@ -62,9 +62,9 @@ export function EnergyDashboard() {
   const avgValue = totalBills > 0 ? totalValue / totalBills : 0;
 
   const getContractName = (contractId: string | null) => {
-    if (!contractId) return 'Sem contrato';
+    if (!contractId) return 'Sem Contrato';
     const contract = contracts.find((c) => c.id === contractId);
-    return contract?.client_name || 'Sem contrato';
+    return contract?.client_name || 'Sem Contrato';
   };
 
   // Gasto por contrato

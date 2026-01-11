@@ -72,7 +72,7 @@ export function InternetDashboard() {
     connections.forEach(conn => {
       const contract = contracts.find(c => c.id === conn.contract_id);
       const contractKey = contract?.id || 'sem_contrato';
-      const contractName = contract ? `${contract.number} - ${contract.client_name}` : 'Sem Contrato';
+      const contractName = contract?.client_name || 'Sem Contrato';
       
       if (!result[contractKey]) {
         result[contractKey] = { name: contractName, total: 0, count: 0 };
