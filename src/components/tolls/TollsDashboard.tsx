@@ -49,7 +49,7 @@ export function TollsDashboard() {
     filteredTags.forEach(tag => {
       const contract = contracts.find(c => c.id === tag.contract_id);
       const key = tag.contract_id || 'sem_contrato';
-      const name = contract ? `${contract.number} - ${contract.client_name}` : 'Sem Contrato';
+      const name = contract?.client_name || 'Sem Contrato';
       if (!result[key]) result[key] = { name, total: 0, count: 0 };
       result[key].total += tag.value;
       result[key].count++;
@@ -119,7 +119,7 @@ export function TollsDashboard() {
 
   const getContractName = (tag: TollTag) => {
     const contract = contracts.find(c => c.id === tag.contract_id);
-    return contract ? `${contract.number} - ${contract.client_name}` : 'Sem Contrato';
+    return contract?.client_name || 'Sem Contrato';
   };
 
   const getVehiclePlate = (vehicleId: string) => {

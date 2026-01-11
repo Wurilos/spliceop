@@ -54,7 +54,7 @@ export function InfractionsDashboard() {
     const grouped: Record<string, number> = {};
     filteredInfractions.forEach((i) => {
       const contract = contracts.find(c => c.id === i.contract_id);
-      const key = contract ? `${contract.number} - ${contract.client_name}` : 'Sem Contrato';
+      const key = contract?.client_name || 'Sem Contrato';
       grouped[key] = (grouped[key] || 0) + (i.image_count || 0);
     });
     return Object.entries(grouped)
@@ -90,7 +90,7 @@ export function InfractionsDashboard() {
           serial,
           images: data.images,
           records: data.records,
-          contract: contract ? `${contract.number} - ${contract.client_name}` : '-',
+          contract: contract?.client_name || '-',
         };
       })
       .sort((a, b) => b.images - a.images)
