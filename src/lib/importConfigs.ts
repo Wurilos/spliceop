@@ -35,6 +35,19 @@ const toDate = (v: any) => {
 };
 const toDateTime = (v: any) => {
   if (!v) return null;
+  
+  // Handle Excel serial date number (e.g., 45958)
+  if (typeof v === 'number' || /^\d+(\.\d+)?$/.test(String(v).trim())) {
+    const serial = parseFloat(String(v).trim());
+    if (serial > 25000 && serial < 100000) {
+      // Excel serial date: days since 1899-12-30
+      const excelEpoch = new Date(Date.UTC(1899, 11, 30));
+      const msPerDay = 24 * 60 * 60 * 1000;
+      const date = new Date(excelEpoch.getTime() + serial * msPerDay);
+      return date.toISOString();
+    }
+  }
+  
   const str = String(v).trim();
   
   // Handle Brazilian date format DD/MM/YYYY or DD/MM/YYYY HH:MM

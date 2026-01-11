@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { AppLayout } from '@/components/layout/AppLayout';
@@ -21,6 +22,7 @@ export default function Tolls() {
   const { tollTags, isLoading, deleteTollTag } = useTollTags();
   const { vehicles } = useVehicles();
   const { contracts } = useContracts();
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState('data');
   const [formOpen, setFormOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -107,9 +109,46 @@ export default function Tolls() {
   };
 
   const handleImport = async (data: any[]) => {
-    const { error } = await supabase.from('toll_tags').insert(data);
+    // Resolve contract_id by name and vehicle_id by plate
+    const resolvedData = data.map((row, index) => {
+      const rowNumber = index + 2;
+      
+      // Resolve vehicle by plate (required)
+      const vehiclePlate = String(row.vehicle_id || '').trim().toUpperCase();
+      const vehicle = vehicles.find((v) => v.plate?.toUpperCase() === vehiclePlate);
+      if (!vehicle) {
+        throw new Error(`Linha ${rowNumber}: Veículo com placa "${vehiclePlate}" não encontrado`);
+      }
+      
+      // Resolve contract by name (optional)
+      let contractId: string | null = null;
+      if (row.contract_id) {
+        const contractName = String(row.contract_id).trim().toLowerCase();
+        const contract = contracts.find(
+          (c) =>
+            c.client_name?.toLowerCase() === contractName ||
+            c.number?.toLowerCase() === contractName ||
+            `${c.number} - ${c.client_name}`.toLowerCase() === contractName
+        );
+        if (contract) {
+          contractId = contract.id;
+        }
+      }
+      
+      return {
+        vehicle_id: vehicle.id,
+        contract_id: contractId,
+        passage_date: row.passage_date,
+        value: row.value,
+        tag_number: row.tag_number,
+        toll_plaza: row.toll_plaza,
+      };
+    });
+
+    const { error } = await supabase.from('toll_tags').insert(resolvedData);
     if (error) throw error;
-    toast.success(`${data.length} registros importados com sucesso!`);
+    queryClient.invalidateQueries({ queryKey: ['toll_tags'] });
+    toast.success(`${resolvedData.length} registros importados com sucesso!`);
   };
 
   return (
