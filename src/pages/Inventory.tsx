@@ -17,9 +17,10 @@ import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 
 const componentColumns: Column<Component>[] = [
-  { key: 'name', label: 'Nome' },
-  { key: 'category', label: 'Categoria' },
-  { key: 'description', label: 'Descrição' },
+  { key: 'code', label: 'Código' },
+  { key: 'name', label: 'Descrição' },
+  { key: 'type', label: 'Tipo' },
+  { key: 'value', label: 'Valor', render: (v) => v ? `R$ ${(v as number).toFixed(2)}` : '-' },
 ];
 
 const stockColumns: Column<Stock>[] = [
@@ -190,7 +191,7 @@ export default function InventoryPage() {
             if (editingComponent) {
               updateComponent({ id: editingComponent.id, ...data });
             } else {
-              createComponent(data as { name: string; category?: string; description?: string });
+              createComponent(data as { code?: string; name: string; type?: string; description?: string; value?: number });
             }
             setComponentFormOpen(false);
           }}

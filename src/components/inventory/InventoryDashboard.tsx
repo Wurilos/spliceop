@@ -27,14 +27,14 @@ export function InventoryDashboard() {
       }, 0);
   }, [maintenanceItems]);
 
-  // Materials by category
-  const materialsByCategory = useMemo(() => {
-    const categoryMap: Record<string, number> = {};
+  // Materials by type
+  const materialsByType = useMemo(() => {
+    const typeMap: Record<string, number> = {};
     components.forEach(comp => {
-      const category = comp.category || 'Sem categoria';
-      categoryMap[category] = (categoryMap[category] || 0) + 1;
+      const type = comp.type || 'Sem tipo';
+      typeMap[type] = (typeMap[type] || 0) + 1;
     });
-    return Object.entries(categoryMap).map(([name, value]) => ({ name, value }));
+    return Object.entries(typeMap).map(([name, value]) => ({ name, value }));
   }, [components]);
 
   // Stock vs Maintenance comparison by component
@@ -123,18 +123,18 @@ export function InventoryDashboard() {
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Materials by Category */}
+        {/* Materials by Type */}
         <Card>
           <CardHeader>
-            <CardTitle>Componentes por Categoria</CardTitle>
+            <CardTitle>Componentes por Tipo</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-[300px]">
-              {materialsByCategory.length > 0 ? (
+              {materialsByType.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
-                      data={materialsByCategory}
+                      data={materialsByType}
                       cx="50%"
                       cy="50%"
                       labelLine={false}
@@ -143,7 +143,7 @@ export function InventoryDashboard() {
                       fill="#8884d8"
                       dataKey="value"
                     >
-                      {materialsByCategory.map((_, index) => (
+                      {materialsByType.map((_, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
