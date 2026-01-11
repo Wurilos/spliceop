@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { AppLayout } from '@/components/layout/AppLayout';
@@ -17,8 +18,9 @@ import { useEnergyConsumerUnits, EnergyConsumerUnit } from '@/hooks/useEnergyCon
 import { useContracts } from '@/hooks/useContracts';
 import { useEquipment } from '@/hooks/useEquipment';
 import { exportToPDF, exportToExcel, exportToCSV } from '@/lib/export';
-import { energyImportConfig } from '@/lib/importConfigs';
+import { energyImportConfig, energyConsumerUnitImportConfig } from '@/lib/importConfigs';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export default function Energy() {
   const { energyBills, isLoading: billsLoading, deleteEnergyBill } = useEnergyBills();
@@ -26,12 +28,14 @@ export default function Energy() {
   const { consumerUnits, isLoading: unitsLoading, deleteConsumerUnit } = useEnergyConsumerUnits();
   const { contracts } = useContracts();
   const { equipment } = useEquipment();
+  const queryClient = useQueryClient();
 
   const [activeTab, setActiveTab] = useState('suppliers');
   const [formOpen, setFormOpen] = useState(false);
   const [supplierFormOpen, setSupplierFormOpen] = useState(false);
   const [unitFormOpen, setUnitFormOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [unitImportOpen, setUnitImportOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
   const [selectedBill, setSelectedBill] = useState<any>(null);
@@ -196,6 +200,55 @@ export default function Energy() {
   const handleImport = async (data: any[]) => {
     const { error } = await supabase.from('energy_bills').insert(data);
     if (error) throw error;
+    queryClient.invalidateQueries({ queryKey: ['energy_bills'] });
+    toast.success(`${data.length} faturas importadas com sucesso!`);
+  };
+
+  const handleUnitImport = async (data: any[]) => {
+    const resolvedData = data.map((row, index) => {
+      const rowNumber = index + 2;
+
+      // Resolve supplier by name
+      let supplierId: string | null = null;
+      if (row.supplier_name) {
+        const supplierName = String(row.supplier_name).trim().toLowerCase();
+        const supplier = suppliers.find((s) => s.name?.toLowerCase() === supplierName);
+        if (supplier) supplierId = supplier.id;
+      }
+
+      // Resolve contract by name/number
+      let contractId: string | null = null;
+      if (row.contract_ref) {
+        const contractRef = String(row.contract_ref).trim().toLowerCase();
+        const contract = contracts.find((c) => {
+          const number = (c.number || '').toLowerCase();
+          const name = (c.client_name || '').toLowerCase();
+          const combined = `${c.number} - ${c.client_name}`.toLowerCase();
+          return combined === contractRef || name === contractRef || number === contractRef;
+        });
+        if (contract) contractId = contract.id;
+      }
+
+      // Resolve equipment by serial
+      let equipmentId: string | null = null;
+      if (row.equipment_serial) {
+        const serial = String(row.equipment_serial).trim().toUpperCase();
+        const eq = equipment.find((e) => e.serial_number?.toUpperCase() === serial);
+        if (eq) equipmentId = eq.id;
+      }
+
+      return {
+        consumer_unit: row.consumer_unit,
+        supplier_id: supplierId,
+        contract_id: contractId,
+        equipment_id: equipmentId,
+      };
+    });
+
+    const { error } = await supabase.from('energy_consumer_units').insert(resolvedData);
+    if (error) throw error;
+    queryClient.invalidateQueries({ queryKey: ['energy_consumer_units'] });
+    toast.success(`${resolvedData.length} unidades consumidoras importadas com sucesso!`);
   };
 
   const getDeleteMessage = () => {
@@ -211,7 +264,13 @@ export default function Energy() {
         description="Controle de consumo de energia elétrica"
         onAdd={activeTab !== 'dashboard' ? handleAdd : undefined}
         onExport={activeTab === 'bills' ? handleExport : undefined}
-        onImport={activeTab === 'bills' ? () => setImportOpen(true) : undefined}
+        onImport={
+          activeTab === 'bills'
+            ? () => setImportOpen(true)
+            : activeTab === 'units'
+            ? () => setUnitImportOpen(true)
+            : undefined
+        }
       />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
@@ -295,6 +354,17 @@ export default function Energy() {
         templateColumns={energyImportConfig.templateColumns}
         templateFilename="energia"
         onImport={handleImport}
+      />
+
+      <ImportDialog
+        open={unitImportOpen}
+        onOpenChange={setUnitImportOpen}
+        title="Importar Unidades Consumidoras"
+        description="Importe unidades consumidoras a partir de uma planilha Excel"
+        columnMappings={energyConsumerUnitImportConfig.mappings}
+        templateColumns={energyConsumerUnitImportConfig.templateColumns}
+        templateFilename="unidades_consumidoras"
+        onImport={handleUnitImport}
       />
     </AppLayout>
   );

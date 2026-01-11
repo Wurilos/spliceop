@@ -356,6 +356,22 @@ export const tollImportConfig = {
   ],
 };
 
+// Energy consumer units import config
+export const energyConsumerUnitImportConfig = {
+  mappings: [
+    { excelColumn: 'Unidade Consumidora', dbColumn: 'consumer_unit', required: true, transform: toString },
+    { excelColumn: 'Fornecedor', dbColumn: 'supplier_name', transform: toString },
+    { excelColumn: 'Contrato', dbColumn: 'contract_ref', transform: toString },
+    { excelColumn: 'Serial Equipamento', dbColumn: 'equipment_serial', transform: toString },
+  ] as ColumnMapping[],
+  templateColumns: [
+    { key: 'consumer_unit', label: 'Unidade Consumidora' },
+    { key: 'supplier_name', label: 'Fornecedor' },
+    { key: 'contract_ref', label: 'Contrato' },
+    { key: 'equipment_serial', label: 'Serial Equipamento' },
+  ],
+};
+
 // Energy bills import config
 export const energyImportConfig = {
   mappings: [
