@@ -1,7 +1,10 @@
 import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
 import { PhoneLine } from '@/hooks/usePhoneLines';
-import { Phone, Building2, Radio, CheckCircle, XCircle } from 'lucide-react';
+import { useChipNumbers, ChipNumber } from '@/hooks/useChipNumbers';
+import { Phone, Building2, Radio, CheckCircle, Unlink } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 
 interface PhoneLinesDashboardProps {
@@ -11,15 +14,23 @@ interface PhoneLinesDashboardProps {
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
 
 export function PhoneLinesDashboard({ phoneLines }: PhoneLinesDashboardProps) {
+  const { chipNumbers } = useChipNumbers();
+
+  // Get unlinked chips (chips not linked to any equipment)
+  const unlinkedChips = useMemo(() => {
+    const linkedChipIds = new Set(phoneLines.map(pl => pl.chip_id).filter(Boolean));
+    return chipNumbers.filter(chip => !linkedChipIds.has(chip.id));
+  }, [chipNumbers, phoneLines]);
+
   const stats = useMemo(() => {
     const total = phoneLines.length;
     const active = phoneLines.filter(pl => pl.status === 'active').length;
-    const inactive = phoneLines.filter(pl => pl.status !== 'active').length;
+    const unlinked = unlinkedChips.length;
     const uniqueCarriers = new Set(phoneLines.map(pl => pl.carrier)).size;
     const uniqueContracts = new Set(phoneLines.filter(pl => pl.contract_id).map(pl => pl.contract_id)).size;
 
-    return { total, active, inactive, uniqueCarriers, uniqueContracts };
-  }, [phoneLines]);
+    return { total, active, unlinked, uniqueCarriers, uniqueContracts, totalChips: chipNumbers.length };
+  }, [phoneLines, unlinkedChips, chipNumbers]);
 
   const byContract = useMemo(() => {
     const grouped: Record<string, { name: string; count: number }> = {};
@@ -45,8 +56,8 @@ export function PhoneLinesDashboard({ phoneLines }: PhoneLinesDashboardProps) {
 
   const byStatus = useMemo(() => {
     return [
-      { name: 'Ativas', value: stats.active, color: '#10b981' },
-      { name: 'Inativas', value: stats.inactive, color: '#ef4444' },
+      { name: 'Vinculadas', value: stats.total, color: '#10b981' },
+      { name: 'Sem Vínculo', value: stats.unlinked, color: '#f59e0b' },
     ].filter(item => item.value > 0);
   }, [stats]);
 
@@ -72,32 +83,35 @@ export function PhoneLinesDashboard({ phoneLines }: PhoneLinesDashboardProps) {
             <Phone className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.total}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Linhas Ativas</CardTitle>
-            <CheckCircle className="h-4 w-4 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{stats.active}</div>
+            <div className="text-2xl font-bold">{stats.totalChips}</div>
             <p className="text-xs text-muted-foreground">
-              {stats.total > 0 ? ((stats.active / stats.total) * 100).toFixed(1) : 0}% do total
+              Chips cadastrados
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Linhas Inativas</CardTitle>
-            <XCircle className="h-4 w-4 text-red-500" />
+            <CardTitle className="text-sm font-medium">Linhas Vinculadas</CardTitle>
+            <CheckCircle className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{stats.inactive}</div>
+            <div className="text-2xl font-bold text-green-600">{stats.total}</div>
             <p className="text-xs text-muted-foreground">
-              {stats.total > 0 ? ((stats.inactive / stats.total) * 100).toFixed(1) : 0}% do total
+              {stats.totalChips > 0 ? ((stats.total / stats.totalChips) * 100).toFixed(1) : 0}% do total
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Linhas sem Vínculo</CardTitle>
+            <Unlink className="h-4 w-4 text-amber-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-amber-600">{stats.unlinked}</div>
+            <p className="text-xs text-muted-foreground">
+              {stats.totalChips > 0 ? ((stats.unlinked / stats.totalChips) * 100).toFixed(1) : 0}% do total
             </p>
           </CardContent>
         </Card>
@@ -178,7 +192,7 @@ export function PhoneLinesDashboard({ phoneLines }: PhoneLinesDashboardProps) {
         {/* By Status */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Distribuição por Status</CardTitle>
+            <CardTitle className="text-lg">Distribuição por Vínculo</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-[300px]">
@@ -226,6 +240,42 @@ export function PhoneLinesDashboard({ phoneLines }: PhoneLinesDashboardProps) {
           </CardContent>
         </Card>
       </div>
+
+      {/* Unlinked Chips Table */}
+      {unlinkedChips.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Unlink className="h-5 w-5 text-amber-500" />
+              Linhas sem Vínculo ({unlinkedChips.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Número da Linha</TableHead>
+                  <TableHead>Operadora</TableHead>
+                  <TableHead>Data Cadastro</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {unlinkedChips.map((chip) => (
+                  <TableRow key={chip.id}>
+                    <TableCell className="font-medium">{chip.line_number}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{chip.carrier}</Badge>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {new Date(chip.created_at).toLocaleDateString('pt-BR')}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
