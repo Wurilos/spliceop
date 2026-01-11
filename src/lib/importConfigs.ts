@@ -413,10 +413,8 @@ export const internetConnectionImportConfig = {
   mappings: [
     { excelColumn: 'Contrato', dbColumn: 'contract_ref', transform: toString },
     { excelColumn: 'Número de Série', dbColumn: 'serial_number', required: true, transform: toString },
-    { excelColumn: 'Serial', dbColumn: 'serial_number', required: true, transform: toString },
     { excelColumn: 'Provedor', dbColumn: 'provider_name', transform: toString },
     { excelColumn: 'Código do Cliente', dbColumn: 'client_code', transform: toString },
-    { excelColumn: 'Código Cliente', dbColumn: 'client_code', transform: toString },
   ] as ColumnMapping[],
   templateColumns: [
     { key: 'contract_ref', label: 'Contrato' },
