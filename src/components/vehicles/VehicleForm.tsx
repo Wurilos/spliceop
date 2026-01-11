@@ -48,11 +48,18 @@ const schema = z.object({
   insurance_company: z.string().optional(),
   rental_company: z.string().optional(),
   insurance_contact: z.string().optional(),
+  ownership: z.string().optional(),
   status: z.enum(['active', 'inactive', 'maintenance']),
   notes: z.string().optional(),
   color: z.string().optional(),
   team: z.string().optional(),
 });
+
+const ownershipOptions = [
+  'Próprio',
+  'Locado (Fixo)',
+  'Locado (Reserva)',
+];
 
 type FormData = z.infer<typeof schema>;
 
@@ -102,6 +109,7 @@ export function VehicleForm({
       insurance_company: '',
       rental_company: '',
       insurance_contact: '',
+      ownership: 'Próprio',
       status: 'active',
       notes: '',
       color: '',
@@ -128,6 +136,7 @@ export function VehicleForm({
         insurance_company: initialData.insurance_company || '',
         rental_company: initialData.rental_company || '',
         insurance_contact: initialData.insurance_contact || '',
+        ownership: initialData.ownership || 'Próprio',
         status: initialData.status || 'active',
         notes: initialData.notes || '',
         color: initialData.color || '',
@@ -151,6 +160,7 @@ export function VehicleForm({
         insurance_company: '',
         rental_company: '',
         insurance_contact: '',
+        ownership: 'Próprio',
         status: 'active',
         notes: '',
         color: '',
@@ -447,28 +457,55 @@ export function VehicleForm({
               />
             </div>
 
-            <FormField
-              control={form.control}
-              name="status"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-destructive">Status *</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione status" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="active">Ativo</SelectItem>
-                      <SelectItem value="inactive">Inativo</SelectItem>
-                      <SelectItem value="maintenance">Manutenção</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="ownership"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Titularidade</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione titularidade" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {ownershipOptions.map((opt) => (
+                          <SelectItem key={opt} value={opt}>
+                            {opt}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-destructive">Status *</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione status" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="active">Ativo</SelectItem>
+                        <SelectItem value="inactive">Inativo</SelectItem>
+                        <SelectItem value="maintenance">Manutenção</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             <FormField
               control={form.control}

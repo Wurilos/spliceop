@@ -4,6 +4,7 @@ import { PageHeader } from '@/components/shared/PageHeader';
 import { ImportDialog } from '@/components/shared/ImportDialog';
 import { useVehicles } from '@/hooks/useVehicles';
 import { VehicleForm } from '@/components/vehicles/VehicleForm';
+import { VehiclesDashboard } from '@/components/vehicles/VehiclesDashboard';
 import { Tables } from '@/integrations/supabase/types';
 import { vehicleImportConfig } from '@/lib/importConfigs';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,6 +13,7 @@ import { Car, MoreHorizontal, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -65,6 +67,7 @@ const exportColumns = [
   { key: 'Número Cartão', label: 'Número Cartão' },
   { key: 'Saldo Mensal', label: 'Saldo Mensal' },
   { key: 'Número TAG', label: 'Número TAG' },
+  { key: 'Titularidade', label: 'Titularidade' },
   { key: 'Status', label: 'Status' },
   { key: 'Observações', label: 'Observações' },
 ];
@@ -79,6 +82,7 @@ export default function Vehicles() {
   const [deleteManyDialogOpen, setDeleteManyDialogOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [activeTab, setActiveTab] = useState('list');
   const itemsPerPage = 10;
 
   const handleAdd = () => {
@@ -179,6 +183,7 @@ export default function Vehicles() {
       'Número Cartão': v.fuel_card || '',
       'Saldo Mensal': v.monthly_balance || '',
       'Número TAG': v.tag_number || '',
+      'Titularidade': v.ownership || '',
       'Status': v.status || '',
       'Observações': v.notes || '',
     }));
@@ -241,22 +246,33 @@ export default function Vehicles() {
           onExport={handleExport}
         />
 
-        {selectedIds.length > 0 && (
-          <div className="flex items-center gap-4 p-3 bg-muted rounded-lg border">
-            <span className="text-sm font-medium">{selectedIds.length} veículo(s) selecionado(s)</span>
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={() => setDeleteManyDialogOpen(true)}
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Excluir Selecionados
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => setSelectedIds([])}>
-              Limpar Seleção
-            </Button>
-          </div>
-        )}
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList>
+            <TabsTrigger value="list">Listagem</TabsTrigger>
+            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="dashboard" className="mt-6">
+            <VehiclesDashboard vehicles={vehicles} />
+          </TabsContent>
+
+          <TabsContent value="list" className="mt-6">
+            {selectedIds.length > 0 && (
+              <div className="flex items-center gap-4 p-3 bg-muted rounded-lg border mb-4">
+                <span className="text-sm font-medium">{selectedIds.length} veículo(s) selecionado(s)</span>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => setDeleteManyDialogOpen(true)}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Excluir Selecionados
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setSelectedIds([])}>
+                  Limpar Seleção
+                </Button>
+              </div>
+            )}
 
         <div className="bg-card rounded-lg border">
           {loading ? (
@@ -290,6 +306,7 @@ export default function Vehicles() {
                       <th className="text-left py-3 px-3 font-medium text-muted-foreground text-xs">Nº Cartão</th>
                       <th className="text-left py-3 px-3 font-medium text-muted-foreground text-xs">Saldo Mensal</th>
                       <th className="text-left py-3 px-3 font-medium text-muted-foreground text-xs">Nº TAG</th>
+                      <th className="text-left py-3 px-3 font-medium text-muted-foreground text-xs">Titularidade</th>
                       <th className="text-left py-3 px-3 font-medium text-muted-foreground text-xs">Status</th>
                       <th className="text-left py-3 px-3 font-medium text-muted-foreground text-xs">Observações</th>
                       <th className="py-3 px-3"></th>
@@ -333,6 +350,7 @@ export default function Vehicles() {
                           {vehicle.monthly_balance ? `R$ ${vehicle.monthly_balance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '-'}
                         </td>
                         <td className="py-2 px-3 text-sm">{vehicle.tag_number || '-'}</td>
+                        <td className="py-2 px-3 text-sm">{vehicle.ownership || '-'}</td>
                         <td className="py-2 px-3">{getStatusBadge(vehicle.status)}</td>
                         <td className="py-2 px-3 text-sm max-w-[100px] truncate" title={vehicle.notes || ''}>
                           {vehicle.notes || '-'}
@@ -389,9 +407,11 @@ export default function Vehicles() {
                   </Button>
                 </div>
               </div>
-            </>
-          )}
-        </div>
+              </>
+            )}
+          </div>
+        </TabsContent>
+      </Tabs>
 
         <VehicleForm
           open={formOpen}
