@@ -23,8 +23,8 @@ export function useEnergyConsumerUnits() {
         .select(`
           *,
           suppliers:energy_suppliers(name),
-          contracts(number, client_name),
-          equipment(serial_number)
+          contracts:contracts!fk_energy_consumer_units_contract(number, client_name),
+          equipment:equipment!fk_energy_consumer_units_equipment(serial_number)
         `)
         .order('consumer_unit', { ascending: true });
       if (error) throw error;
