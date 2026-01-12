@@ -332,20 +332,18 @@ export function ServiceCallsDashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-72">
+            <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={chartByType}
                     cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    outerRadius={100}
+                    cy="45%"
+                    outerRadius={80}
+                    innerRadius={40}
                     fill="#8884d8"
                     dataKey="value"
-                    label={({ name, percent }) =>
-                      `${name} (${(percent * 100).toFixed(0)}%)`
-                    }
+                    paddingAngle={2}
                   >
                     {chartByType.map((_, index) => (
                       <Cell
@@ -354,7 +352,16 @@ export function ServiceCallsDashboard() {
                       />
                     ))}
                   </Pie>
-                  <Tooltip />
+                  <Tooltip 
+                    formatter={(value: number) => [value, 'Atendimentos']}
+                  />
+                  <Legend 
+                    layout="horizontal"
+                    align="center"
+                    verticalAlign="bottom"
+                    wrapperStyle={{ paddingTop: 16 }}
+                    formatter={(value) => <span className="text-xs">{value}</span>}
+                  />
                 </PieChart>
               </ResponsiveContainer>
             </div>
@@ -370,20 +377,18 @@ export function ServiceCallsDashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-72">
+            <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={chartByStatus}
                     cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    outerRadius={100}
+                    cy="45%"
+                    outerRadius={80}
+                    innerRadius={40}
                     fill="#8884d8"
                     dataKey="value"
-                    label={({ name, percent }) =>
-                      `${name} (${(percent * 100).toFixed(0)}%)`
-                    }
+                    paddingAngle={2}
                   >
                     {chartByStatus.map((entry, index) => {
                       const statusColors: Record<string, string> = {
@@ -401,8 +406,16 @@ export function ServiceCallsDashboard() {
                       );
                     })}
                   </Pie>
-                  <Tooltip />
-                  <Legend />
+                  <Tooltip 
+                    formatter={(value: number) => [value, 'Atendimentos']}
+                  />
+                  <Legend 
+                    layout="horizontal"
+                    align="center"
+                    verticalAlign="bottom"
+                    wrapperStyle={{ paddingTop: 16 }}
+                    formatter={(value) => <span className="text-xs">{value}</span>}
+                  />
                 </PieChart>
               </ResponsiveContainer>
             </div>
