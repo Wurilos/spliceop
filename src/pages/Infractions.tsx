@@ -112,9 +112,39 @@ export default function Infractions() {
   };
 
   const handleImport = async (data: any[]) => {
-    const { error } = await supabase.from('infractions').insert(data);
+    // Resolve contract and equipment references
+    const resolvedData = data.map((row) => {
+      let contractId = row.contract_id;
+      let equipmentId = row.equipment_id;
+
+      // Resolve contract by number or client_name
+      if (contractId && typeof contractId === 'string') {
+        const contract = contracts.find(
+          (c) => c.number === contractId || c.client_name?.toLowerCase() === contractId.toLowerCase()
+        );
+        contractId = contract?.id || null;
+      }
+
+      // Resolve equipment by serial_number
+      if (equipmentId && typeof equipmentId === 'string') {
+        const eq = equipment.find((e) => e.serial_number === equipmentId);
+        equipmentId = eq?.id || null;
+      }
+
+      if (!equipmentId) {
+        throw new Error(`Equipamento não encontrado: ${row.equipment_id}`);
+      }
+
+      return {
+        ...row,
+        contract_id: contractId || null,
+        equipment_id: equipmentId,
+      };
+    });
+
+    const { error } = await supabase.from('infractions').insert(resolvedData);
     if (error) throw error;
-    toast.success(`${data.length} registros importados com sucesso!`);
+    toast.success(`${resolvedData.length} registros importados com sucesso!`);
   };
 
   return (
