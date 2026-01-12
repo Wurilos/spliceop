@@ -1785,6 +1785,7 @@ export type Database = {
           employee_id: string | null
           equipment_id: string | null
           id: string
+          mob_code: string | null
           resolution: string | null
           status: string | null
           type: string | null
@@ -1798,6 +1799,7 @@ export type Database = {
           employee_id?: string | null
           equipment_id?: string | null
           id?: string
+          mob_code?: string | null
           resolution?: string | null
           status?: string | null
           type?: string | null
@@ -1811,6 +1813,7 @@ export type Database = {
           employee_id?: string | null
           equipment_id?: string | null
           id?: string
+          mob_code?: string | null
           resolution?: string | null
           status?: string | null
           type?: string | null
