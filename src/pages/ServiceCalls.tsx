@@ -57,15 +57,25 @@ export default function ServiceCalls() {
     else exportToCSV(serviceCalls, exportColumns, 'Atendimentos');
   };
 
+  // Função auxiliar para normalizar variações de nomes (Luis/Luiz, etc)
+  const normalizeNameVariations = (name: string): string => {
+    return name
+      .toLowerCase()
+      .replace(/luís|luiz/g, 'luis')
+      .replace(/sérgio|sergio/g, 'sergio')
+      .replace(/\./g, '')
+      .trim();
+  };
+
   // Função auxiliar para busca flexível de colaboradores
-  // Trata nomes abreviados como "Alessandro A. Piva" para "Alessandro Alves Piva"
+  // Trata nomes abreviados, variações ortográficas e sobrenomes parciais
   const findEmployeeFlexible = (searchName: string, employeeList: typeof employees): string | null => {
     if (!searchName) return null;
     
-    const normalized = searchName.toLowerCase().trim();
+    const normalized = normalizeNameVariations(searchName);
     
-    // Busca exata primeiro
-    const exactMatch = employeeList.find(e => e.full_name.toLowerCase().trim() === normalized);
+    // Busca exata primeiro (normalizada)
+    const exactMatch = employeeList.find(e => normalizeNameVariations(e.full_name) === normalized);
     if (exactMatch) return exactMatch.id;
     
     // Quebrar o nome de busca em partes
@@ -75,43 +85,55 @@ export default function ServiceCalls() {
     const searchFirst = searchParts[0];
     const searchLast = searchParts[searchParts.length - 1];
     
-    // Buscar colaborador que tenha o mesmo primeiro e último nome
+    // Score de correspondência para encontrar o melhor match
+    let bestMatch: { emp: typeof employeeList[0] | null; score: number } = { emp: null, score: 0 };
+    
     for (const emp of employeeList) {
-      const empParts = emp.full_name.toLowerCase().trim().split(/\s+/).filter(p => p.length > 0);
+      const empNormalized = normalizeNameVariations(emp.full_name);
+      const empParts = empNormalized.split(/\s+/).filter(p => p.length > 0);
       if (empParts.length < 2) continue;
       
       const empFirst = empParts[0];
-      const empLast = empParts[empParts.length - 1];
+      let score = 0;
       
-      // Verificar se primeiro e último nome coincidem
-      if (empFirst === searchFirst && empLast === searchLast) {
-        // Verificar se as iniciais do meio também batem (se houver)
-        if (searchParts.length > 2 && empParts.length > 2) {
-          const searchMiddles = searchParts.slice(1, -1);
-          const empMiddles = empParts.slice(1, -1);
+      // Primeiro nome deve coincidir
+      if (empFirst !== searchFirst) continue;
+      score += 3;
+      
+      // Último nome da busca deve estar presente no nome do colaborador
+      const lastInEmp = empParts.some(p => p === searchLast || p.startsWith(searchLast));
+      if (!lastInEmp) continue;
+      score += 2;
+      
+      // Verificar nomes/iniciais do meio
+      if (searchParts.length > 2) {
+        const searchMiddles = searchParts.slice(1, -1);
+        
+        for (const searchMid of searchMiddles) {
+          const isInitial = searchMid.length === 1;
           
-          // Cada parte do meio da busca deve ser inicial ou nome completo
-          let allMatch = true;
-          for (let i = 0; i < searchMiddles.length && i < empMiddles.length; i++) {
-            const searchMid = searchMiddles[i].replace(/\./g, '');
-            const empMid = empMiddles[i];
-            
-            // Aceita se é inicial (ex: "a" ou "a." casa com "alves")
-            if (searchMid.length === 1) {
-              if (!empMid.startsWith(searchMid)) {
-                allMatch = false;
+          for (const empPart of empParts.slice(1)) {
+            if (isInitial) {
+              if (empPart.startsWith(searchMid)) {
+                score += 1;
                 break;
               }
-            } else if (searchMid !== empMid) {
-              allMatch = false;
+            } else if (empPart === searchMid || empPart.startsWith(searchMid)) {
+              score += 1;
               break;
             }
           }
-          if (allMatch) return emp.id;
-        } else {
-          return emp.id;
         }
       }
+      
+      if (score > bestMatch.score) {
+        bestMatch = { emp, score };
+      }
+    }
+    
+    // Retornar apenas se tiver score mínimo (primeiro nome + último nome)
+    if (bestMatch.score >= 5 && bestMatch.emp) {
+      return bestMatch.emp.id;
     }
     
     return null;
