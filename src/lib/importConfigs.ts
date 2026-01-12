@@ -300,12 +300,12 @@ export const infrastructureImportConfig = {
 export const infractionImportConfig = {
   mappings: [
     { excelColumn: 'Contrato', dbColumn: 'contract_id', transform: toString },
-    // Aceita múltiplas variações de nome de coluna para equipamento
+    // Aceita múltiplas variações de nome de coluna para equipamento - apenas a primeira é obrigatória
     { excelColumn: 'Equipamento', dbColumn: 'equipment_id', required: true, transform: toString },
-    { excelColumn: 'Nº Série', dbColumn: 'equipment_id', required: true, transform: toString },
-    { excelColumn: 'N Série', dbColumn: 'equipment_id', required: true, transform: toString },
-    { excelColumn: 'Numero de Serie', dbColumn: 'equipment_id', required: true, transform: toString },
-    { excelColumn: 'Serial', dbColumn: 'equipment_id', required: true, transform: toString },
+    { excelColumn: 'Nº Série', dbColumn: 'equipment_id', transform: toString },
+    { excelColumn: 'N Série', dbColumn: 'equipment_id', transform: toString },
+    { excelColumn: 'Numero de Serie', dbColumn: 'equipment_id', transform: toString },
+    { excelColumn: 'Serial', dbColumn: 'equipment_id', transform: toString },
     { excelColumn: 'Mês', dbColumn: 'month', transform: (v: any) => {
       if (!v) return null;
       // Se for número (1-12), converte para nome do mês
