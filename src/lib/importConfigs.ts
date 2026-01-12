@@ -612,18 +612,6 @@ export const serviceCallImportConfig = {
     { excelColumn: 'Código Mob', dbColumn: 'mob_code', transform: toString },
     { excelColumn: 'Tipo', dbColumn: 'type', transform: toString },
     { excelColumn: 'Descrição', dbColumn: 'description', transform: toString },
-    { excelColumn: 'Resolução', dbColumn: 'resolution', transform: toString },
-    { excelColumn: 'Status', dbColumn: 'status', transform: (v: string) => {
-      const statusMap: Record<string, string> = {
-        'aberto': 'open',
-        'em andamento': 'in_progress',
-        'fechado': 'closed',
-        'concluído': 'closed',
-        'concluido': 'closed',
-      };
-      const normalized = v?.toLowerCase().trim();
-      return statusMap[normalized] || normalized || 'open';
-    }},
   ] as ColumnMapping[],
   templateColumns: [
     { key: 'contract_ref', label: 'Contrato' },
@@ -634,8 +622,6 @@ export const serviceCallImportConfig = {
     { key: 'mob_code', label: 'Cód. Mob' },
     { key: 'type', label: 'Tipo' },
     { key: 'description', label: 'Descrição' },
-    { key: 'resolution', label: 'Resolução' },
-    { key: 'status', label: 'Status' },
   ],
 };
 
