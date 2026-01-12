@@ -300,8 +300,23 @@ export const infrastructureImportConfig = {
 export const infractionImportConfig = {
   mappings: [
     { excelColumn: 'Contrato', dbColumn: 'contract_id', transform: toString },
+    // Aceita múltiplas variações de nome de coluna para equipamento
     { excelColumn: 'Equipamento', dbColumn: 'equipment_id', required: true, transform: toString },
-    { excelColumn: 'Mês', dbColumn: 'month', transform: toString },
+    { excelColumn: 'Nº Série', dbColumn: 'equipment_id', required: true, transform: toString },
+    { excelColumn: 'N Série', dbColumn: 'equipment_id', required: true, transform: toString },
+    { excelColumn: 'Numero de Serie', dbColumn: 'equipment_id', required: true, transform: toString },
+    { excelColumn: 'Serial', dbColumn: 'equipment_id', required: true, transform: toString },
+    { excelColumn: 'Mês', dbColumn: 'month', transform: (v: any) => {
+      if (!v) return null;
+      // Se for número (1-12), converte para nome do mês
+      const monthNum = parseInt(String(v), 10);
+      if (!isNaN(monthNum) && monthNum >= 1 && monthNum <= 12) {
+        const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 
+                           'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+        return monthNames[monthNum - 1];
+      }
+      return String(v).trim();
+    }},
     { excelColumn: 'Ano', dbColumn: 'year', transform: toInteger },
     { excelColumn: 'Faixa Datacheck', dbColumn: 'datacheck_lane', transform: toString },
     { excelColumn: 'Faixa Física', dbColumn: 'physical_lane', transform: toString },
