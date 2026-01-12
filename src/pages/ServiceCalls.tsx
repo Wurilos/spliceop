@@ -57,6 +57,66 @@ export default function ServiceCalls() {
     else exportToCSV(serviceCalls, exportColumns, 'Atendimentos');
   };
 
+  // Função auxiliar para busca flexível de colaboradores
+  // Trata nomes abreviados como "Alessandro A. Piva" para "Alessandro Alves Piva"
+  const findEmployeeFlexible = (searchName: string, employeeList: typeof employees): string | null => {
+    if (!searchName) return null;
+    
+    const normalized = searchName.toLowerCase().trim();
+    
+    // Busca exata primeiro
+    const exactMatch = employeeList.find(e => e.full_name.toLowerCase().trim() === normalized);
+    if (exactMatch) return exactMatch.id;
+    
+    // Quebrar o nome de busca em partes
+    const searchParts = normalized.split(/\s+/).filter(p => p.length > 0);
+    if (searchParts.length < 2) return null;
+    
+    const searchFirst = searchParts[0];
+    const searchLast = searchParts[searchParts.length - 1];
+    
+    // Buscar colaborador que tenha o mesmo primeiro e último nome
+    for (const emp of employeeList) {
+      const empParts = emp.full_name.toLowerCase().trim().split(/\s+/).filter(p => p.length > 0);
+      if (empParts.length < 2) continue;
+      
+      const empFirst = empParts[0];
+      const empLast = empParts[empParts.length - 1];
+      
+      // Verificar se primeiro e último nome coincidem
+      if (empFirst === searchFirst && empLast === searchLast) {
+        // Verificar se as iniciais do meio também batem (se houver)
+        if (searchParts.length > 2 && empParts.length > 2) {
+          const searchMiddles = searchParts.slice(1, -1);
+          const empMiddles = empParts.slice(1, -1);
+          
+          // Cada parte do meio da busca deve ser inicial ou nome completo
+          let allMatch = true;
+          for (let i = 0; i < searchMiddles.length && i < empMiddles.length; i++) {
+            const searchMid = searchMiddles[i].replace(/\./g, '');
+            const empMid = empMiddles[i];
+            
+            // Aceita se é inicial (ex: "a" ou "a." casa com "alves")
+            if (searchMid.length === 1) {
+              if (!empMid.startsWith(searchMid)) {
+                allMatch = false;
+                break;
+              }
+            } else if (searchMid !== empMid) {
+              allMatch = false;
+              break;
+            }
+          }
+          if (allMatch) return emp.id;
+        } else {
+          return emp.id;
+        }
+      }
+    }
+    
+    return null;
+  };
+
   const handleImport = async (data: any[]) => {
     // Buscar contrato "Infraestrutura" (fallback)
     const infraContract = contracts.find(c => 
@@ -74,11 +134,6 @@ export default function ServiceCalls() {
     const equipmentMap = new Map<string, string>();
     equipment.forEach(e => {
       equipmentMap.set(e.serial_number.toLowerCase().trim(), e.id);
-    });
-
-    const employeeMap = new Map<string, string>();
-    employees.forEach(e => {
-      employeeMap.set(e.full_name.toLowerCase().trim(), e.id);
     });
 
     let thirdPartyCount = 0;
@@ -100,9 +155,8 @@ export default function ServiceCalls() {
       const equipmentSerial = row.equipment_serial?.toLowerCase().trim();
       const equipmentId = equipmentSerial ? equipmentMap.get(equipmentSerial) : null;
 
-      // Resolver colaborador pelo nome
-      const employeeName = row.employee_name?.toLowerCase().trim();
-      const employeeId = employeeName ? employeeMap.get(employeeName) : null;
+      // Resolver colaborador pelo nome (busca flexível para nomes abreviados)
+      const employeeId = findEmployeeFlexible(row.employee_name, employees);
 
       return {
         date: row.date,
