@@ -21,6 +21,7 @@ const schema = z.object({
   description: z.string().optional(),
   resolution: z.string().optional(),
   contract_id: z.string().optional(),
+  third_party_contract: z.string().optional(),
   equipment_id: z.string().optional(),
   employee_id: z.string().optional(),
   mob_code: z.string().optional(),
@@ -38,7 +39,7 @@ export function ServiceCallForm({ open, onOpenChange, onSubmit, initialData, loa
   
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { date: new Date().toISOString().split('T')[0], type: '', description: '', resolution: '', contract_id: '', equipment_id: '', employee_id: '', mob_code: '', status: 'open' },
+    defaultValues: { date: new Date().toISOString().split('T')[0], type: '', description: '', resolution: '', contract_id: '', third_party_contract: '', equipment_id: '', employee_id: '', mob_code: '', status: 'open' },
   });
 
   useEffect(() => {
@@ -49,18 +50,19 @@ export function ServiceCallForm({ open, onOpenChange, onSubmit, initialData, loa
         description: initialData.description || '',
         resolution: initialData.resolution || '',
         contract_id: initialData.contract_id || '',
+        third_party_contract: initialData.third_party_contract || '',
         equipment_id: initialData.equipment_id || '',
         employee_id: initialData.employee_id || '',
         mob_code: initialData.mob_code || '',
         status: (initialData.status as 'open' | 'in_progress' | 'closed') || 'open',
       });
     } else {
-      form.reset({ date: new Date().toISOString().split('T')[0], type: '', description: '', resolution: '', contract_id: '', equipment_id: '', employee_id: '', mob_code: '', status: 'open' });
+      form.reset({ date: new Date().toISOString().split('T')[0], type: '', description: '', resolution: '', contract_id: '', third_party_contract: '', equipment_id: '', employee_id: '', mob_code: '', status: 'open' });
     }
   }, [initialData, form]);
 
   const handleSubmit = (data: FormData) => {
-    onSubmit({ ...data, contract_id: data.contract_id || null, equipment_id: data.equipment_id || null, employee_id: data.employee_id || null } as any);
+    onSubmit({ ...data, contract_id: data.contract_id || null, third_party_contract: data.third_party_contract || null, equipment_id: data.equipment_id || null, employee_id: data.employee_id || null } as any);
   };
 
   return (
@@ -69,21 +71,9 @@ export function ServiceCallForm({ open, onOpenChange, onSubmit, initialData, loa
         <DialogHeader><DialogTitle>{initialData ? 'Editar Atendimento' : 'Novo Atendimento'}</DialogTitle></DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <FormField control={form.control} name="date" render={({ field }) => (
-                <FormItem><FormLabel>Data</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>
-              )} />
-              <FormField control={form.control} name="type" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Tipo</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl><SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger></FormControl>
-                    <SelectContent>{callTypes.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )} />
-            </div>
+            <FormField control={form.control} name="date" render={({ field }) => (
+              <FormItem><FormLabel>Data</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>
+            )} />
             <div className="grid grid-cols-2 gap-4">
               <FormField control={form.control} name="contract_id" render={({ field }) => (
                 <FormItem>
@@ -95,6 +85,15 @@ export function ServiceCallForm({ open, onOpenChange, onSubmit, initialData, loa
                   <FormMessage />
                 </FormItem>
               )} />
+              <FormField control={form.control} name="third_party_contract" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Contrato Terceiros</FormLabel>
+                  <FormControl><Input placeholder="Nome do contrato (se não cadastrado)" {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
               <FormField control={form.control} name="equipment_id" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Equipamento</FormLabel>
@@ -105,8 +104,6 @@ export function ServiceCallForm({ open, onOpenChange, onSubmit, initialData, loa
                   <FormMessage />
                 </FormItem>
               )} />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
               <FormField control={form.control} name="employee_id" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Colaborador</FormLabel>
@@ -117,6 +114,8 @@ export function ServiceCallForm({ open, onOpenChange, onSubmit, initialData, loa
                   <FormMessage />
                 </FormItem>
               )} />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
               <FormField control={form.control} name="mob_code" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Cód. Mob</FormLabel>
@@ -124,17 +123,27 @@ export function ServiceCallForm({ open, onOpenChange, onSubmit, initialData, loa
                   <FormMessage />
                 </FormItem>
               )} />
+              <FormField control={form.control} name="status" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Status</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl><SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger></FormControl>
+                    <SelectContent>
+                      <SelectItem value="open">Aberto</SelectItem>
+                      <SelectItem value="in_progress">Em Andamento</SelectItem>
+                      <SelectItem value="closed">Fechado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )} />
             </div>
-            <FormField control={form.control} name="status" render={({ field }) => (
+            <FormField control={form.control} name="type" render={({ field }) => (
               <FormItem>
-                <FormLabel>Status</FormLabel>
+                <FormLabel>Tipo</FormLabel>
                 <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl><SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger></FormControl>
-                  <SelectContent>
-                    <SelectItem value="open">Aberto</SelectItem>
-                    <SelectItem value="in_progress">Em Andamento</SelectItem>
-                    <SelectItem value="closed">Fechado</SelectItem>
-                  </SelectContent>
+                  <SelectContent>{callTypes.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
                 </Select>
                 <FormMessage />
               </FormItem>

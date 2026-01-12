@@ -560,14 +560,38 @@ export const mileageImportConfig = {
 // Service calls import config
 export const serviceCallImportConfig = {
   mappings: [
+    { excelColumn: 'Contrato', dbColumn: 'contract_ref', transform: toString },
+    { excelColumn: 'Contrato Terceiros', dbColumn: 'third_party_contract', transform: toString },
+    { excelColumn: 'Equipamento', dbColumn: 'equipment_serial', transform: toString },
+    { excelColumn: 'Serial', dbColumn: 'equipment_serial', transform: toString },
+    { excelColumn: 'Nº Série', dbColumn: 'equipment_serial', transform: toString },
     { excelColumn: 'Data', dbColumn: 'date', required: true, transform: toDate },
+    { excelColumn: 'Colaborador', dbColumn: 'employee_name', transform: toString },
+    { excelColumn: 'Cód. Mob', dbColumn: 'mob_code', transform: toString },
+    { excelColumn: 'Cod. Mob', dbColumn: 'mob_code', transform: toString },
+    { excelColumn: 'Código Mob', dbColumn: 'mob_code', transform: toString },
     { excelColumn: 'Tipo', dbColumn: 'type', transform: toString },
     { excelColumn: 'Descrição', dbColumn: 'description', transform: toString },
     { excelColumn: 'Resolução', dbColumn: 'resolution', transform: toString },
-    { excelColumn: 'Status', dbColumn: 'status', transform: (v: string) => v?.toLowerCase() || 'open' },
+    { excelColumn: 'Status', dbColumn: 'status', transform: (v: string) => {
+      const statusMap: Record<string, string> = {
+        'aberto': 'open',
+        'em andamento': 'in_progress',
+        'fechado': 'closed',
+        'concluído': 'closed',
+        'concluido': 'closed',
+      };
+      const normalized = v?.toLowerCase().trim();
+      return statusMap[normalized] || normalized || 'open';
+    }},
   ] as ColumnMapping[],
   templateColumns: [
+    { key: 'contract_ref', label: 'Contrato' },
+    { key: 'third_party_contract', label: 'Contrato Terceiros' },
+    { key: 'equipment_serial', label: 'Equipamento' },
     { key: 'date', label: 'Data' },
+    { key: 'employee_name', label: 'Colaborador' },
+    { key: 'mob_code', label: 'Cód. Mob' },
     { key: 'type', label: 'Tipo' },
     { key: 'description', label: 'Descrição' },
     { key: 'resolution', label: 'Resolução' },

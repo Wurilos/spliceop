@@ -1788,6 +1788,7 @@ export type Database = {
           mob_code: string | null
           resolution: string | null
           status: string | null
+          third_party_contract: string | null
           type: string | null
           updated_at: string | null
         }
@@ -1802,6 +1803,7 @@ export type Database = {
           mob_code?: string | null
           resolution?: string | null
           status?: string | null
+          third_party_contract?: string | null
           type?: string | null
           updated_at?: string | null
         }
@@ -1816,6 +1818,7 @@ export type Database = {
           mob_code?: string | null
           resolution?: string | null
           status?: string | null
+          third_party_contract?: string | null
           type?: string | null
           updated_at?: string | null
         }
