@@ -20,7 +20,8 @@ export function useInfractions() {
           equipment:equipment!fk_infractions_equipment(serial_number, type),
           contracts(number, client_name)
         `)
-        .order('date', { ascending: false });
+        .order('year', { ascending: false })
+        .order('created_at', { ascending: false });
       if (error) throw error;
       return data;
     },
