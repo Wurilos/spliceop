@@ -31,13 +31,16 @@ export function InfractionsDashboard() {
       if (selectedEquipment !== 'all' && infraction.equipment_id !== selectedEquipment) {
         return false;
       }
-      if (startDate && infraction.date) {
-        const infractionDate = new Date(infraction.date);
-        if (infractionDate < new Date(startDate)) return false;
-      }
-      if (endDate && infraction.date) {
-        const infractionDate = new Date(infraction.date);
-        if (infractionDate > new Date(endDate)) return false;
+      // Filter by year/month combination using startDate and endDate
+      if (startDate || endDate) {
+        const infractionYear = infraction.year || 0;
+        const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+          'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+        const infractionMonth = infraction.month ? months.indexOf(infraction.month) + 1 : 1;
+        const infractionDate = new Date(infractionYear, infractionMonth - 1, 1);
+        
+        if (startDate && infractionDate < new Date(startDate)) return false;
+        if (endDate && infractionDate > new Date(endDate)) return false;
       }
       return true;
     });
