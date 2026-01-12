@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/shared/PageHeader';
-import { DataTable, Column, StatusBadge } from '@/components/shared/DataTable';
+import { DataTable, Column } from '@/components/shared/DataTable';
 import { DeleteDialog } from '@/components/shared/DeleteDialog';
 import { ImportDialog } from '@/components/shared/ImportDialog';
 import { useServiceCalls } from '@/hooks/useServiceCalls';
@@ -20,7 +20,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BarChart3, List } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-type ServiceCall = Tables<'service_calls'> & { 
+type ServiceCall = Tables<'service_calls'> & {
   contracts?: { number: string; client_name: string } | null;
   equipment?: { serial_number: string } | null;
   employees?: { full_name: string } | null;
@@ -34,13 +34,22 @@ const columns: Column<ServiceCall>[] = [
   { key: 'employees.full_name', label: 'Colaborador', render: (_, row) => row.employees?.full_name || '-' },
   { key: 'type', label: 'Tipo de Atendimento' },
   { key: 'mob_code', label: 'Cód. Mob', render: (v) => String(v || '-') },
-  { key: 'status', label: 'Status', render: (v) => <StatusBadge status={String(v || 'open')} /> },
 ];
 
 export default function ServiceCalls() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { serviceCalls, loading, create, update, delete: deleteRecord, deleteMany, isCreating, isUpdating, isDeleting } = useServiceCalls();
+  const {
+    serviceCalls,
+    loading,
+    create,
+    update,
+    delete: deleteRecord,
+    deleteMany,
+    isCreating,
+    isUpdating,
+    isDeleting,
+  } = useServiceCalls();
   const { contracts } = useContracts();
   const { equipment } = useEquipment();
   const { employees } = useEmployees();
@@ -50,10 +59,10 @@ export default function ServiceCalls() {
   const [deleting, setDeleting] = useState<ServiceCall | null>(null);
   const [activeTab, setActiveTab] = useState('dashboard');
 
-  const handleExport = (format: 'pdf' | 'excel' | 'csv') => {
-    const exportColumns = columns.map(c => ({ key: String(c.key), label: c.label }));
-    if (format === 'pdf') exportToPDF(serviceCalls, exportColumns, 'Atendimentos');
-    else if (format === 'excel') exportToExcel(serviceCalls, exportColumns, 'Atendimentos');
+  const handleExport = (formatType: 'pdf' | 'excel' | 'csv') => {
+    const exportColumns = columns.map((c) => ({ key: String(c.key), label: c.label }));
+    if (formatType === 'pdf') exportToPDF(serviceCalls, exportColumns, 'Atendimentos');
+    else if (formatType === 'excel') exportToExcel(serviceCalls, exportColumns, 'Atendimentos');
     else exportToCSV(serviceCalls, exportColumns, 'Atendimentos');
   };
 
@@ -71,47 +80,47 @@ export default function ServiceCalls() {
   // Trata nomes abreviados, variações ortográficas e sobrenomes parciais
   const findEmployeeFlexible = (searchName: string, employeeList: typeof employees): string | null => {
     if (!searchName) return null;
-    
+
     const normalized = normalizeNameVariations(searchName);
-    
+
     // Busca exata primeiro (normalizada)
-    const exactMatch = employeeList.find(e => normalizeNameVariations(e.full_name) === normalized);
+    const exactMatch = employeeList.find((e) => normalizeNameVariations(e.full_name) === normalized);
     if (exactMatch) return exactMatch.id;
-    
+
     // Quebrar o nome de busca em partes
-    const searchParts = normalized.split(/\s+/).filter(p => p.length > 0);
+    const searchParts = normalized.split(/\s+/).filter((p) => p.length > 0);
     if (searchParts.length < 2) return null;
-    
+
     const searchFirst = searchParts[0];
     const searchLast = searchParts[searchParts.length - 1];
-    
+
     // Score de correspondência para encontrar o melhor match
     let bestMatch: { emp: typeof employeeList[0] | null; score: number } = { emp: null, score: 0 };
-    
+
     for (const emp of employeeList) {
       const empNormalized = normalizeNameVariations(emp.full_name);
-      const empParts = empNormalized.split(/\s+/).filter(p => p.length > 0);
+      const empParts = empNormalized.split(/\s+/).filter((p) => p.length > 0);
       if (empParts.length < 2) continue;
-      
+
       const empFirst = empParts[0];
       let score = 0;
-      
+
       // Primeiro nome deve coincidir
       if (empFirst !== searchFirst) continue;
       score += 3;
-      
+
       // Último nome da busca deve estar presente no nome do colaborador
-      const lastInEmp = empParts.some(p => p === searchLast || p.startsWith(searchLast));
+      const lastInEmp = empParts.some((p) => p === searchLast || p.startsWith(searchLast));
       if (!lastInEmp) continue;
       score += 2;
-      
+
       // Verificar nomes/iniciais do meio
       if (searchParts.length > 2) {
         const searchMiddles = searchParts.slice(1, -1);
-        
+
         for (const searchMid of searchMiddles) {
           const isInitial = searchMid.length === 1;
-          
+
           for (const empPart of empParts.slice(1)) {
             if (isInitial) {
               if (empPart.startsWith(searchMid)) {
@@ -125,43 +134,42 @@ export default function ServiceCalls() {
           }
         }
       }
-      
+
       if (score > bestMatch.score) {
         bestMatch = { emp, score };
       }
     }
-    
+
     // Retornar apenas se tiver score mínimo (primeiro nome + último nome)
     if (bestMatch.score >= 5 && bestMatch.emp) {
       return bestMatch.emp.id;
     }
-    
+
     return null;
   };
 
   const handleImport = async (data: any[]) => {
     // Buscar contrato "Infraestrutura" (fallback)
-    const infraContract = contracts.find(c => 
-      c.client_name.toLowerCase().includes('infraestrutura') || 
-      c.number.toLowerCase().includes('infraestrutura')
+    const infraContract = contracts.find(
+      (c) => c.client_name.toLowerCase().includes('infraestrutura') || c.number.toLowerCase().includes('infraestrutura')
     );
 
     // Criar mapas de lookup
     const contractMap = new Map<string, string>();
-    contracts.forEach(c => {
+    contracts.forEach((c) => {
       contractMap.set(c.number.toLowerCase().trim(), c.id);
       contractMap.set(c.client_name.toLowerCase().trim(), c.id);
     });
 
     const equipmentMap = new Map<string, string>();
-    equipment.forEach(e => {
+    equipment.forEach((e) => {
       equipmentMap.set(e.serial_number.toLowerCase().trim(), e.id);
     });
 
     let thirdPartyCount = 0;
 
     // Processar cada registro
-    const processedData = data.map(row => {
+    const processedData = data.map((row) => {
       const contractRef = row.contract_ref?.toLowerCase().trim();
       let contractId = contractRef ? contractMap.get(contractRef) : null;
       let thirdPartyContract = row.third_party_contract || null;
@@ -184,8 +192,6 @@ export default function ServiceCalls() {
         date: row.date,
         type: row.type || null,
         description: row.description || null,
-        resolution: row.resolution || null,
-        status: row.status || 'open',
         mob_code: row.mob_code || null,
         contract_id: contractId,
         third_party_contract: thirdPartyContract,
@@ -193,6 +199,8 @@ export default function ServiceCalls() {
         employee_id: employeeId,
       };
     });
+
+    console.log('[Import Atendimentos] payload keys:', processedData[0] ? Object.keys(processedData[0]) : []);
 
     const { error } = await supabase.from('service_calls').insert(processedData);
     if (error) throw error;
@@ -211,11 +219,14 @@ export default function ServiceCalls() {
   return (
     <AppLayout title="Atendimentos">
       <div className="space-y-6">
-        <PageHeader 
-          title="Atendimentos" 
-          description="Chamados técnicos e atendimentos" 
-          onAdd={() => { setEditing(null); setFormOpen(true); }} 
-          addLabel="Novo Atendimento" 
+        <PageHeader
+          title="Atendimentos"
+          description="Chamados técnicos e atendimentos"
+          onAdd={() => {
+            setEditing(null);
+            setFormOpen(true);
+          }}
+          addLabel="Novo Atendimento"
           onExport={handleExport}
           onImport={() => setImportOpen(true)}
         />
@@ -242,7 +253,10 @@ export default function ServiceCalls() {
               columns={columns}
               loading={loading}
               searchPlaceholder="Buscar..."
-              onEdit={(r) => { setEditing(r); setFormOpen(true); }}
+              onEdit={(r) => {
+                setEditing(r);
+                setFormOpen(true);
+              }}
               onDelete={setDeleting}
               onDeleteMany={deleteMany}
               entityName="atendimento"
@@ -254,7 +268,7 @@ export default function ServiceCalls() {
           open={formOpen}
           onOpenChange={setFormOpen}
           onSubmit={(data) => {
-            editing ? update({ id: editing.id, ...data }) : create(data as any);
+            editing ? update({ id: editing.id, ...data } as any) : create(data as any);
             setFormOpen(false);
           }}
           initialData={editing}
