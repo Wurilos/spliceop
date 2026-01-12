@@ -32,7 +32,6 @@ import { useContracts } from '@/hooks/useContracts';
 const formSchema = z.object({
   contract_id: z.string().nullable().optional(),
   equipment_id: z.string().min(1, 'Selecione um equipamento'),
-  date: z.string().nullable().optional(),
   month: z.string().nullable().optional(),
   year: z.coerce.number().nullable().optional(),
   datacheck_lane: z.string().nullable().optional(),
@@ -58,7 +57,6 @@ export function InfractionForm({ open, onOpenChange, infraction }: InfractionFor
     defaultValues: {
       contract_id: '',
       equipment_id: '',
-      date: '',
       month: '',
       year: new Date().getFullYear(),
       datacheck_lane: '',
@@ -72,7 +70,6 @@ export function InfractionForm({ open, onOpenChange, infraction }: InfractionFor
       form.reset({
         contract_id: infraction.contract_id || '',
         equipment_id: infraction.equipment_id,
-        date: infraction.date ? infraction.date.slice(0, 16) : '',
         month: infraction.month || '',
         year: infraction.year || new Date().getFullYear(),
         datacheck_lane: infraction.datacheck_lane || '',
@@ -83,7 +80,6 @@ export function InfractionForm({ open, onOpenChange, infraction }: InfractionFor
       form.reset({
         contract_id: '',
         equipment_id: '',
-        date: '',
         month: '',
         year: new Date().getFullYear(),
         datacheck_lane: '',
@@ -97,7 +93,6 @@ export function InfractionForm({ open, onOpenChange, infraction }: InfractionFor
     const data = {
       contract_id: values.contract_id || null,
       equipment_id: values.equipment_id,
-      date: values.date || null,
       month: values.month || null,
       year: values.year || null,
       datacheck_lane: values.datacheck_lane || null,
@@ -174,20 +169,6 @@ export function InfractionForm({ open, onOpenChange, infraction }: InfractionFor
                       ))}
                     </SelectContent>
                   </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="date"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Data/Hora</FormLabel>
-                  <FormControl>
-                    <Input type="datetime-local" {...field} value={field.value || ''} />
-                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}

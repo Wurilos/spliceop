@@ -1,6 +1,4 @@
 import { useState } from 'react';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { DataTable } from '@/components/shared/DataTable';
@@ -49,11 +47,6 @@ export default function Infractions() {
       label: 'Equipamento',
       render: (value: string) => getEquipmentSerial(value),
     },
-    {
-      key: 'date',
-      label: 'Data/Hora',
-      render: (value: string | null) => value ? format(new Date(value), 'dd/MM/yyyy HH:mm', { locale: ptBR }) : '-',
-    },
     { key: 'month', label: 'Mês' },
     { key: 'year', label: 'Ano' },
     { key: 'datacheck_lane', label: 'Faixa Datacheck' },
@@ -86,7 +79,6 @@ export default function Infractions() {
   const exportColumns = [
     { key: 'Contrato', label: 'Contrato' },
     { key: 'Equipamento', label: 'Equipamento' },
-    { key: 'Data/Hora', label: 'Data/Hora' },
     { key: 'Mês', label: 'Mês' },
     { key: 'Ano', label: 'Ano' },
     { key: 'Faixa Datacheck', label: 'Faixa Datacheck' },
@@ -98,7 +90,6 @@ export default function Infractions() {
     const data = infractions.map((i) => ({
       'Contrato': getContractName(i.contract_id),
       'Equipamento': getEquipmentSerial(i.equipment_id),
-      'Data/Hora': i.date ? format(new Date(i.date), 'dd/MM/yyyy HH:mm') : '',
       'Mês': i.month || '',
       'Ano': i.year || '',
       'Faixa Datacheck': i.datacheck_lane || '',

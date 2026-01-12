@@ -837,7 +837,6 @@ export type Database = {
           contract_id: string | null
           created_at: string | null
           datacheck_lane: string | null
-          date: string | null
           equipment_id: string
           id: string
           image_count: number | null
@@ -849,7 +848,6 @@ export type Database = {
           contract_id?: string | null
           created_at?: string | null
           datacheck_lane?: string | null
-          date?: string | null
           equipment_id: string
           id?: string
           image_count?: number | null
@@ -861,7 +859,6 @@ export type Database = {
           contract_id?: string | null
           created_at?: string | null
           datacheck_lane?: string | null
-          date?: string | null
           equipment_id?: string
           id?: string
           image_count?: number | null

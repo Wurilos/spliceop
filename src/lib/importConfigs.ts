@@ -301,7 +301,6 @@ export const infractionImportConfig = {
   mappings: [
     { excelColumn: 'Contrato', dbColumn: 'contract_id', transform: toString },
     { excelColumn: 'Equipamento', dbColumn: 'equipment_id', required: true, transform: toString },
-    { excelColumn: 'Data/Hora', dbColumn: 'date', transform: toDateTime },
     { excelColumn: 'Mês', dbColumn: 'month', transform: toString },
     { excelColumn: 'Ano', dbColumn: 'year', transform: toInteger },
     { excelColumn: 'Faixa Datacheck', dbColumn: 'datacheck_lane', transform: toString },
@@ -311,7 +310,6 @@ export const infractionImportConfig = {
   templateColumns: [
     { key: 'contract_id', label: 'Contrato' },
     { key: 'equipment_id', label: 'Equipamento' },
-    { key: 'date', label: 'Data/Hora' },
     { key: 'month', label: 'Mês' },
     { key: 'year', label: 'Ano' },
     { key: 'datacheck_lane', label: 'Faixa Datacheck' },
