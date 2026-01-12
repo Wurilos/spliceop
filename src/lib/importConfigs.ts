@@ -19,18 +19,58 @@ const toNumber = (v: any) => {
 };
 const toInteger = (v: any) => parseInt(String(v).replace(/\D/g, ''), 10) || 0;
 const toDate = (v: any) => {
-  if (!v) return null;
-  const str = String(v).trim();
-  
-  // Handle Brazilian date format DD/MM/YYYY
-  const brDateMatch = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if (brDateMatch) {
-    const [, day, month, year] = brDateMatch;
-    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+  if (v === undefined || v === null || v === '') return null;
+
+  // Excel serial date number (e.g., 45958)
+  if (typeof v === 'number' || /^\d+(\.\d+)?$/.test(String(v).trim())) {
+    const serial = typeof v === 'number' ? v : parseFloat(String(v).trim());
+    if (!Number.isNaN(serial) && serial > 25000 && serial < 100000) {
+      const excelEpoch = new Date(Date.UTC(1899, 11, 30));
+      const msPerDay = 24 * 60 * 60 * 1000;
+      const date = new Date(excelEpoch.getTime() + serial * msPerDay);
+      return date.toISOString().split('T')[0];
+    }
   }
-  
-  // Try standard Date parsing
-  const date = new Date(v);
+
+  // Date object
+  if (v instanceof Date) {
+    return isNaN(v.getTime()) ? null : v.toISOString().split('T')[0];
+  }
+
+  const str = String(v).trim();
+  if (!str) return null;
+
+  // Already ISO
+  const isoMatch = str.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (isoMatch) return str;
+
+  // Flexible D/M/Y parsing (supports 2 or 4 digit year, / or -)
+  const m = str.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{2}|\d{4})$/);
+  if (m) {
+    const a = parseInt(m[1], 10);
+    const b = parseInt(m[2], 10);
+    let y = parseInt(m[3], 10);
+
+    if (y < 100) y = 2000 + y; // 25 -> 2025
+
+    // Decide order: default BR (DD/MM), but if clearly MM/DD, swap.
+    let day = a;
+    let month = b;
+    if (a <= 12 && b > 12) {
+      // MM/DD
+      month = a;
+      day = b;
+    }
+
+    if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+      return `${y}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    }
+
+    return null;
+  }
+
+  // Fallback: native parsing (last resort)
+  const date = new Date(str);
   return isNaN(date.getTime()) ? null : date.toISOString().split('T')[0];
 };
 const toDateTime = (v: any) => {

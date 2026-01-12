@@ -102,17 +102,25 @@ export function mapExcelData<T>(
     for (const mapping of mappings) {
       const value = getCellValue(row, mapping.excelColumn);
 
-      // Check required fields
+      // Check required fields (pre-transform)
       if (mapping.required && (value === undefined || value === null || value === '')) {
         errors.push(`Linha ${rowNumber}: Campo "${mapping.excelColumn}" é obrigatório`);
         isValid = false;
         continue;
       }
 
-      // Apply transformation if provided
       if (value !== undefined && value !== null && value !== '') {
         try {
-          mappedRow[mapping.dbColumn] = mapping.transform ? mapping.transform(value) : value;
+          const transformed = mapping.transform ? mapping.transform(value) : value;
+
+          // Check required fields (post-transform)
+          if (mapping.required && (transformed === undefined || transformed === null || transformed === '')) {
+            errors.push(`Linha ${rowNumber}: Campo "${mapping.excelColumn}" é inválido`);
+            isValid = false;
+            continue;
+          }
+
+          mappedRow[mapping.dbColumn] = transformed;
         } catch {
           errors.push(`Linha ${rowNumber}: Erro ao processar campo "${mapping.excelColumn}"`);
           isValid = false;

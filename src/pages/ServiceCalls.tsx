@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { DataTable, Column, StatusBadge } from '@/components/shared/DataTable';
@@ -38,6 +39,7 @@ const columns: Column<ServiceCall>[] = [
 
 export default function ServiceCalls() {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const { serviceCalls, loading, create, update, delete: deleteRecord, isCreating, isUpdating, isDeleting } = useServiceCalls();
   const { contracts } = useContracts();
   const { equipment } = useEquipment();
@@ -119,12 +121,15 @@ export default function ServiceCalls() {
     const { error } = await supabase.from('service_calls').insert(processedData);
     if (error) throw error;
 
-    if (thirdPartyCount > 0) {
-      toast({
-        title: 'Importação concluída',
-        description: `${processedData.length} atendimentos importados. ${thirdPartyCount} vinculados como "Contrato Terceiros".`,
-      });
-    }
+    queryClient.invalidateQueries({ queryKey: ['service_calls'] });
+
+    toast({
+      title: 'Importação concluída',
+      description:
+        thirdPartyCount > 0
+          ? `${processedData.length} atendimentos importados. ${thirdPartyCount} vinculados como "Contrato Terceiros".`
+          : `${processedData.length} atendimentos importados com sucesso.`,
+    });
   };
 
   return (
