@@ -40,7 +40,7 @@ const columns: Column<ServiceCall>[] = [
 export default function ServiceCalls() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { serviceCalls, loading, create, update, delete: deleteRecord, isCreating, isUpdating, isDeleting } = useServiceCalls();
+  const { serviceCalls, loading, create, update, delete: deleteRecord, deleteMany, isCreating, isUpdating, isDeleting } = useServiceCalls();
   const { contracts } = useContracts();
   const { equipment } = useEquipment();
   const { employees } = useEmployees();
@@ -222,6 +222,8 @@ export default function ServiceCalls() {
               searchPlaceholder="Buscar..."
               onEdit={(r) => { setEditing(r); setFormOpen(true); }}
               onDelete={setDeleting}
+              onDeleteMany={deleteMany}
+              entityName="atendimento"
             />
           </TabsContent>
         </Tabs>
