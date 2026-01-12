@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { DataTable } from '@/components/shared/DataTable';
@@ -20,6 +21,7 @@ export default function Infractions() {
   const { infractions, isLoading, deleteInfraction } = useInfractions();
   const { equipment } = useEquipment();
   const { contracts } = useContracts();
+  const queryClient = useQueryClient();
   const [formOpen, setFormOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
@@ -135,6 +137,7 @@ export default function Infractions() {
 
     const { error } = await supabase.from('infractions').insert(resolvedData);
     if (error) throw error;
+    await queryClient.invalidateQueries({ queryKey: ['infractions'] });
     toast.success(`${resolvedData.length} registros importados com sucesso!`);
   };
 
