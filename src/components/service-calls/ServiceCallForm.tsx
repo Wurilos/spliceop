@@ -23,6 +23,7 @@ const schema = z.object({
   contract_id: z.string().optional(),
   equipment_id: z.string().optional(),
   employee_id: z.string().optional(),
+  mob_code: z.string().optional(),
   status: z.enum(['open', 'in_progress', 'closed']).optional(),
 });
 
@@ -37,7 +38,7 @@ export function ServiceCallForm({ open, onOpenChange, onSubmit, initialData, loa
   
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { date: new Date().toISOString().split('T')[0], type: '', description: '', resolution: '', contract_id: '', equipment_id: '', employee_id: '', status: 'open' },
+    defaultValues: { date: new Date().toISOString().split('T')[0], type: '', description: '', resolution: '', contract_id: '', equipment_id: '', employee_id: '', mob_code: '', status: 'open' },
   });
 
   useEffect(() => {
@@ -50,10 +51,11 @@ export function ServiceCallForm({ open, onOpenChange, onSubmit, initialData, loa
         contract_id: initialData.contract_id || '',
         equipment_id: initialData.equipment_id || '',
         employee_id: initialData.employee_id || '',
+        mob_code: initialData.mob_code || '',
         status: (initialData.status as 'open' | 'in_progress' | 'closed') || 'open',
       });
     } else {
-      form.reset({ date: new Date().toISOString().split('T')[0], type: '', description: '', resolution: '', contract_id: '', equipment_id: '', employee_id: '', status: 'open' });
+      form.reset({ date: new Date().toISOString().split('T')[0], type: '', description: '', resolution: '', contract_id: '', equipment_id: '', employee_id: '', mob_code: '', status: 'open' });
     }
   }, [initialData, form]);
 
@@ -107,7 +109,7 @@ export function ServiceCallForm({ open, onOpenChange, onSubmit, initialData, loa
             <div className="grid grid-cols-2 gap-4">
               <FormField control={form.control} name="employee_id" render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Técnico Responsável</FormLabel>
+                  <FormLabel>Colaborador</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl><SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger></FormControl>
                     <SelectContent>{employees.map((e) => <SelectItem key={e.id} value={e.id}>{e.full_name}</SelectItem>)}</SelectContent>
@@ -115,21 +117,28 @@ export function ServiceCallForm({ open, onOpenChange, onSubmit, initialData, loa
                   <FormMessage />
                 </FormItem>
               )} />
-              <FormField control={form.control} name="status" render={({ field }) => (
+              <FormField control={form.control} name="mob_code" render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Status</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl><SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger></FormControl>
-                    <SelectContent>
-                      <SelectItem value="open">Aberto</SelectItem>
-                      <SelectItem value="in_progress">Em Andamento</SelectItem>
-                      <SelectItem value="closed">Fechado</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormLabel>Cód. Mob</FormLabel>
+                  <FormControl><Input placeholder="Código Mob" {...field} /></FormControl>
                   <FormMessage />
                 </FormItem>
               )} />
             </div>
+            <FormField control={form.control} name="status" render={({ field }) => (
+              <FormItem>
+                <FormLabel>Status</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormControl><SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger></FormControl>
+                  <SelectContent>
+                    <SelectItem value="open">Aberto</SelectItem>
+                    <SelectItem value="in_progress">Em Andamento</SelectItem>
+                    <SelectItem value="closed">Fechado</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )} />
             <FormField control={form.control} name="description" render={({ field }) => (
               <FormItem><FormLabel>Descrição</FormLabel><FormControl><Textarea placeholder="Descreva o atendimento..." {...field} /></FormControl><FormMessage /></FormItem>
             )} />

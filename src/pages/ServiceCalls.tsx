@@ -23,11 +23,11 @@ type ServiceCall = Tables<'service_calls'> & {
 
 const columns: Column<ServiceCall>[] = [
   { key: 'date', label: 'Data', render: (v) => format(new Date(String(v)), 'dd/MM/yyyy') },
-  { key: 'type', label: 'Tipo' },
   { key: 'contracts.client_name', label: 'Contrato', render: (_, row) => row.contracts?.client_name || '-' },
   { key: 'equipment.serial_number', label: 'Equipamento', render: (_, row) => row.equipment?.serial_number || '-' },
-  { key: 'employees.full_name', label: 'Técnico', render: (_, row) => row.employees?.full_name || '-' },
-  { key: 'description', label: 'Descrição', render: (v) => String(v || '-').substring(0, 30) + (String(v || '').length > 30 ? '...' : '') },
+  { key: 'employees.full_name', label: 'Colaborador', render: (_, row) => row.employees?.full_name || '-' },
+  { key: 'type', label: 'Tipo de Atendimento' },
+  { key: 'mob_code', label: 'Cód. Mob', render: (v) => String(v || '-') },
   { key: 'status', label: 'Status', render: (v) => <StatusBadge status={String(v || 'open')} /> },
 ];
 
