@@ -1,14 +1,10 @@
 import { useState, useMemo } from 'react';
 import { format, startOfMonth, endOfMonth, parseISO, isWithinInterval } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import {
   Headphones,
   FileText,
   Users,
   Wrench,
-  CheckCircle,
-  Clock,
-  XCircle,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -63,16 +59,6 @@ export function ServiceCallsDashboard() {
     });
   }, [serviceCalls, startDate, endDate, contractFilter, technicianFilter]);
 
-  // Stats
-  const stats = useMemo(() => {
-    const total = filteredData.length;
-    const completed = filteredData.filter((c) => c.status === 'completed').length;
-    const pending = filteredData.filter((c) => c.status === 'pending' || c.status === 'open').length;
-    const cancelled = filteredData.filter((c) => c.status === 'cancelled').length;
-
-    return { total, completed, pending, cancelled };
-  }, [filteredData]);
-
   // Chart data - by contract
   const chartByContract = useMemo(() => {
     const grouped: Record<string, { name: string; total: number }> = {};
@@ -120,29 +106,6 @@ export function ServiceCallsDashboard() {
     filteredData.forEach((call) => {
       const type = call.type || 'Outros';
       grouped[type] = (grouped[type] || 0) + 1;
-    });
-
-    return Object.entries(grouped)
-      .map(([name, value]) => ({ name, value }))
-      .sort((a, b) => b.value - a.value);
-  }, [filteredData]);
-
-  // Chart data - by status
-  const chartByStatus = useMemo(() => {
-    const statusLabels: Record<string, string> = {
-      completed: 'Concluído',
-      pending: 'Pendente',
-      open: 'Aberto',
-      cancelled: 'Cancelado',
-      in_progress: 'Em Andamento',
-    };
-
-    const grouped: Record<string, number> = {};
-
-    filteredData.forEach((call) => {
-      const status = call.status || 'open';
-      const label = statusLabels[status] || status;
-      grouped[label] = (grouped[label] || 0) + 1;
     });
 
     return Object.entries(grouped)
@@ -215,13 +178,13 @@ export function ServiceCallsDashboard() {
       </Card>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Total de Atendimentos</p>
-                <p className="text-2xl font-bold">{stats.total}</p>
+                <p className="text-2xl font-bold">{filteredData.length}</p>
               </div>
               <Headphones className="h-8 w-8 text-primary" />
             </div>
@@ -231,10 +194,12 @@ export function ServiceCallsDashboard() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Concluídos</p>
-                <p className="text-2xl font-bold text-emerald-500">{stats.completed}</p>
+                <p className="text-sm text-muted-foreground">Contratos Atendidos</p>
+                <p className="text-2xl font-bold text-blue-500">
+                  {new Set(filteredData.map(c => c.contract_id).filter(Boolean)).size}
+                </p>
               </div>
-              <CheckCircle className="h-8 w-8 text-emerald-500" />
+              <FileText className="h-8 w-8 text-blue-500" />
             </div>
           </CardContent>
         </Card>
@@ -242,21 +207,12 @@ export function ServiceCallsDashboard() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Pendentes</p>
-                <p className="text-2xl font-bold text-amber-500">{stats.pending}</p>
+                <p className="text-sm text-muted-foreground">Técnicos Envolvidos</p>
+                <p className="text-2xl font-bold text-emerald-500">
+                  {new Set(filteredData.map(c => c.employee_id).filter(Boolean)).size}
+                </p>
               </div>
-              <Clock className="h-8 w-8 text-amber-500" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Cancelados</p>
-                <p className="text-2xl font-bold text-destructive">{stats.cancelled}</p>
-              </div>
-              <XCircle className="h-8 w-8 text-destructive" />
+              <Users className="h-8 w-8 text-emerald-500" />
             </div>
           </CardContent>
         </Card>
@@ -322,7 +278,7 @@ export function ServiceCallsDashboard() {
       </div>
 
       {/* Charts Row 2 */}
-      <div className="grid md:grid-cols-2 gap-6">
+      <div className="grid md:grid-cols-1 gap-6">
         {/* By Type */}
         <Card>
           <CardHeader>
@@ -339,8 +295,8 @@ export function ServiceCallsDashboard() {
                     data={chartByType}
                     cx="50%"
                     cy="45%"
-                    outerRadius={80}
-                    innerRadius={40}
+                    outerRadius={100}
+                    innerRadius={50}
                     fill="#8884d8"
                     dataKey="value"
                     paddingAngle={2}
@@ -351,60 +307,6 @@ export function ServiceCallsDashboard() {
                         fill={CHART_COLORS[index % CHART_COLORS.length]}
                       />
                     ))}
-                  </Pie>
-                  <Tooltip 
-                    formatter={(value: number) => [value, 'Atendimentos']}
-                  />
-                  <Legend 
-                    layout="horizontal"
-                    align="center"
-                    verticalAlign="bottom"
-                    wrapperStyle={{ paddingTop: 16 }}
-                    formatter={(value) => <span className="text-xs">{value}</span>}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* By Status */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <CheckCircle className="h-4 w-4" />
-              Atendimentos por Status
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={chartByStatus}
-                    cx="50%"
-                    cy="45%"
-                    outerRadius={80}
-                    innerRadius={40}
-                    fill="#8884d8"
-                    dataKey="value"
-                    paddingAngle={2}
-                  >
-                    {chartByStatus.map((entry, index) => {
-                      const statusColors: Record<string, string> = {
-                        Concluído: '#10b981',
-                        Pendente: '#f59e0b',
-                        Aberto: '#3b82f6',
-                        Cancelado: '#ef4444',
-                        'Em Andamento': '#8b5cf6',
-                      };
-                      return (
-                        <Cell
-                          key={`cell-${index}`}
-                          fill={statusColors[entry.name] || CHART_COLORS[index % CHART_COLORS.length]}
-                        />
-                      );
-                    })}
                   </Pie>
                   <Tooltip 
                     formatter={(value: number) => [value, 'Atendimentos']}

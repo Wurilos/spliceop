@@ -19,13 +19,11 @@ const schema = z.object({
   date: z.string().min(1, 'Data é obrigatória'),
   type: z.string().optional(),
   description: z.string().optional(),
-  resolution: z.string().optional(),
   contract_id: z.string().optional(),
   third_party_contract: z.string().optional(),
   equipment_id: z.string().optional(),
   employee_id: z.string().optional(),
   mob_code: z.string().optional(),
-  status: z.enum(['open', 'in_progress', 'closed']).optional(),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -39,7 +37,7 @@ export function ServiceCallForm({ open, onOpenChange, onSubmit, initialData, loa
   
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { date: new Date().toISOString().split('T')[0], type: '', description: '', resolution: '', contract_id: '', third_party_contract: '', equipment_id: '', employee_id: '', mob_code: '', status: 'open' },
+    defaultValues: { date: new Date().toISOString().split('T')[0], type: '', description: '', contract_id: '', third_party_contract: '', equipment_id: '', employee_id: '', mob_code: '' },
   });
 
   useEffect(() => {
@@ -48,16 +46,14 @@ export function ServiceCallForm({ open, onOpenChange, onSubmit, initialData, loa
         date: initialData.date,
         type: initialData.type || '',
         description: initialData.description || '',
-        resolution: initialData.resolution || '',
         contract_id: initialData.contract_id || '',
         third_party_contract: initialData.third_party_contract || '',
         equipment_id: initialData.equipment_id || '',
         employee_id: initialData.employee_id || '',
         mob_code: initialData.mob_code || '',
-        status: (initialData.status as 'open' | 'in_progress' | 'closed') || 'open',
       });
     } else {
-      form.reset({ date: new Date().toISOString().split('T')[0], type: '', description: '', resolution: '', contract_id: '', third_party_contract: '', equipment_id: '', employee_id: '', mob_code: '', status: 'open' });
+      form.reset({ date: new Date().toISOString().split('T')[0], type: '', description: '', contract_id: '', third_party_contract: '', equipment_id: '', employee_id: '', mob_code: '' });
     }
   }, [initialData, form]);
 
@@ -123,36 +119,19 @@ export function ServiceCallForm({ open, onOpenChange, onSubmit, initialData, loa
                   <FormMessage />
                 </FormItem>
               )} />
-              <FormField control={form.control} name="status" render={({ field }) => (
+              <FormField control={form.control} name="type" render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Status</FormLabel>
+                  <FormLabel>Tipo</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl><SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger></FormControl>
-                    <SelectContent>
-                      <SelectItem value="open">Aberto</SelectItem>
-                      <SelectItem value="in_progress">Em Andamento</SelectItem>
-                      <SelectItem value="closed">Fechado</SelectItem>
-                    </SelectContent>
+                    <SelectContent>{callTypes.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
                   </Select>
                   <FormMessage />
                 </FormItem>
               )} />
             </div>
-            <FormField control={form.control} name="type" render={({ field }) => (
-              <FormItem>
-                <FormLabel>Tipo</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <FormControl><SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger></FormControl>
-                  <SelectContent>{callTypes.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )} />
             <FormField control={form.control} name="description" render={({ field }) => (
               <FormItem><FormLabel>Descrição</FormLabel><FormControl><Textarea placeholder="Descreva o atendimento..." {...field} /></FormControl><FormMessage /></FormItem>
-            )} />
-            <FormField control={form.control} name="resolution" render={({ field }) => (
-              <FormItem><FormLabel>Resolução</FormLabel><FormControl><Textarea placeholder="Descreva a resolução..." {...field} /></FormControl><FormMessage /></FormItem>
             )} />
             <div className="flex justify-end gap-2 pt-4">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
