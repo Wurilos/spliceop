@@ -63,6 +63,8 @@ export function useKanbanIssues() {
       if (error) throw error;
       return data as KanbanIssue[];
     },
+    staleTime: 1000 * 60 * 2,
+    gcTime: 1000 * 60 * 5,
   });
 
   const createMutation = useMutation({

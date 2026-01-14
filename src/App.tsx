@@ -40,7 +40,17 @@ import PhoneLines from "./pages/PhoneLines";
 import IssuesDashboard from "./pages/IssuesDashboard";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 2, // 2 minutes default
+      gcTime: 1000 * 60 * 5, // 5 minutes cache
+      retry: 1,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: true,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>

@@ -56,6 +56,8 @@ function getPreviousReferenceMonth(): string {
 export function useSystemAlerts() {
   const { data: alerts = [], isLoading, refetch } = useQuery({
     queryKey: ['system-alerts'],
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 10,
     queryFn: async (): Promise<SystemAlert[]> => {
       const allAlerts: SystemAlert[] = [];
       const today = new Date();
@@ -678,7 +680,6 @@ export function useSystemAlerts() {
 
       return allAlerts;
     },
-    staleTime: 1000 * 60 * 5,
   });
 
   const alertsByCategory = alerts.reduce((acc, alert) => {
