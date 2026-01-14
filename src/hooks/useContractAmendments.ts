@@ -46,6 +46,8 @@ export function useContractAmendments(contractId?: string) {
       return data as ContractAmendment[];
     },
     enabled: contractId !== undefined || contractId === undefined,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    gcTime: 1000 * 60 * 10, // 10 minutes
   });
 
   // Query para buscar todos os aditivos (para uso no dashboard)
@@ -59,6 +61,8 @@ export function useContractAmendments(contractId?: string) {
       if (error) throw error;
       return data as ContractAmendment[];
     },
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    gcTime: 1000 * 60 * 10, // 10 minutes
   });
 
   const createMutation = useMutation({

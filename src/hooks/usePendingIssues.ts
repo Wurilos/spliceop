@@ -33,6 +33,8 @@ export function usePendingIssues() {
       if (error) throw error;
       return data;
     },
+    staleTime: 1000 * 60 * 2,
+    gcTime: 1000 * 60 * 5,
   });
 
   const createMutation = useMutation({

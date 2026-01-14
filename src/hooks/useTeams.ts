@@ -35,6 +35,8 @@ export function useTeams() {
       if (error) throw error;
       return data as Team[];
     },
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 10,
   });
 
   const createMutation = useMutation({
