@@ -1,6 +1,9 @@
+import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useEquipment } from '@/hooks/useEquipment';
 import { useContracts } from '@/hooks/useContracts';
+import { useDashboardCrossFilter } from '@/hooks/useDashboardCrossFilter';
+import { ActiveFilterBadge } from '@/components/shared/ActiveFilterBadge';
 import {
   BarChart,
   Bar,
@@ -12,7 +15,6 @@ import {
   PieChart,
   Pie,
   Cell,
-  Legend,
 } from 'recharts';
 import { Cpu, Activity, AlertTriangle, CheckCircle, Gauge, Radio } from 'lucide-react';
 
@@ -28,14 +30,41 @@ const statusLabels: Record<string, string> = {
 export function EquipmentDashboard() {
   const { equipment } = useEquipment();
   const { contracts } = useContracts();
+  const { activeFilter, setFilter, clearFilter, getFilterStyles } = useDashboardCrossFilter();
+
+  // Apply cross-filter
+  const filteredEquipment = useMemo(() => {
+    if (!activeFilter) return equipment;
+    
+    return equipment.filter((eq) => {
+      switch (activeFilter.field) {
+        case 'status':
+          return statusLabels[eq.status || 'active'] === activeFilter.value;
+        case 'type':
+          return (eq.type || 'Não informado') === activeFilter.value;
+        case 'contract':
+          const contract = contracts.find((c) => c.id === eq.contract_id);
+          const name = contract?.client_name || 'Sem Contrato';
+          return name === activeFilter.value || (name.length > 15 && activeFilter.value === name.slice(0, 15) + '...');
+        case 'brand':
+          return (eq.brand || 'Não informado') === activeFilter.value;
+        case 'communication_type':
+          return ((eq as any).communication_type || 'Não informado') === activeFilter.value;
+        case 'energy_type':
+          return ((eq as any).energy_type || 'Não informado') === activeFilter.value;
+        default:
+          return true;
+      }
+    });
+  }, [equipment, contracts, activeFilter]);
 
   // Stats
-  const total = equipment.length;
-  const active = equipment.filter((e) => e.status === 'active').length;
-  const maintenance = equipment.filter((e) => e.status === 'maintenance').length;
-  const inactive = equipment.filter((e) => e.status === 'inactive' || e.status === 'decommissioned').length;
+  const total = filteredEquipment.length;
+  const active = filteredEquipment.filter((e) => e.status === 'active').length;
+  const maintenance = filteredEquipment.filter((e) => e.status === 'maintenance').length;
+  const inactive = filteredEquipment.filter((e) => e.status === 'inactive' || e.status === 'decommissioned').length;
 
-  // Equipment by type
+  // Equipment by type - from full data for clicking
   const byType = equipment.reduce((acc, eq) => {
     const type = eq.type || 'Não informado';
     acc[type] = (acc[type] || 0) + 1;
@@ -55,7 +84,7 @@ export function EquipmentDashboard() {
   }, {} as Record<string, number>);
 
   const contractData = Object.entries(byContract)
-    .map(([name, total]) => ({ name: name.length > 15 ? name.slice(0, 15) + '...' : name, total }))
+    .map(([name, total]) => ({ name: name.length > 15 ? name.slice(0, 15) + '...' : name, fullName: name, total }))
     .sort((a, b) => b.total - a.total)
     .slice(0, 8);
 
@@ -68,8 +97,8 @@ export function EquipmentDashboard() {
 
   const statusData = Object.entries(byStatus).map(([name, value]) => ({ name, value }));
 
-  // Equipment by speed limit
-  const bySpeed = equipment.reduce((acc, eq) => {
+  // Equipment by speed limit - from filtered data
+  const bySpeed = filteredEquipment.reduce((acc, eq) => {
     const speed = (eq as any).speed_limit;
     if (speed) {
       const label = `${speed} km/h`;
@@ -115,8 +144,36 @@ export function EquipmentDashboard() {
     .map(([name, value]) => ({ name, value }))
     .sort((a, b) => b.value - a.value);
 
+  // Click handlers
+  const handleTypeClick = (data: { name: string }) => {
+    setFilter('type', data.name, data.name);
+  };
+
+  const handleStatusClick = (data: { name: string }) => {
+    setFilter('status', data.name, data.name);
+  };
+
+  const handleContractClick = (data: { name: string; fullName?: string }) => {
+    setFilter('contract', data.name, data.fullName || data.name);
+  };
+
+  const handleBrandClick = (data: { name: string }) => {
+    setFilter('brand', data.name, data.name);
+  };
+
+  const handleCommClick = (data: { name: string }) => {
+    setFilter('communication_type', data.name, data.name);
+  };
+
+  const handleEnergyClick = (data: { name: string }) => {
+    setFilter('energy_type', data.name, data.name);
+  };
+
   return (
     <div className="space-y-6">
+      {/* Active Filter Badge */}
+      <ActiveFilterBadge filter={activeFilter} onClear={clearFilter} />
+
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
@@ -126,7 +183,9 @@ export function EquipmentDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{total}</div>
-            <p className="text-xs text-muted-foreground">equipamentos cadastrados</p>
+            <p className="text-xs text-muted-foreground">
+              {activeFilter ? 'filtrados' : 'equipamentos cadastrados'}
+            </p>
           </CardContent>
         </Card>
 
@@ -170,7 +229,10 @@ export function EquipmentDashboard() {
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle translate="no">Equipamentos por Tipo</CardTitle>
+            <CardTitle className="flex items-center gap-2" translate="no">
+              Equipamentos por Tipo
+              <span className="text-xs font-normal text-muted-foreground">(clique para filtrar)</span>
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -179,7 +241,14 @@ export function EquipmentDashboard() {
                 <XAxis type="number" />
                 <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 12 }} />
                 <Tooltip />
-                <Bar dataKey="value" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} name="Quantidade" />
+                <Bar 
+                  dataKey="value" 
+                  fill="hsl(var(--primary))" 
+                  radius={[0, 4, 4, 0]} 
+                  name="Quantidade"
+                  onClick={handleTypeClick}
+                  style={{ cursor: 'pointer' }}
+                />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -187,7 +256,10 @@ export function EquipmentDashboard() {
 
         <Card>
           <CardHeader>
-            <CardTitle translate="no">Equipamentos por Contrato</CardTitle>
+            <CardTitle className="flex items-center gap-2" translate="no">
+              Equipamentos por Contrato
+              <span className="text-xs font-normal text-muted-foreground">(clique para filtrar)</span>
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -196,7 +268,14 @@ export function EquipmentDashboard() {
                 <XAxis dataKey="name" tick={{ fontSize: 11 }} angle={-45} textAnchor="end" height={80} />
                 <YAxis />
                 <Tooltip />
-                <Bar dataKey="total" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} name="Quantidade" />
+                <Bar 
+                  dataKey="total" 
+                  fill="hsl(var(--chart-2))" 
+                  radius={[4, 4, 0, 0]} 
+                  name="Quantidade"
+                  onClick={handleContractClick}
+                  style={{ cursor: 'pointer' }}
+                />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -207,7 +286,10 @@ export function EquipmentDashboard() {
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader>
-            <CardTitle translate="no">Distribuição por Status</CardTitle>
+            <CardTitle className="flex items-center gap-2" translate="no">
+              Distribuição por Status
+              <span className="text-xs font-normal text-muted-foreground">(clique)</span>
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={250}>
@@ -222,10 +304,15 @@ export function EquipmentDashboard() {
                   dataKey="value"
                   label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                   labelLine={false}
+                  onClick={handleStatusClick}
+                  style={{ cursor: 'pointer' }}
                 >
-                  {statusData.map((_, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
+                  {statusData.map((entry, index) => {
+                    const styles = getFilterStyles('status', entry.name);
+                    return (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} style={styles} />
+                    );
+                  })}
                 </Pie>
                 <Tooltip />
               </PieChart>
@@ -255,7 +342,10 @@ export function EquipmentDashboard() {
 
         <Card>
           <CardHeader>
-            <CardTitle translate="no">Por Marca</CardTitle>
+            <CardTitle className="flex items-center gap-2" translate="no">
+              Por Marca
+              <span className="text-xs font-normal text-muted-foreground">(clique)</span>
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={250}>
@@ -268,10 +358,15 @@ export function EquipmentDashboard() {
                   dataKey="value"
                   label={({ name, value }) => `${name}: ${value}`}
                   labelLine={false}
+                  onClick={handleBrandClick}
+                  style={{ cursor: 'pointer' }}
                 >
-                  {brandData.map((_, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
+                  {brandData.map((entry, index) => {
+                    const styles = getFilterStyles('brand', entry.name);
+                    return (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} style={styles} />
+                    );
+                  })}
                 </Pie>
                 <Tooltip />
               </PieChart>
@@ -287,6 +382,7 @@ export function EquipmentDashboard() {
             <CardTitle className="flex items-center gap-2" translate="no">
               <Radio className="h-4 w-4" />
               Por Meio de Comunicação
+              <span className="text-xs font-normal text-muted-foreground">(clique)</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -296,7 +392,14 @@ export function EquipmentDashboard() {
                 <XAxis type="number" />
                 <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 12 }} />
                 <Tooltip />
-                <Bar dataKey="value" fill="hsl(var(--chart-4))" radius={[0, 4, 4, 0]} name="Quantidade" />
+                <Bar 
+                  dataKey="value" 
+                  fill="hsl(var(--chart-4))" 
+                  radius={[0, 4, 4, 0]} 
+                  name="Quantidade"
+                  onClick={handleCommClick}
+                  style={{ cursor: 'pointer' }}
+                />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -304,7 +407,10 @@ export function EquipmentDashboard() {
 
         <Card>
           <CardHeader>
-            <CardTitle translate="no">Por Tipo de Energia</CardTitle>
+            <CardTitle className="flex items-center gap-2" translate="no">
+              Por Tipo de Energia
+              <span className="text-xs font-normal text-muted-foreground">(clique)</span>
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={250}>
@@ -313,7 +419,14 @@ export function EquipmentDashboard() {
                 <XAxis type="number" />
                 <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 12 }} />
                 <Tooltip />
-                <Bar dataKey="value" fill="hsl(var(--chart-5))" radius={[0, 4, 4, 0]} name="Quantidade" />
+                <Bar 
+                  dataKey="value" 
+                  fill="hsl(var(--chart-5))" 
+                  radius={[0, 4, 4, 0]} 
+                  name="Quantidade"
+                  onClick={handleEnergyClick}
+                  style={{ cursor: 'pointer' }}
+                />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>

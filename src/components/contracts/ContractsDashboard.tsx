@@ -1,7 +1,10 @@
+import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useContracts } from '@/hooks/useContracts';
 import { useInvoices } from '@/hooks/useInvoices';
 import { useContractAmendments } from '@/hooks/useContractAmendments';
+import { useDashboardCrossFilter } from '@/hooks/useDashboardCrossFilter';
+import { ActiveFilterBadge } from '@/components/shared/ActiveFilterBadge';
 import {
   BarChart,
   Bar,
@@ -13,10 +16,9 @@ import {
   PieChart,
   Pie,
   Cell,
-  Legend,
 } from 'recharts';
 import { FileText, AlertTriangle, CheckCircle, DollarSign, Calendar, TrendingUp } from 'lucide-react';
-import { differenceInMonths, differenceInDays, format, addMonths } from 'date-fns';
+import { differenceInDays, format, addMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
@@ -32,10 +34,7 @@ export function ContractsDashboard() {
   const { contracts, loading } = useContracts();
   const { invoices } = useInvoices();
   const { allAmendments, allLoading } = useContractAmendments();
-
-  if (loading || allLoading) {
-    return <div className="flex items-center justify-center h-64">Carregando...</div>;
-  }
+  const { activeFilter, setFilter, clearFilter, getFilterStyles } = useDashboardCrossFilter();
 
   const today = new Date();
 
@@ -43,35 +42,59 @@ export function ContractsDashboard() {
   const getEffectiveValue = (contractId: string, originalValue: number): number => {
     const contractAmendments = allAmendments.filter(a => a.contract_id === contractId);
     if (contractAmendments.length === 0) return originalValue;
-    // Pega o aditivo com maior número (mais recente)
     const latestAmendment = contractAmendments.reduce((prev, curr) => 
       curr.amendment_number > prev.amendment_number ? curr : prev
     );
     return Number(latestAmendment.value) || originalValue;
   };
 
-  // Stats calculations
-  const totalContracts = contracts.length;
-  const activeContracts = contracts.filter((c) => c.status === 'active').length;
+  // Apply cross-filter
+  const filteredContracts = useMemo(() => {
+    if (!activeFilter) return contracts;
+    
+    return contracts.filter((c) => {
+      switch (activeFilter.field) {
+        case 'status':
+          return (c.status || 'active') === activeFilter.value;
+        case 'state':
+          return (c.state || 'Não informado') === activeFilter.value;
+        case 'city':
+          return (c.city || 'Não informado') === activeFilter.value;
+        default:
+          return true;
+      }
+    });
+  }, [contracts, activeFilter]);
+
+  const filteredInvoices = useMemo(() => {
+    if (!activeFilter) return invoices;
+    const filteredContractIds = new Set(filteredContracts.map(c => c.id));
+    return invoices.filter(inv => filteredContractIds.has(inv.contract_id));
+  }, [invoices, filteredContracts, activeFilter]);
+
+  if (loading || allLoading) {
+    return <div className="flex items-center justify-center h-64">Carregando...</div>;
+  }
+
+  // Stats calculations - now using filtered data
+  const totalContracts = filteredContracts.length;
+  const activeContracts = filteredContracts.filter((c) => c.status === 'active').length;
   
-  // Contracts expiring in next 90 days
-  const expiringContracts = contracts.filter((c) => {
+  const expiringContracts = filteredContracts.filter((c) => {
     if (!c.end_date) return false;
     const endDate = new Date(c.end_date);
     const daysUntilExpiry = differenceInDays(endDate, today);
     return daysUntilExpiry >= 0 && daysUntilExpiry <= 90;
   });
 
-  // Total contract value - AGORA CONSIDERA OS ADITIVOS
-  const totalValue = contracts.reduce((acc, c) => {
+  const totalValue = filteredContracts.reduce((acc, c) => {
     const effectiveValue = getEffectiveValue(c.id, Number(c.value) || 0);
     return acc + effectiveValue;
   }, 0);
 
-  // Total invoiced
-  const totalInvoiced = invoices.reduce((acc, inv) => acc + (Number(inv.value) || 0), 0);
+  const totalInvoiced = filteredInvoices.reduce((acc, inv) => acc + (Number(inv.value) || 0), 0);
 
-  // Status distribution
+  // Status distribution - always from full data for pie chart
   const statusData = contracts.reduce((acc, c) => {
     const status = c.status || 'active';
     const existing = acc.find((item) => item.name === status);
@@ -83,7 +106,7 @@ export function ContractsDashboard() {
     return acc;
   }, [] as { name: string; value: number }[]);
 
-  // Contracts by state
+  // Contracts by state - from full data
   const stateData = contracts.reduce((acc, c) => {
     const state = c.state || 'Não informado';
     const existing = acc.find((item) => item.name === state);
@@ -95,11 +118,11 @@ export function ContractsDashboard() {
     return acc;
   }, [] as { name: string; value: number }[]).sort((a, b) => b.value - a.value);
 
-  // Expiration timeline (next 12 months)
+  // Expiration timeline
   const expirationTimeline = Array.from({ length: 12 }, (_, i) => {
     const monthStart = addMonths(today, i);
     const monthEnd = addMonths(today, i + 1);
-    const count = contracts.filter((c) => {
+    const count = filteredContracts.filter((c) => {
       if (!c.end_date) return false;
       const endDate = new Date(c.end_date);
       return endDate >= monthStart && endDate < monthEnd;
@@ -110,8 +133,8 @@ export function ContractsDashboard() {
     };
   });
 
-  // Top contracts by value - AGORA CONSIDERA OS ADITIVOS
-  const topContractsByValue = [...contracts]
+  // Top contracts by value
+  const topContractsByValue = [...filteredContracts]
     .map((c) => ({
       ...c,
       effectiveValue: getEffectiveValue(c.id, Number(c.value) || 0),
@@ -123,10 +146,10 @@ export function ContractsDashboard() {
       valor: c.effectiveValue,
     }));
 
-  // Revenue by contract (from invoices)
-  const revenueByContract = contracts
+  // Revenue by contract
+  const revenueByContract = filteredContracts
     .map((contract) => {
-      const contractInvoices = invoices.filter((inv) => inv.contract_id === contract.id);
+      const contractInvoices = filteredInvoices.filter((inv) => inv.contract_id === contract.id);
       const totalRevenue = contractInvoices.reduce((acc, inv) => acc + (Number(inv.value) || 0), 0);
       return {
         name: contract.client_name.length > 12 ? contract.client_name.substring(0, 12) + '...' : contract.client_name,
@@ -137,7 +160,7 @@ export function ContractsDashboard() {
     .sort((a, b) => b.faturado - a.faturado)
     .slice(0, 6);
 
-  // Contracts by city
+  // Contracts by city - from full data
   const cityData = contracts.reduce((acc, c) => {
     const city = c.city || 'Não informado';
     const existing = acc.find((item) => item.name === city);
@@ -164,8 +187,24 @@ export function ContractsDashboard() {
     return labels[status] || status;
   };
 
+  // Click handlers for charts
+  const handleStatusClick = (data: { name: string }) => {
+    setFilter('status', data.name, getStatusLabel(data.name));
+  };
+
+  const handleStateClick = (data: { name: string }) => {
+    setFilter('state', data.name, data.name);
+  };
+
+  const handleCityClick = (data: { name: string }) => {
+    setFilter('city', data.name, data.name);
+  };
+
   return (
     <div className="space-y-6">
+      {/* Active Filter Badge */}
+      <ActiveFilterBadge filter={activeFilter} onClear={clearFilter} />
+
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         <Card>
@@ -175,6 +214,9 @@ export function ContractsDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalContracts}</div>
+            {activeFilter && (
+              <p className="text-xs text-primary">Filtrado</p>
+            )}
           </CardContent>
         </Card>
 
@@ -257,7 +299,10 @@ export function ContractsDashboard() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Distribuição por Status</CardTitle>
+            <CardTitle className="text-base flex items-center gap-2">
+              Distribuição por Status
+              <span className="text-xs font-normal text-muted-foreground">(clique para filtrar)</span>
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={280}>
@@ -271,10 +316,19 @@ export function ContractsDashboard() {
                   paddingAngle={2}
                   dataKey="value"
                   label={({ name, value }) => `${getStatusLabel(name)}: ${value}`}
+                  onClick={handleStatusClick}
+                  style={{ cursor: 'pointer' }}
                 >
-                  {statusData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={STATUS_COLORS[entry.name] || COLORS[index % COLORS.length]} />
-                  ))}
+                  {statusData.map((entry, index) => {
+                    const styles = getFilterStyles('status', entry.name);
+                    return (
+                      <Cell 
+                        key={`cell-${index}`} 
+                        fill={STATUS_COLORS[entry.name] || COLORS[index % COLORS.length]}
+                        style={styles}
+                      />
+                    );
+                  })}
                 </Pie>
                 <Tooltip formatter={(value, name) => [value, getStatusLabel(String(name))]} />
               </PieChart>
@@ -324,7 +378,10 @@ export function ContractsDashboard() {
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Contratos por Estado</CardTitle>
+            <CardTitle className="text-base flex items-center gap-2">
+              Contratos por Estado
+              <span className="text-xs font-normal text-muted-foreground">(clique para filtrar)</span>
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={280}>
@@ -333,7 +390,14 @@ export function ContractsDashboard() {
                 <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                 <YAxis allowDecimals={false} />
                 <Tooltip />
-                <Bar dataKey="value" fill="#8b5cf6" name="Contratos" radius={[4, 4, 0, 0]} />
+                <Bar 
+                  dataKey="value" 
+                  fill="#8b5cf6" 
+                  name="Contratos" 
+                  radius={[4, 4, 0, 0]}
+                  onClick={(data) => handleStateClick(data)}
+                  style={{ cursor: 'pointer' }}
+                />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -341,7 +405,10 @@ export function ContractsDashboard() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Contratos por Cidade</CardTitle>
+            <CardTitle className="text-base flex items-center gap-2">
+              Contratos por Cidade
+              <span className="text-xs font-normal text-muted-foreground">(clique para filtrar)</span>
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={280}>
@@ -353,10 +420,19 @@ export function ContractsDashboard() {
                   outerRadius={100}
                   dataKey="value"
                   label={({ name, value }) => `${name}: ${value}`}
+                  onClick={handleCityClick}
+                  style={{ cursor: 'pointer' }}
                 >
-                  {cityData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
+                  {cityData.map((entry, index) => {
+                    const styles = getFilterStyles('city', entry.name);
+                    return (
+                      <Cell 
+                        key={`cell-${index}`} 
+                        fill={COLORS[index % COLORS.length]}
+                        style={styles}
+                      />
+                    );
+                  })}
                 </Pie>
                 <Tooltip />
               </PieChart>

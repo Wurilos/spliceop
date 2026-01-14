@@ -3,12 +3,15 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Filter, Fuel, DollarSign, Droplets, TrendingUp } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Filter, Fuel, DollarSign, Droplets, TrendingUp, X } from 'lucide-react';
 import { Tables } from '@/integrations/supabase/types';
 import { useContracts } from '@/hooks/useContracts';
 import { useVehicles } from '@/hooks/useVehicles';
+import { useDashboardCrossFilter } from '@/hooks/useDashboardCrossFilter';
+import { ActiveFilterBadge } from '@/components/shared/ActiveFilterBadge';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Legend } from 'recharts';
-import { format, parseISO, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 type FuelRecord = Tables<'fuel_records'> & { vehicles?: { plate: string; brand: string | null; model: string | null; contract_id: string | null } | null };
@@ -26,8 +29,10 @@ export function FuelDashboard({ records }: FuelDashboardProps) {
   const [endDate, setEndDate] = useState('');
   const [selectedContract, setSelectedContract] = useState('all');
   const [selectedVehicle, setSelectedVehicle] = useState('all');
+  const { activeFilter, setFilter, clearFilter, getFilterStyles } = useDashboardCrossFilter();
 
-  const filteredRecords = useMemo(() => {
+  // First apply date and dropdown filters
+  const preFilteredRecords = useMemo(() => {
     return records.filter(record => {
       if (startDate && new Date(record.date) < new Date(startDate)) return false;
       if (endDate && new Date(record.date) > new Date(endDate)) return false;
@@ -36,6 +41,22 @@ export function FuelDashboard({ records }: FuelDashboardProps) {
       return true;
     });
   }, [records, startDate, endDate, selectedContract, selectedVehicle]);
+
+  // Then apply cross-filter
+  const filteredRecords = useMemo(() => {
+    if (!activeFilter) return preFilteredRecords;
+    
+    return preFilteredRecords.filter(record => {
+      switch (activeFilter.field) {
+        case 'fuel_type':
+          return (record.fuel_type || 'Não especificado') === activeFilter.value;
+        case 'vehicle':
+          return (record.vehicles?.plate || 'Desconhecido') === activeFilter.value;
+        default:
+          return true;
+      }
+    });
+  }, [preFilteredRecords, activeFilter]);
 
   // Stats calculations
   const stats = useMemo(() => {
@@ -46,20 +67,20 @@ export function FuelDashboard({ records }: FuelDashboardProps) {
     return { totalRecords, totalLiters, totalValue, avgPricePerLiter };
   }, [filteredRecords]);
 
-  // Fuel type distribution (pie chart)
+  // Fuel type distribution (pie chart) - from pre-filtered for clicking
   const fuelTypeData = useMemo(() => {
     const grouped: Record<string, number> = {};
-    filteredRecords.forEach(r => {
+    preFilteredRecords.forEach(r => {
       const type = r.fuel_type || 'Não especificado';
       grouped[type] = (grouped[type] || 0) + (r.liters || 0);
     });
     return Object.entries(grouped).map(([name, value]) => ({ name, value: Number(value.toFixed(2)) }));
-  }, [filteredRecords]);
+  }, [preFilteredRecords]);
 
-  // Top consuming vehicles
+  // Top consuming vehicles - from pre-filtered for clicking
   const vehicleConsumptionData = useMemo(() => {
     const grouped: Record<string, { plate: string; liters: number }> = {};
-    filteredRecords.forEach(r => {
+    preFilteredRecords.forEach(r => {
       const plate = r.vehicles?.plate || 'Desconhecido';
       if (!grouped[plate]) grouped[plate] = { plate, liters: 0 };
       grouped[plate].liters += r.liters || 0;
@@ -68,9 +89,9 @@ export function FuelDashboard({ records }: FuelDashboardProps) {
       .sort((a, b) => b.liters - a.liters)
       .slice(0, 6)
       .map(v => ({ name: v.plate, litros: Number(v.liters.toFixed(2)) }));
-  }, [filteredRecords]);
+  }, [preFilteredRecords]);
 
-  // Monthly spending evolution
+  // Monthly spending evolution - from filtered data
   const monthlySpendingData = useMemo(() => {
     const grouped: Record<string, number> = {};
     filteredRecords.forEach(r => {
@@ -80,7 +101,7 @@ export function FuelDashboard({ records }: FuelDashboardProps) {
     return Object.entries(grouped).map(([name, value]) => ({ name, valor: Number(value.toFixed(2)) }));
   }, [filteredRecords]);
 
-  // Station ranking by fuel type
+  // Station ranking by fuel type - from filtered data
   const stationRankingByFuelType = useMemo(() => {
     const byFuelType: Record<string, Record<string, { total: number; liters: number }>> = {};
     
@@ -105,15 +126,42 @@ export function FuelDashboard({ records }: FuelDashboardProps) {
 
   const fuelTypes = Object.keys(stationRankingByFuelType);
 
+  // Click handlers
+  const handleFuelTypeClick = (data: { name: string }) => {
+    setFilter('fuel_type', data.name, data.name);
+  };
+
+  const handleVehicleClick = (data: { name: string }) => {
+    setFilter('vehicle', data.name, data.name);
+  };
+
+  const clearAllFilters = () => {
+    clearFilter();
+    setStartDate('');
+    setEndDate('');
+    setSelectedContract('all');
+    setSelectedVehicle('all');
+  };
+
+  const hasAnyFilter = activeFilter || startDate || endDate || selectedContract !== 'all' || selectedVehicle !== 'all';
+
   return (
     <div className="space-y-6">
       {/* Filters */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Filter className="h-5 w-5" />
-            Filtros
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Filter className="h-5 w-5" />
+              Filtros
+            </CardTitle>
+            {hasAnyFilter && (
+              <Button variant="ghost" size="sm" onClick={clearAllFilters} className="text-muted-foreground">
+                <X className="h-4 w-4 mr-1" />
+                Limpar filtros
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -152,6 +200,9 @@ export function FuelDashboard({ records }: FuelDashboardProps) {
           </div>
         </CardContent>
       </Card>
+
+      {/* Active Cross Filter Badge */}
+      <ActiveFilterBadge filter={activeFilter} onClear={clearFilter} />
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -232,8 +283,10 @@ export function FuelDashboard({ records }: FuelDashboardProps) {
         {/* Fuel Type Distribution */}
         <Card>
           <CardHeader>
-            <CardTitle>Combustível Mais Utilizado</CardTitle>
-            <CardDescription>Clique para filtrar por tipo de combustível</CardDescription>
+            <CardTitle className="flex items-center gap-2">
+              Combustível Mais Utilizado
+              <span className="text-xs font-normal text-muted-foreground">(clique para filtrar)</span>
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={250}>
@@ -245,10 +298,15 @@ export function FuelDashboard({ records }: FuelDashboardProps) {
                   outerRadius={80}
                   dataKey="value"
                   label={({ name, value }) => `${name}: ${value}L`}
+                  onClick={handleFuelTypeClick}
+                  style={{ cursor: 'pointer' }}
                 >
-                  {fuelTypeData.map((_, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
+                  {fuelTypeData.map((entry, index) => {
+                    const styles = getFilterStyles('fuel_type', entry.name);
+                    return (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} style={styles} />
+                    );
+                  })}
                 </Pie>
                 <Tooltip formatter={(value: number) => [`${value.toLocaleString('pt-BR')}L`, 'Litros']} />
                 <Legend />
@@ -260,8 +318,10 @@ export function FuelDashboard({ records }: FuelDashboardProps) {
         {/* Top Consuming Vehicles */}
         <Card>
           <CardHeader>
-            <CardTitle>Veículos que Mais Consomem</CardTitle>
-            <CardDescription>Clique para filtrar por veículo</CardDescription>
+            <CardTitle className="flex items-center gap-2">
+              Veículos que Mais Consomem
+              <span className="text-xs font-normal text-muted-foreground">(clique para filtrar)</span>
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={250}>
@@ -270,7 +330,13 @@ export function FuelDashboard({ records }: FuelDashboardProps) {
                 <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                 <YAxis tickFormatter={(v) => `${v}L`} />
                 <Tooltip formatter={(value: number) => [`${value.toLocaleString('pt-BR')}L`, 'Litros']} />
-                <Bar dataKey="litros" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+                <Bar 
+                  dataKey="litros" 
+                  fill="#8b5cf6" 
+                  radius={[4, 4, 0, 0]}
+                  onClick={handleVehicleClick}
+                  style={{ cursor: 'pointer' }}
+                />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -281,7 +347,6 @@ export function FuelDashboard({ records }: FuelDashboardProps) {
       <Card>
         <CardHeader>
           <CardTitle>Evolução dos Gastos Mensais</CardTitle>
-          <CardDescription>Clique para filtrar por mês</CardDescription>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={300}>
