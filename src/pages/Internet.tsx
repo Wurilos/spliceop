@@ -13,6 +13,7 @@ import { ProviderForm } from '@/components/internet/ProviderForm';
 import { ConnectionForm } from '@/components/internet/ConnectionForm';
 import { InternetBillForm } from '@/components/internet/InternetBillForm';
 import { InternetDashboard } from '@/components/internet/InternetDashboard';
+import { InternetBillingStatusGrid } from '@/components/internet/InternetBillingStatusGrid';
 import { useInternetProviders, InternetProvider } from '@/hooks/useInternetProviders';
 import { useInternetConnections, InternetConnection } from '@/hooks/useInternetConnections';
 import { useInternetBills, InternetBill } from '@/hooks/useInternetBills';
@@ -203,6 +204,7 @@ export default function Internet() {
         <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="dashboard">
           <TabsList>
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+            <TabsTrigger value="status-grid">Grade de Status</TabsTrigger>
             <TabsTrigger value="providers">Provedores</TabsTrigger>
             <TabsTrigger value="connections">Cadastro de Internet</TabsTrigger>
             <TabsTrigger value="bills">Faturas</TabsTrigger>
@@ -284,6 +286,30 @@ export default function Internet() {
 
           <TabsContent value="dashboard">
             <InternetDashboard />
+          </TabsContent>
+
+          <TabsContent value="status-grid">
+            <InternetBillingStatusGrid
+              connections={connections.map(c => ({
+                ...c,
+                contracts: contracts.find(ct => ct.id === c.contract_id) || null,
+                providers: providers.find(p => p.id === c.provider_id) || null,
+              }))}
+              internetBills={internetBills.map(b => ({
+                ...b,
+                connection_id: (b as any).connection_id || null,
+              }))}
+              contracts={contracts}
+              onCreateBill={(connectionId, referenceMonth) => {
+                setSelectedBill(null);
+                setBillFormOpen(true);
+              }}
+              onEditBill={(bill) => {
+                const fullBill = internetBills.find(b => b.id === bill.id);
+                setSelectedBill(fullBill || null);
+                setBillFormOpen(true);
+              }}
+            />
           </TabsContent>
         </Tabs>
       </div>
