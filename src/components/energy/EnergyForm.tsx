@@ -62,9 +62,14 @@ interface EnergyFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   bill?: any;
+  prefillData?: {
+    consumerUnit?: string;
+    referenceMonth?: string;
+    contractId?: string | null;
+  } | null;
 }
 
-export function EnergyForm({ open, onOpenChange, bill }: EnergyFormProps) {
+export function EnergyForm({ open, onOpenChange, bill, prefillData }: EnergyFormProps) {
   const { energyBills, createEnergyBill, updateEnergyBill } = useEnergyBills();
   const { consumerUnits } = useEnergyConsumerUnits();
   const { contracts } = useContracts();
@@ -116,6 +121,17 @@ export function EnergyForm({ open, onOpenChange, bill }: EnergyFormProps) {
         due_date: bill.due_date || '',
         status: bill.status || 'pending',
       });
+    } else if (prefillData) {
+      // Pre-fill from dashboard click
+      form.reset({
+        contract_id: prefillData.contractId || '',
+        consumer_unit: prefillData.consumerUnit || '',
+        reference_month: prefillData.referenceMonth || new Date().toISOString().slice(0, 7) + '-01',
+        value: 0,
+        zero_invoice: false,
+        due_date: '',
+        status: 'pending',
+      });
     } else {
       form.reset({
         contract_id: '',
@@ -127,7 +143,7 @@ export function EnergyForm({ open, onOpenChange, bill }: EnergyFormProps) {
         status: 'pending',
       });
     }
-  }, [bill, form]);
+  }, [bill, prefillData, form]);
 
   const onSubmit = (values: FormValues) => {
     // Check for duplicate: same consumer_unit and reference_month
