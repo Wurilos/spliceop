@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { useQueryClient } from '@tanstack/react-query';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { DataTable, StatusBadge } from '@/components/shared/DataTable';
@@ -19,6 +20,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LayoutDashboard, List } from 'lucide-react';
 
 export default function Advances() {
+  const queryClient = useQueryClient();
   const { advances, isLoading, deleteAdvance } = useAdvances();
   const { employees } = useEmployees();
   const { contracts } = useContracts();
@@ -253,6 +255,9 @@ export default function Advances() {
 
     const { error } = await supabase.from('advances').insert(validData);
     if (error) throw error;
+
+    // Invalidar cache para atualizar listagem
+    queryClient.invalidateQueries({ queryKey: ['advances'] });
 
     let message = `${validData.length} registros importados com sucesso!`;
     if (invalidCount > 0) {
