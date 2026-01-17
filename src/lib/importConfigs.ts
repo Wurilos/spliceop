@@ -5,16 +5,57 @@ const toNumber = (v: any) => {
   if (!v && v !== 0) return 0;
   const str = String(v).trim();
   
-  // Check if it's already a plain number (no formatting)
-  if (/^-?\d+\.?\d*$/.test(str)) {
+  // Check if it's already a plain number without any formatting (e.g., "6633.40" or "18000")
+  if (/^-?\d+(\.\d+)?$/.test(str)) {
     return parseFloat(str) || 0;
   }
   
-  // Handle Brazilian currency format (R$ 23.000,00)
-  const cleaned = str
-    .replace(/[R$\s]/g, '')  // Remove R$, spaces
-    .replace(/\./g, '')       // Remove thousand separators (dots)
-    .replace(',', '.');       // Convert decimal comma to dot
+  // Detect format: Brazilian uses comma as decimal separator
+  // Brazilian: "6.633,40" or "R$ 6.633,40" (dot = thousand, comma = decimal)
+  // US/Excel: "6,633.40" (comma = thousand, dot = decimal)
+  
+  // Remove currency symbols and spaces first
+  let cleaned = str.replace(/[R$\s]/g, '');
+  
+  // Detect if it's Brazilian format (has comma after dots, or ends with comma + digits)
+  const hasBrazilianFormat = /\d\.\d{3},\d{2}$/.test(cleaned) || // 1.234,56
+                             /^\d{1,3}(,\d{2})$/.test(cleaned) || // 123,45
+                             /^\d{1,3}(\.\d{3})+(,\d{2})?$/.test(cleaned); // 1.234 or 1.234.567,89
+  
+  // Detect US format (has dot after commas, or ends with dot + digits)  
+  const hasUSFormat = /\d,\d{3}\.\d{2}$/.test(cleaned) || // 1,234.56
+                      /^\d{1,3}(,\d{3})+(\.\d{2})?$/.test(cleaned); // 1,234 or 1,234,567.89
+  
+  if (hasBrazilianFormat) {
+    // Brazilian: remove dots (thousands), replace comma with dot (decimal)
+    cleaned = cleaned.replace(/\./g, '').replace(',', '.');
+  } else if (hasUSFormat) {
+    // US: just remove commas (thousands)
+    cleaned = cleaned.replace(/,/g, '');
+  } else {
+    // Fallback: check if there's a comma that could be decimal
+    // If format is like "1234,56" (no thousand separator), treat comma as decimal
+    if (/^\d+,\d{1,2}$/.test(cleaned)) {
+      cleaned = cleaned.replace(',', '.');
+    } else {
+      // Remove any remaining commas/dots that might be thousand separators
+      // and keep the last separator as decimal if it has 1-2 digits after
+      const lastComma = cleaned.lastIndexOf(',');
+      const lastDot = cleaned.lastIndexOf('.');
+      
+      if (lastComma > lastDot && cleaned.length - lastComma <= 3) {
+        // Comma is decimal
+        cleaned = cleaned.replace(/\./g, '').replace(',', '.');
+      } else if (lastDot > lastComma && cleaned.length - lastDot <= 3) {
+        // Dot is decimal
+        cleaned = cleaned.replace(/,/g, '');
+      } else {
+        // No clear decimal, remove all separators
+        cleaned = cleaned.replace(/[,.]/g, '');
+      }
+    }
+  }
+  
   return parseFloat(cleaned) || 0;
 };
 const toInteger = (v: any) => parseInt(String(v).replace(/\D/g, ''), 10) || 0;
