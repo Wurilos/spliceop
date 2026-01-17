@@ -4,10 +4,14 @@ import { toast } from 'sonner';
 
 export interface Advance {
   id: string;
+  contract_id: string | null;
   employee_id: string;
-  date: string;
-  value: number;
+  intranet: string | null;
+  request_date: string;
+  requested_value: number;
   reason: string | null;
+  closing_date: string | null;
+  proven_value: number | null;
   status: string | null;
   created_at: string | null;
 }
@@ -22,12 +26,15 @@ export function useAdvances() {
         .from('advances')
         .select(`
           *,
-          employees:employees!fk_advances_employee(full_name, role)
+          employees:employees!fk_advances_employee(full_name, role),
+          contracts:contracts!fk_advances_contract(number, client_name)
         `)
-        .order('date', { ascending: false });
+        .order('request_date', { ascending: false });
       if (error) throw error;
       return data;
     },
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 10,
   });
 
   const createMutation = useMutation({

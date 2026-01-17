@@ -10,6 +10,7 @@ import { AdvanceForm } from '@/components/advances/AdvanceForm';
 import { AdvancesDashboard } from '@/components/advances/AdvancesDashboard';
 import { useAdvances } from '@/hooks/useAdvances';
 import { useEmployees } from '@/hooks/useEmployees';
+import { useContracts } from '@/hooks/useContracts';
 import { exportToPDF, exportToExcel, exportToCSV } from '@/lib/export';
 import { advanceImportConfig } from '@/lib/importConfigs';
 import { supabase } from '@/integrations/supabase/client';
@@ -20,6 +21,7 @@ import { LayoutDashboard, List } from 'lucide-react';
 export default function Advances() {
   const { advances, isLoading, deleteAdvance } = useAdvances();
   const { employees } = useEmployees();
+  const { contracts } = useContracts();
   const [formOpen, setFormOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
@@ -31,24 +33,55 @@ export default function Advances() {
     return employee?.full_name || '-';
   };
 
+  const getContractName = (contractId: string | null) => {
+    if (!contractId) return '-';
+    const contract = contracts.find((c) => c.id === contractId);
+    return contract ? `${contract.number} - ${contract.client_name}` : '-';
+  };
+
   const columns = [
     {
-      key: 'date',
-      label: 'Data',
+      key: 'request_date',
+      label: 'Data Solicitação',
       render: (value: string) => format(new Date(value), 'dd/MM/yyyy', { locale: ptBR }),
+    },
+    {
+      key: 'contract_id',
+      label: 'Contrato',
+      render: (value: string | null) => getContractName(value),
     },
     {
       key: 'employee_id',
       label: 'Colaborador',
       render: (value: string) => getEmployeeName(value),
     },
+    { key: 'intranet', label: 'Intranet' },
     {
-      key: 'value',
-      label: 'Valor',
+      key: 'requested_value',
+      label: 'Valor Solicitado',
       render: (value: number) =>
         value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
     },
-    { key: 'reason', label: 'Motivo' },
+    {
+      key: 'proven_value',
+      label: 'Valor Comprovado',
+      render: (value: number) =>
+        (value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
+    },
+    {
+      key: 'balance',
+      label: 'Saldo a Devolver',
+      render: (_: any, row: any) => {
+        const balance = Math.max(0, (row.requested_value || 0) - (row.proven_value || 0));
+        return balance.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+      },
+    },
+    {
+      key: 'closing_date',
+      label: 'Data Fechamento',
+      render: (value: string | null) => 
+        value ? format(new Date(value), 'dd/MM/yyyy', { locale: ptBR }) : '-',
+    },
     {
       key: 'status',
       label: 'Status',
@@ -75,20 +108,30 @@ export default function Advances() {
   };
 
   const exportColumns = [
-    { key: 'Data', label: 'Data' },
+    { key: 'Data Solicitação', label: 'Data Solicitação' },
+    { key: 'Contrato', label: 'Contrato' },
     { key: 'Colaborador', label: 'Colaborador' },
-    { key: 'Valor', label: 'Valor' },
+    { key: 'Intranet', label: 'Intranet' },
+    { key: 'Valor Solicitado', label: 'Valor Solicitado' },
     { key: 'Motivo', label: 'Motivo' },
+    { key: 'Data Fechamento', label: 'Data Fechamento' },
+    { key: 'Valor Comprovado', label: 'Valor Comprovado' },
+    { key: 'Saldo a Devolver', label: 'Saldo a Devolver' },
     { key: 'Status', label: 'Status' },
   ];
 
   const handleExport = (type: 'pdf' | 'excel' | 'csv') => {
     const data = advances.map((a) => ({
-      Data: format(new Date(a.date), 'dd/MM/yyyy'),
-      Colaborador: getEmployeeName(a.employee_id),
-      Valor: a.value,
-      Motivo: a.reason || '',
-      Status: a.status || '',
+      'Data Solicitação': format(new Date(a.request_date), 'dd/MM/yyyy'),
+      'Contrato': getContractName(a.contract_id),
+      'Colaborador': getEmployeeName(a.employee_id),
+      'Intranet': a.intranet || '',
+      'Valor Solicitado': a.requested_value,
+      'Motivo': a.reason || '',
+      'Data Fechamento': a.closing_date ? format(new Date(a.closing_date), 'dd/MM/yyyy') : '',
+      'Valor Comprovado': a.proven_value || 0,
+      'Saldo a Devolver': Math.max(0, (a.requested_value || 0) - (a.proven_value || 0)),
+      'Status': a.status || '',
     }));
 
     if (type === 'pdf') exportToPDF(data, exportColumns, 'Adiantamentos');

@@ -4,19 +4,16 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { Badge } from '@/components/ui/badge';
 import { 
   DollarSign, 
   FileText, 
   CheckCircle2, 
   Clock, 
   Calendar as CalendarIcon, 
-  X,
   Users
 } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, parseISO, isWithinInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { cn } from '@/lib/utils';
 import { useAdvances } from '@/hooks/useAdvances';
 import { useEmployees } from '@/hooks/useEmployees';
 import { useContracts } from '@/hooks/useContracts';
@@ -39,17 +36,15 @@ import {
 const COLORS = ['#22c55e', '#eab308', '#ef4444', '#3b82f6', '#8b5cf6', '#ec4899'];
 
 const statusLabels: Record<string, string> = {
-  pending: 'Pendente',
-  approved: 'Aprovado',
-  rejected: 'Rejeitado',
-  paid: 'Pago',
+  Pendente: 'Pendente',
+  Fechado: 'Fechado',
+  Cancelado: 'Cancelado',
 };
 
 const statusColors: Record<string, string> = {
-  pending: '#eab308',
-  approved: '#22c55e',
-  rejected: '#ef4444',
-  paid: '#3b82f6',
+  Pendente: '#eab308',
+  Fechado: '#22c55e',
+  Cancelado: '#ef4444',
 };
 
 export function AdvancesDashboard() {
@@ -74,46 +69,36 @@ export function AdvancesDashboard() {
 
   const filteredAdvances = useMemo(() => {
     return advances.filter(advance => {
-      const advanceDate = parseISO(advance.date);
+      const advanceDate = parseISO(advance.request_date);
       const inDateRange = isWithinInterval(advanceDate, { start: dateRange.from, end: dateRange.to });
       
       const matchesEmployee = selectedEmployee === 'all' || advance.employee_id === selectedEmployee;
       const matchesStatus = selectedStatus === 'all' || advance.status === selectedStatus;
-      
-      // Filter by contract through employee
-      let matchesContract = selectedContract === 'all';
-      if (selectedContract !== 'all') {
-        const employee = employees.find(e => e.id === advance.employee_id);
-        matchesContract = employee?.contract_id === selectedContract;
-      }
+      const matchesContract = selectedContract === 'all' || advance.contract_id === selectedContract;
 
       return inDateRange && matchesEmployee && matchesStatus && matchesContract;
     });
-  }, [advances, dateRange, selectedEmployee, selectedStatus, selectedContract, employees]);
+  }, [advances, dateRange, selectedEmployee, selectedStatus, selectedContract]);
 
   // Stats
   const stats = useMemo(() => {
     const total = filteredAdvances.length;
-    const totalValue = filteredAdvances.reduce((sum, a) => sum + a.value, 0);
-    const approvedValue = filteredAdvances
-      .filter(a => a.status === 'approved' || a.status === 'paid')
-      .reduce((sum, a) => sum + a.value, 0);
-    const pendingValue = filteredAdvances
-      .filter(a => a.status === 'pending')
-      .reduce((sum, a) => sum + a.value, 0);
+    const totalRequested = filteredAdvances.reduce((sum, a) => sum + (a.requested_value || 0), 0);
+    const totalProven = filteredAdvances.reduce((sum, a) => sum + (a.proven_value || 0), 0);
+    const pendingBalance = filteredAdvances
+      .filter(a => a.status === 'Pendente')
+      .reduce((sum, a) => sum + Math.max(0, (a.requested_value || 0) - (a.proven_value || 0)), 0);
     
     const uniqueContracts = new Set(
-      filteredAdvances.map(a => {
-        const emp = employees.find(e => e.id === a.employee_id);
-        return emp?.contract_id;
-      }).filter(Boolean)
+      filteredAdvances.map(a => a.contract_id).filter(Boolean)
     ).size;
 
-    return { total, totalValue, approvedValue, pendingValue, uniqueContracts };
-  }, [filteredAdvances, employees]);
+    return { total, totalRequested, totalProven, pendingBalance, uniqueContracts };
+  }, [filteredAdvances]);
 
   // Get contract name for display
-  const getContractName = (contractId: string) => {
+  const getContractName = (contractId: string | null) => {
+    if (!contractId) return 'Sem contrato';
     const contract = contracts.find(c => c.id === contractId);
     return contract ? `${contract.number} - ${contract.client_name}` : contractId;
   };
@@ -123,12 +108,12 @@ export function AdvancesDashboard() {
     const grouped: Record<string, { date: string; count: number; value: number }> = {};
     
     filteredAdvances.forEach(advance => {
-      const dateKey = format(parseISO(advance.date), 'dd/MM');
+      const dateKey = format(parseISO(advance.request_date), 'dd/MM');
       if (!grouped[dateKey]) {
         grouped[dateKey] = { date: dateKey, count: 0, value: 0 };
       }
       grouped[dateKey].count += 1;
-      grouped[dateKey].value += advance.value;
+      grouped[dateKey].value += advance.requested_value || 0;
     });
 
     return Object.values(grouped).sort((a, b) => {
@@ -144,7 +129,7 @@ export function AdvancesDashboard() {
     const grouped: Record<string, number> = {};
     
     filteredAdvances.forEach(advance => {
-      const status = advance.status || 'pending';
+      const status = advance.status || 'Pendente';
       grouped[status] = (grouped[status] || 0) + 1;
     });
 
@@ -167,15 +152,13 @@ export function AdvancesDashboard() {
         grouped[advance.employee_id] = { name, count: 0, value: 0 };
       }
       grouped[advance.employee_id].count += 1;
-      grouped[advance.employee_id].value += advance.value;
+      grouped[advance.employee_id].value += advance.requested_value || 0;
     });
 
     return Object.values(grouped)
       .sort((a, b) => b.count - a.count)
       .slice(0, 10);
   }, [filteredAdvances, employees]);
-
-  const hasActiveFilters = selectedContract !== 'all' || selectedEmployee !== 'all' || selectedStatus !== 'all';
 
   if (isLoading) {
     return (
@@ -262,10 +245,9 @@ export function AdvancesDashboard() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos os status</SelectItem>
-                  <SelectItem value="pending">Pendente</SelectItem>
-                  <SelectItem value="approved">Aprovado</SelectItem>
-                  <SelectItem value="rejected">Rejeitado</SelectItem>
-                  <SelectItem value="paid">Pago</SelectItem>
+                  <SelectItem value="Pendente">Pendente</SelectItem>
+                  <SelectItem value="Fechado">Fechado</SelectItem>
+                  <SelectItem value="Cancelado">Cancelado</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -304,7 +286,7 @@ export function AdvancesDashboard() {
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Valor Total Solicitado</p>
                 <p className="text-3xl font-bold text-blue-600">
-                  {stats.totalValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                  {stats.totalRequested.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                 </p>
                 <p className="text-xs text-muted-foreground">Total solicitado</p>
               </div>
@@ -321,7 +303,7 @@ export function AdvancesDashboard() {
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Valor Comprovado</p>
                 <p className="text-3xl font-bold text-green-600">
-                  {stats.approvedValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                  {stats.totalProven.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                 </p>
                 <p className="text-xs text-muted-foreground">Total comprovado</p>
               </div>
@@ -338,7 +320,7 @@ export function AdvancesDashboard() {
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Saldo Pendente</p>
                 <p className="text-3xl font-bold text-orange-600">
-                  {stats.pendingValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                  {stats.pendingBalance.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                 </p>
                 <p className="text-xs text-muted-foreground">Saldo a comprovar</p>
               </div>
@@ -462,12 +444,7 @@ export function AdvancesDashboard() {
               <BarChart data={employeeChartData} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                 <XAxis type="number" tick={{ fontSize: 12 }} />
-                <YAxis 
-                  type="category" 
-                  dataKey="name" 
-                  tick={{ fontSize: 12 }} 
-                  width={150}
-                />
+                <YAxis dataKey="name" type="category" width={150} tick={{ fontSize: 12 }} />
                 <Tooltip 
                   formatter={(value: number, name: string) => [
                     name === 'value' 
@@ -477,7 +454,8 @@ export function AdvancesDashboard() {
                   ]}
                 />
                 <Legend />
-                <Bar dataKey="count" name="Quantidade" fill="#3b82f6" radius={[0, 4, 4, 0]} />
+                <Bar dataKey="count" name="Quantidade" fill="#3b82f6" />
+                <Bar dataKey="value" name="Valor Total" fill="#22c55e" />
               </BarChart>
             </ResponsiveContainer>
           ) : (
@@ -485,35 +463,6 @@ export function AdvancesDashboard() {
               Nenhum dado para exibir
             </div>
           )}
-        </CardContent>
-      </Card>
-
-      {/* Applied Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Filtros Aplicados</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-2">
-            <Badge variant="outline" className="text-primary border-primary">
-              Período: {format(dateRange.from, 'dd/MM/yyyy', { locale: ptBR })} - {format(dateRange.to, 'dd/MM/yyyy', { locale: ptBR })}
-            </Badge>
-            {selectedContract !== 'all' && (
-              <Badge variant="outline">
-                Contrato: {getContractName(selectedContract)}
-              </Badge>
-            )}
-            {selectedEmployee !== 'all' && (
-              <Badge variant="outline">
-                Colaborador: {employees.find(e => e.id === selectedEmployee)?.full_name || selectedEmployee}
-              </Badge>
-            )}
-            {selectedStatus !== 'all' && (
-              <Badge variant="outline">
-                Status: {statusLabels[selectedStatus] || selectedStatus}
-              </Badge>
-            )}
-          </div>
         </CardContent>
       </Card>
     </div>

@@ -16,38 +16,64 @@ export type Database = {
     Tables: {
       advances: {
         Row: {
+          closing_date: string | null
+          contract_id: string | null
           created_at: string | null
-          date: string
           employee_id: string
           id: string
+          intranet: string | null
+          proven_value: number | null
           reason: string | null
+          request_date: string
+          requested_value: number
           status: string | null
-          value: number
         }
         Insert: {
+          closing_date?: string | null
+          contract_id?: string | null
           created_at?: string | null
-          date: string
           employee_id: string
           id?: string
+          intranet?: string | null
+          proven_value?: number | null
           reason?: string | null
+          request_date: string
+          requested_value: number
           status?: string | null
-          value: number
         }
         Update: {
+          closing_date?: string | null
+          contract_id?: string | null
           created_at?: string | null
-          date?: string
           employee_id?: string
           id?: string
+          intranet?: string | null
+          proven_value?: number | null
           reason?: string | null
+          request_date?: string
+          requested_value?: number
           status?: string | null
-          value?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "advances_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "advances_employee_id_fkey"
             columns: ["employee_id"]
             isOneToOne: false
             referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_advances_contract"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
             referencedColumns: ["id"]
           },
           {
