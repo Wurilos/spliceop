@@ -73,7 +73,7 @@ export function EnergyBillingStatusGrid({
   
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [selectedContract, setSelectedContract] = useState<string>('all');
-  const [selectedMonth, setSelectedMonth] = useState<string>('all');
+  
 
   const years = useMemo(() => {
     const yearsSet = new Set<number>();
@@ -134,53 +134,11 @@ export function EnergyBillingStatusGrid({
     return data;
   }, [filteredUnits, energyBills, selectedYear, currentYear, currentMonth]);
 
-  // Filter pending bills by selected month if applicable
-  const pendingBills = useMemo(() => {
-    const pending: Array<{
-      consumerUnit: string;
-      month: number;
-      monthLabel: string;
-      contractId: string | null;
-      contractName: string;
-      daysOverdue: number;
-    }> = [];
-    
-    filteredUnits.forEach(uc => {
-      const monthsMap = gridData.get(uc.consumer_unit);
-      if (!monthsMap) return;
-      
-      monthsMap.forEach((cellData, month) => {
-        // Filter by selected month if not 'all'
-        if (selectedMonth !== 'all' && month !== parseInt(selectedMonth)) return;
-        
-        if (cellData.status === 'pending') {
-          const refDate = new Date(selectedYear, month + 1, 0); // Last day of month
-          const today = new Date();
-          const daysOverdue = Math.floor((today.getTime() - refDate.getTime()) / (1000 * 60 * 60 * 24));
-          
-          pending.push({
-            consumerUnit: uc.consumer_unit,
-            month,
-            monthLabel: `${MONTH_NAMES[month]}/${selectedYear}`,
-            contractId: uc.contract_id,
-            contractName: uc.contracts?.client_name || 'Sem contrato',
-            daysOverdue: Math.max(0, daysOverdue)
-          });
-        }
-      });
-    });
-    
-    return pending.sort((a, b) => b.daysOverdue - a.daysOverdue);
-  }, [filteredUnits, gridData, selectedYear, selectedMonth]);
-
   const stats = useMemo(() => {
     let sent = 0, pending = 0, zeroed = 0;
     
     gridData.forEach(monthsMap => {
-      monthsMap.forEach((cellData, month) => {
-        // Filter by selected month if not 'all'
-        if (selectedMonth !== 'all' && month !== parseInt(selectedMonth)) return;
-        
+      monthsMap.forEach((cellData) => {
         if (cellData.status === 'sent') sent++;
         else if (cellData.status === 'pending') pending++;
         else if (cellData.status === 'zeroed') zeroed++;
@@ -188,7 +146,7 @@ export function EnergyBillingStatusGrid({
     });
     
     return { sent, pending, zeroed, total: sent + pending + zeroed };
-  }, [gridData, selectedMonth]);
+  }, [gridData]);
 
   const getStatusColor = (status: BillStatus) => {
     switch (status) {
@@ -253,24 +211,6 @@ export function EnergyBillingStatusGrid({
             </SelectContent>
           </Select>
           
-          <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-            <SelectTrigger className="w-[150px]">
-              <SelectValue placeholder="Todos os meses" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos os meses</SelectItem>
-              {MONTH_NAMES.map((month, idx) => {
-                // Only show months up to current month for current year
-                const isFuture = selectedYear === currentYear && idx > currentMonth;
-                if (isFuture) return null;
-                return (
-                  <SelectItem key={idx} value={String(idx)}>
-                    {month}
-                  </SelectItem>
-                );
-              })}
-            </SelectContent>
-          </Select>
         </div>
 
         <div className="flex items-center gap-4">
@@ -434,63 +374,6 @@ export function EnergyBillingStatusGrid({
         </Card>
       )}
 
-      {/* Pending Bills List */}
-      {pendingBills.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-red-500" />
-              Faturas Pendentes ({pendingBills.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Unidade Consumidora</TableHead>
-                  <TableHead>Mês de Referência</TableHead>
-                  <TableHead>Contrato</TableHead>
-                  <TableHead>Dias em Atraso</TableHead>
-                  <TableHead className="text-right">Ação</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {pendingBills.slice(0, 10).map((item, idx) => (
-                  <TableRow key={idx}>
-                    <TableCell className="font-medium">{item.consumerUnit}</TableCell>
-                    <TableCell>{item.monthLabel}</TableCell>
-                    <TableCell>{item.contractName}</TableCell>
-                    <TableCell>
-                      <Badge variant={item.daysOverdue > 30 ? 'destructive' : 'secondary'}>
-                        {item.daysOverdue} dias
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        size="sm"
-                        onClick={() => {
-                          if (onCreateBill) {
-                            const refMonth = `${selectedYear}-${String(item.month + 1).padStart(2, '0')}-01`;
-                            onCreateBill(item.consumerUnit, refMonth, item.contractId);
-                          }
-                        }}
-                      >
-                        <Plus className="h-4 w-4 mr-1" />
-                        Criar Fatura
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            {pendingBills.length > 10 && (
-              <p className="text-sm text-muted-foreground mt-4 text-center">
-                Mostrando 10 de {pendingBills.length} pendências
-              </p>
-            )}
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }
