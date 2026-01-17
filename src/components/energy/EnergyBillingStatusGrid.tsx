@@ -73,6 +73,7 @@ export function EnergyBillingStatusGrid({
   
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [selectedContract, setSelectedContract] = useState<string>('all');
+  const [selectedMonth, setSelectedMonth] = useState<string>('all');
 
   const years = useMemo(() => {
     const yearsSet = new Set<number>();
@@ -133,6 +134,7 @@ export function EnergyBillingStatusGrid({
     return data;
   }, [filteredUnits, energyBills, selectedYear, currentYear, currentMonth]);
 
+  // Filter pending bills by selected month if applicable
   const pendingBills = useMemo(() => {
     const pending: Array<{
       consumerUnit: string;
@@ -148,6 +150,9 @@ export function EnergyBillingStatusGrid({
       if (!monthsMap) return;
       
       monthsMap.forEach((cellData, month) => {
+        // Filter by selected month if not 'all'
+        if (selectedMonth !== 'all' && month !== parseInt(selectedMonth)) return;
+        
         if (cellData.status === 'pending') {
           const refDate = new Date(selectedYear, month + 1, 0); // Last day of month
           const today = new Date();
@@ -166,13 +171,16 @@ export function EnergyBillingStatusGrid({
     });
     
     return pending.sort((a, b) => b.daysOverdue - a.daysOverdue);
-  }, [filteredUnits, gridData, selectedYear]);
+  }, [filteredUnits, gridData, selectedYear, selectedMonth]);
 
   const stats = useMemo(() => {
     let sent = 0, pending = 0, zeroed = 0;
     
     gridData.forEach(monthsMap => {
-      monthsMap.forEach(cellData => {
+      monthsMap.forEach((cellData, month) => {
+        // Filter by selected month if not 'all'
+        if (selectedMonth !== 'all' && month !== parseInt(selectedMonth)) return;
+        
         if (cellData.status === 'sent') sent++;
         else if (cellData.status === 'pending') pending++;
         else if (cellData.status === 'zeroed') zeroed++;
@@ -180,7 +188,7 @@ export function EnergyBillingStatusGrid({
     });
     
     return { sent, pending, zeroed, total: sent + pending + zeroed };
-  }, [gridData]);
+  }, [gridData, selectedMonth]);
 
   const getStatusColor = (status: BillStatus) => {
     switch (status) {
@@ -242,6 +250,25 @@ export function EnergyBillingStatusGrid({
                   {contract.client_name}
                 </SelectItem>
               ))}
+            </SelectContent>
+          </Select>
+          
+          <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+            <SelectTrigger className="w-[150px]">
+              <SelectValue placeholder="Todos os meses" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os meses</SelectItem>
+              {MONTH_NAMES.map((month, idx) => {
+                // Only show months up to current month for current year
+                const isFuture = selectedYear === currentYear && idx > currentMonth;
+                if (isFuture) return null;
+                return (
+                  <SelectItem key={idx} value={String(idx)}>
+                    {month}
+                  </SelectItem>
+                );
+              })}
             </SelectContent>
           </Select>
         </div>
