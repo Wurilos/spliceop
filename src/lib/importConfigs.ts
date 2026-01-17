@@ -502,8 +502,8 @@ export const internetImportConfig = {
 // Advances import config
 export const advanceImportConfig = {
   mappings: [
-    { excelColumn: 'Contrato', dbColumn: 'contract_id', transform: toString },
-    { excelColumn: 'Colaborador', dbColumn: 'employee_id', required: true, transform: toString },
+    { excelColumn: 'Contrato', dbColumn: 'contract_ref', transform: toString },
+    { excelColumn: 'Colaborador', dbColumn: 'employee_name', required: true, transform: toString },
     { excelColumn: 'Intranet', dbColumn: 'intranet', transform: toString },
     { excelColumn: 'Data Solicitação', dbColumn: 'request_date', required: true, transform: toDate },
     { excelColumn: 'Valor Solicitado', dbColumn: 'requested_value', required: true, transform: toNumber },
@@ -521,8 +521,8 @@ export const advanceImportConfig = {
     }},
   ] as ColumnMapping[],
   templateColumns: [
-    { key: 'contract_id', label: 'Contrato' },
-    { key: 'employee_id', label: 'Colaborador' },
+    { key: 'contract_ref', label: 'Contrato' },
+    { key: 'employee_name', label: 'Colaborador' },
     { key: 'intranet', label: 'Intranet' },
     { key: 'request_date', label: 'Data Solicitação' },
     { key: 'requested_value', label: 'Valor Solicitado' },

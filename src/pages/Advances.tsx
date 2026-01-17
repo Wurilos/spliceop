@@ -139,10 +139,128 @@ export default function Advances() {
     else exportToCSV(data, exportColumns, 'adiantamentos');
   };
 
+  // Normaliza variações de acentos e caixa
+  const normalizeNameVariations = (name: string): string => {
+    return name
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
+  };
+
+  // Busca flexível de colaborador (nomes abreviados)
+  const findEmployeeFlexible = (searchName: string): string | null => {
+    if (!searchName) return null;
+
+    const normalized = normalizeNameVariations(searchName);
+
+    // Busca exata primeiro
+    const exactMatch = employees.find((e) => normalizeNameVariations(e.full_name) === normalized);
+    if (exactMatch) return exactMatch.id;
+
+    // Quebrar em partes
+    const searchParts = normalized.split(/\s+/).filter((p) => p.length > 0);
+    if (searchParts.length < 2) return null;
+
+    const searchFirst = searchParts[0];
+    const searchLast = searchParts[searchParts.length - 1];
+
+    let bestMatch: { emp: typeof employees[0] | null; score: number } = { emp: null, score: 0 };
+
+    for (const emp of employees) {
+      const empNormalized = normalizeNameVariations(emp.full_name);
+      const empParts = empNormalized.split(/\s+/).filter((p) => p.length > 0);
+      if (empParts.length < 2) continue;
+
+      const empFirst = empParts[0];
+      let score = 0;
+
+      // Primeiro nome deve coincidir
+      if (empFirst !== searchFirst) continue;
+      score += 3;
+
+      // Último nome da busca deve estar presente
+      const lastInEmp = empParts.some((p) => p === searchLast || p.startsWith(searchLast));
+      if (!lastInEmp) continue;
+      score += 2;
+
+      // Nomes do meio
+      if (searchParts.length > 2) {
+        const searchMiddles = searchParts.slice(1, -1);
+        for (const searchMid of searchMiddles) {
+          const isInitial = searchMid.length === 1;
+          for (const empPart of empParts.slice(1)) {
+            if (isInitial) {
+              if (empPart.startsWith(searchMid)) {
+                score += 1;
+                break;
+              }
+            } else if (empPart === searchMid || empPart.startsWith(searchMid)) {
+              score += 1;
+              break;
+            }
+          }
+        }
+      }
+
+      if (score > bestMatch.score) {
+        bestMatch = { emp, score };
+      }
+    }
+
+    if (bestMatch.score >= 5 && bestMatch.emp) {
+      return bestMatch.emp.id;
+    }
+
+    return null;
+  };
+
   const handleImport = async (data: any[]) => {
-    const { error } = await supabase.from('advances').insert(data);
+    // Criar mapa de contratos por número e nome
+    const contractMap = new Map<string, string>();
+    contracts.forEach((c) => {
+      contractMap.set(c.number.toLowerCase().trim(), c.id);
+      contractMap.set(c.client_name.toLowerCase().trim(), c.id);
+    });
+
+    // Processar registros resolvendo IDs
+    const processedData = data.map((row) => {
+      const contractRef = row.contract_ref?.toLowerCase().trim();
+      const contractId = contractRef ? contractMap.get(contractRef) : null;
+
+      const employeeId = findEmployeeFlexible(row.employee_name);
+
+      return {
+        contract_id: contractId || null,
+        employee_id: employeeId,
+        intranet: row.intranet || null,
+        request_date: row.request_date,
+        requested_value: row.requested_value,
+        reason: row.reason || null,
+        closing_date: row.closing_date || null,
+        proven_value: row.proven_value || 0,
+        status: row.status || 'Pendente',
+      };
+    });
+
+    // Filtrar registros com colaborador válido
+    const validData = processedData.filter((r) => r.employee_id);
+    const invalidCount = processedData.length - validData.length;
+
+    if (validData.length === 0) {
+      throw new Error('Nenhum colaborador foi encontrado. Verifique se os nomes correspondem aos cadastrados.');
+    }
+
+    const { error } = await supabase.from('advances').insert(validData);
     if (error) throw error;
-    toast.success(`${data.length} registros importados com sucesso!`);
+
+    let message = `${validData.length} registros importados com sucesso!`;
+    if (invalidCount > 0) {
+      message += ` ${invalidCount} registros ignorados (colaborador não encontrado).`;
+      toast.warning(message);
+    } else {
+      toast.success(message);
+    }
   };
 
   return (
