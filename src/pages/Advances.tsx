@@ -21,7 +21,7 @@ import { LayoutDashboard, List } from 'lucide-react';
 
 export default function Advances() {
   const queryClient = useQueryClient();
-  const { advances, isLoading, deleteAdvance } = useAdvances();
+  const { advances, isLoading, deleteAdvance, deleteMany } = useAdvances();
   const { employees } = useEmployees();
   const { contracts } = useContracts();
   const [formOpen, setFormOpen] = useState(false);
@@ -305,6 +305,7 @@ export default function Advances() {
             searchPlaceholder="Buscar por colaborador..."
             onEdit={handleEdit}
             onDelete={handleDelete}
+            onDeleteMany={deleteMany}
           />
         </TabsContent>
       </Tabs>
