@@ -378,8 +378,8 @@ export function EnergyForm({ open, onOpenChange, bill, prefillData }: EnergyForm
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="pending">Pendente</SelectItem>
-                      <SelectItem value="paid">Pago</SelectItem>
-                      <SelectItem value="overdue">Vencido</SelectItem>
+                      <SelectItem value="sent">Enviada</SelectItem>
+                      <SelectItem value="zeroed">Zerada</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
