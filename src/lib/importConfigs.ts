@@ -21,6 +21,9 @@ const toInteger = (v: any) => parseInt(String(v).replace(/\D/g, ''), 10) || 0;
 const toDate = (v: any) => {
   if (v === undefined || v === null || v === '') return null;
 
+  // Helper to validate date is within reasonable range (1900-2100)
+  const isValidYear = (year: number) => year >= 1900 && year <= 2100;
+
   // Excel serial date number (e.g., 45958)
   if (typeof v === 'number' || /^\d+(\.\d+)?$/.test(String(v).trim())) {
     const serial = typeof v === 'number' ? v : parseFloat(String(v).trim());
@@ -28,21 +31,39 @@ const toDate = (v: any) => {
       const excelEpoch = new Date(Date.UTC(1899, 11, 30));
       const msPerDay = 24 * 60 * 60 * 1000;
       const date = new Date(excelEpoch.getTime() + serial * msPerDay);
-      return date.toISOString().split('T')[0];
+      const year = date.getUTCFullYear();
+      if (isValidYear(year)) {
+        return date.toISOString().split('T')[0];
+      }
     }
+    // If it's a pure number but not a valid Excel serial, return null
+    return null;
   }
 
   // Date object
   if (v instanceof Date) {
-    return isNaN(v.getTime()) ? null : v.toISOString().split('T')[0];
+    if (isNaN(v.getTime())) return null;
+    const year = v.getFullYear();
+    if (!isValidYear(year)) return null;
+    return v.toISOString().split('T')[0];
   }
 
   const str = String(v).trim();
   if (!str) return null;
 
+  // Reject strings that are too long (likely not dates)
+  if (str.length > 20) return null;
+
+  // Reject strings that look like IDs or random numbers
+  if (/^\d{5,}$/.test(str)) return null;
+
   // Already ISO
   const isoMatch = str.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (isoMatch) return str;
+  if (isoMatch) {
+    const year = parseInt(isoMatch[1], 10);
+    if (isValidYear(year)) return str;
+    return null;
+  }
 
   // Flexible D/M/Y parsing (supports 2 or 4 digit year, / or -)
   const m = str.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{2}|\d{4})$/);
@@ -52,6 +73,8 @@ const toDate = (v: any) => {
     let y = parseInt(m[3], 10);
 
     if (y < 100) y = 2000 + y; // 25 -> 2025
+
+    if (!isValidYear(y)) return null;
 
     // Decide order: default BR (DD/MM), but if clearly MM/DD, swap.
     let day = a;
@@ -69,9 +92,12 @@ const toDate = (v: any) => {
     return null;
   }
 
-  // Fallback: native parsing (last resort)
+  // Fallback: native parsing (last resort) - but validate result
   const date = new Date(str);
-  return isNaN(date.getTime()) ? null : date.toISOString().split('T')[0];
+  if (isNaN(date.getTime())) return null;
+  const year = date.getFullYear();
+  if (!isValidYear(year)) return null;
+  return date.toISOString().split('T')[0];
 };
 const toDateTime = (v: any) => {
   if (!v) return null;
