@@ -502,15 +502,33 @@ export const internetImportConfig = {
 // Advances import config
 export const advanceImportConfig = {
   mappings: [
-    { excelColumn: 'Data', dbColumn: 'date', required: true, transform: toDate },
-    { excelColumn: 'Valor', dbColumn: 'value', required: true, transform: toNumber },
+    { excelColumn: 'Contrato', dbColumn: 'contract_id', transform: toString },
+    { excelColumn: 'Colaborador', dbColumn: 'employee_id', required: true, transform: toString },
+    { excelColumn: 'Intranet', dbColumn: 'intranet', transform: toString },
+    { excelColumn: 'Data Solicitação', dbColumn: 'request_date', required: true, transform: toDate },
+    { excelColumn: 'Valor Solicitado', dbColumn: 'requested_value', required: true, transform: toNumber },
     { excelColumn: 'Motivo', dbColumn: 'reason', transform: toString },
-    { excelColumn: 'Status', dbColumn: 'status', transform: (v: string) => v?.toLowerCase() || 'pending' },
+    { excelColumn: 'Data Fechamento', dbColumn: 'closing_date', transform: toDate },
+    { excelColumn: 'Valor Comprovado', dbColumn: 'proven_value', transform: toNumber },
+    { excelColumn: 'Status', dbColumn: 'status', transform: (v: string) => {
+      const statusMap: Record<string, string> = {
+        'pendente': 'Pendente',
+        'fechado': 'Fechado',
+        'cancelado': 'Cancelado',
+      };
+      const normalized = v?.toLowerCase().trim();
+      return statusMap[normalized] || 'Pendente';
+    }},
   ] as ColumnMapping[],
   templateColumns: [
-    { key: 'date', label: 'Data' },
-    { key: 'value', label: 'Valor' },
+    { key: 'contract_id', label: 'Contrato' },
+    { key: 'employee_id', label: 'Colaborador' },
+    { key: 'intranet', label: 'Intranet' },
+    { key: 'request_date', label: 'Data Solicitação' },
+    { key: 'requested_value', label: 'Valor Solicitado' },
     { key: 'reason', label: 'Motivo' },
+    { key: 'closing_date', label: 'Data Fechamento' },
+    { key: 'proven_value', label: 'Valor Comprovado' },
     { key: 'status', label: 'Status' },
   ],
 };
