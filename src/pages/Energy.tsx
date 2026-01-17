@@ -38,6 +38,13 @@ export default function Energy() {
   const [unitImportOpen, setUnitImportOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
+  // State for pre-filling bill form from dashboard
+  const [prefillBillData, setPrefillBillData] = useState<{
+    consumerUnit?: string;
+    referenceMonth?: string;
+    contractId?: string | null;
+  } | null>(null);
+
   const [selectedBill, setSelectedBill] = useState<any>(null);
   const [selectedSupplier, setSelectedSupplier] = useState<EnergySupplier | null>(null);
   const [selectedUnit, setSelectedUnit] = useState<EnergyConsumerUnit | null>(null);
@@ -151,6 +158,7 @@ export default function Energy() {
   };
 
   const handleEditBill = (bill: any) => {
+    setPrefillBillData(null);
     setSelectedBill(bill);
     setFormOpen(true);
   };
@@ -159,6 +167,18 @@ export default function Energy() {
     setSelectedBill(bill);
     setDeleteContext('bill');
     setDeleteOpen(true);
+  };
+
+  // Callback from dashboard to create a new bill with prefilled data
+  const handleCreateBillFromDashboard = (consumerUnit: string, referenceMonth: string, contractId: string | null) => {
+    setPrefillBillData({ consumerUnit, referenceMonth, contractId });
+    setSelectedBill(null);
+    setFormOpen(true);
+  };
+
+  // Callback from dashboard to edit an existing bill
+  const handleEditBillFromDashboard = (bill: any) => {
+    handleEditBill(bill);
   };
 
   const confirmDelete = () => {
@@ -315,7 +335,10 @@ export default function Energy() {
         </TabsContent>
 
         <TabsContent value="dashboard">
-          <EnergyDashboard />
+          <EnergyDashboard
+            onCreateBill={handleCreateBillFromDashboard}
+            onEditBill={handleEditBillFromDashboard}
+          />
         </TabsContent>
       </Tabs>
 
@@ -333,8 +356,12 @@ export default function Energy() {
 
       <EnergyForm
         open={formOpen}
-        onOpenChange={setFormOpen}
+        onOpenChange={(open) => {
+          setFormOpen(open);
+          if (!open) setPrefillBillData(null);
+        }}
         bill={selectedBill}
+        prefillData={prefillBillData}
       />
 
       <DeleteDialog

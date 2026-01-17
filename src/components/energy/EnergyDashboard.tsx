@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
   SelectContent,
@@ -18,15 +19,23 @@ import {
   ChartTooltipContent,
 } from '@/components/ui/chart';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, PieChart, Pie, Cell, CartesianGrid } from 'recharts';
-import { DollarSign, TrendingUp, FileText, Filter } from 'lucide-react';
+import { DollarSign, TrendingUp, FileText, Filter, CalendarCheck, BarChart3 } from 'lucide-react';
 import { useEnergyBills } from '@/hooks/useEnergyBills';
+import { useEnergyConsumerUnits } from '@/hooks/useEnergyConsumerUnits';
 import { useContracts } from '@/hooks/useContracts';
 import { useEquipment } from '@/hooks/useEquipment';
+import { EnergyBillingStatusGrid } from './EnergyBillingStatusGrid';
 
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
 
-export function EnergyDashboard() {
+interface EnergyDashboardProps {
+  onCreateBill?: (consumerUnit: string, referenceMonth: string, contractId: string | null) => void;
+  onEditBill?: (bill: any) => void;
+}
+
+export function EnergyDashboard({ onCreateBill, onEditBill }: EnergyDashboardProps) {
   const { energyBills } = useEnergyBills();
+  const { consumerUnits } = useEnergyConsumerUnits();
   const { contracts } = useContracts();
   const { equipment } = useEquipment();
 
@@ -96,171 +105,196 @@ export function EnergyDashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Filtros */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Filter className="h-4 w-4" />
-            Filtros do Dashboard - Energia
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="space-y-2">
-              <Label>Período</Label>
-              <div className="flex gap-2">
-                <Input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="flex-1"
-                />
-                <Input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="flex-1"
-                />
+      <Tabs defaultValue="status" className="w-full">
+        <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsTrigger value="status" className="flex items-center gap-2">
+            <CalendarCheck className="h-4 w-4" />
+            Status de Faturas
+          </TabsTrigger>
+          <TabsTrigger value="analytics" className="flex items-center gap-2">
+            <BarChart3 className="h-4 w-4" />
+            Análises
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="status" className="mt-6">
+          <EnergyBillingStatusGrid
+            consumerUnits={consumerUnits}
+            energyBills={energyBills}
+            contracts={contracts}
+            onCreateBill={onCreateBill}
+            onEditBill={onEditBill}
+          />
+        </TabsContent>
+
+        <TabsContent value="analytics" className="mt-6 space-y-6">
+          {/* Filtros */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Filter className="h-4 w-4" />
+                Filtros do Dashboard - Energia
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="space-y-2">
+                  <Label>Período</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="flex-1"
+                    />
+                    <Input
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="flex-1"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Contrato</Label>
+                  <Select value={selectedContract} onValueChange={setSelectedContract}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Todos os Contratos" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos os Contratos</SelectItem>
+                      {contracts.map((c) => (
+                        <SelectItem key={c.id} value={c.id}>
+                          {c.number} - {c.client_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Equipamento</Label>
+                  <Select value={selectedEquipment} onValueChange={setSelectedEquipment}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Todos os Equipamentos" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos os Equipamentos</SelectItem>
+                      {equipment.map((e) => (
+                        <SelectItem key={e.id} value={e.id}>
+                          {e.serial_number}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex items-end">
+                  <Button variant="outline" onClick={clearFilters} className="w-full">
+                    Limpar Filtros
+                  </Button>
+                </div>
               </div>
-            </div>
+            </CardContent>
+          </Card>
 
-            <div className="space-y-2">
-              <Label>Contrato</Label>
-              <Select value={selectedContract} onValueChange={setSelectedContract}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Todos os Contratos" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os Contratos</SelectItem>
-                  {contracts.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {c.number} - {c.client_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          {/* Cards de resumo */}
+          <div className="grid gap-4 md:grid-cols-3">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total das Faturas</CardTitle>
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-primary">
+                  {totalValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                </div>
+                <p className="text-xs text-muted-foreground">Valor total em energia</p>
+              </CardContent>
+            </Card>
 
-            <div className="space-y-2">
-              <Label>Equipamento</Label>
-              <Select value={selectedEquipment} onValueChange={setSelectedEquipment}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Todos os Equipamentos" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os Equipamentos</SelectItem>
-                  {equipment.map((e) => (
-                    <SelectItem key={e.id} value={e.id}>
-                      {e.serial_number}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Média das Faturas</CardTitle>
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-chart-2">
+                  {avgValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                </div>
+                <p className="text-xs text-muted-foreground">Média por fatura</p>
+              </CardContent>
+            </Card>
 
-            <div className="flex items-end">
-              <Button variant="outline" onClick={clearFilters} className="w-full">
-                Limpar Filtros
-              </Button>
-            </div>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total de Faturas</CardTitle>
+                <FileText className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-chart-3">{totalBills}</div>
+                <p className="text-xs text-muted-foreground">Faturas processadas</p>
+              </CardContent>
+            </Card>
           </div>
-        </CardContent>
-      </Card>
 
-      {/* Cards de resumo */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total das Faturas</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-primary">
-              {totalValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-            </div>
-            <p className="text-xs text-muted-foreground">Valor total em energia</p>
-          </CardContent>
-        </Card>
+          {/* Gráficos */}
+          <div className="grid gap-6 md:grid-cols-2">
+            {/* Gasto por Contrato */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Gasto por Contrato</CardTitle>
+                <CardDescription>Ranking dos contratos com maiores gastos</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ChartContainer config={chartConfig} className="h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={expensesByContract} layout="vertical">
+                      <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
+                      <XAxis type="number" tickFormatter={(v) => `R$ ${(v / 1000).toFixed(0)}k`} />
+                      <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 12 }} />
+                      <ChartTooltip
+                        content={<ChartTooltipContent />}
+                        formatter={(value: number) =>
+                          value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+                        }
+                      />
+                      <Bar dataKey="value" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
+              </CardContent>
+            </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Média das Faturas</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-chart-2">
-              {avgValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-            </div>
-            <p className="text-xs text-muted-foreground">Média por fatura</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total de Faturas</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-chart-3">{totalBills}</div>
-            <p className="text-xs text-muted-foreground">Faturas processadas</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Gráficos */}
-      <div className="grid gap-6 md:grid-cols-2">
-        {/* Gasto por Contrato */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Gasto por Contrato</CardTitle>
-            <CardDescription>Ranking dos contratos com maiores gastos</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ChartContainer config={chartConfig} className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={expensesByContract} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
-                  <XAxis type="number" tickFormatter={(v) => `R$ ${(v / 1000).toFixed(0)}k`} />
-                  <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 12 }} />
-                  <ChartTooltip
-                    content={<ChartTooltipContent />}
-                    formatter={(value: number) =>
-                      value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-                    }
-                  />
-                  <Bar dataKey="value" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </ChartContainer>
-          </CardContent>
-        </Card>
-
-        {/* Total de Gastos por Mês */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Total de Gastos por Mês</CardTitle>
-            <CardDescription>Evolução mensal dos gastos com energia</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ChartContainer config={chartConfig} className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={expensesByMonth}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                  <YAxis tickFormatter={(v) => `R$ ${(v / 1000).toFixed(0)}k`} />
-                  <ChartTooltip
-                    content={<ChartTooltipContent />}
-                    formatter={(value: number) =>
-                      value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-                    }
-                  />
-                  <Bar dataKey="value" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </ChartContainer>
-          </CardContent>
-        </Card>
-      </div>
+            {/* Total de Gastos por Mês */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Total de Gastos por Mês</CardTitle>
+                <CardDescription>Evolução mensal dos gastos com energia</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ChartContainer config={chartConfig} className="h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={expensesByMonth}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                      <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                      <YAxis tickFormatter={(v) => `R$ ${(v / 1000).toFixed(0)}k`} />
+                      <ChartTooltip
+                        content={<ChartTooltipContent />}
+                        formatter={(value: number) =>
+                          value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+                        }
+                      />
+                      <Bar dataKey="value" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
