@@ -16,6 +16,7 @@ const formSchema = z.object({
   connection_id: z.string().min(1, 'Conexão é obrigatória'),
   reference_month: z.string().min(1, 'Mês de referência é obrigatório'),
   value: z.string().min(1, 'Valor é obrigatório'),
+  status: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -38,6 +39,7 @@ export function InternetBillForm({ open, onOpenChange, bill }: InternetBillFormP
       connection_id: '',
       reference_month: '',
       value: '',
+      status: 'pending',
     },
   });
 
@@ -47,12 +49,14 @@ export function InternetBillForm({ open, onOpenChange, bill }: InternetBillFormP
         connection_id: (bill as any).connection_id || '',
         reference_month: bill.reference_month,
         value: bill.value?.toString() || '',
+        status: bill.status || 'pending',
       });
     } else {
       form.reset({
         connection_id: '',
         reference_month: '',
         value: '',
+        status: 'pending',
       });
     }
   }, [bill, form]);
@@ -71,6 +75,7 @@ export function InternetBillForm({ open, onOpenChange, bill }: InternetBillFormP
       value: parseFloat(data.value),
       contract_id: connection?.contract_id || null,
       connection_id: data.connection_id,
+      status: data.status || 'pending',
     };
 
     if (bill) {
@@ -135,6 +140,28 @@ export function InternetBillForm({ open, onOpenChange, bill }: InternetBillFormP
                   <FormControl>
                     <Input type="number" step="0.01" placeholder="0.00" {...field} />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="status"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Status</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o status" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="pending">Pendente</SelectItem>
+                      <SelectItem value="sent">Enviada</SelectItem>
+                      <SelectItem value="zeroed">Zerada</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
