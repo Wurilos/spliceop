@@ -1,7 +1,8 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
+import { useHoverPrefetch } from '@/hooks/usePrefetch';
 import spliceIcon from '@/assets/splice-icon.png';
 import {
   Sidebar,
@@ -59,6 +60,16 @@ import {
   List,
   Smartphone,
 } from 'lucide-react';
+
+// Map hrefs to prefetch module names
+const hrefToPrefetchModule: Record<string, string> = {
+  '/contracts': 'contracts',
+  '/employees': 'employees',
+  '/equipment': 'equipment',
+  '/vehicles': 'vehicles',
+  '/fuel': 'fuel',
+  '/invoices': 'invoices',
+};
 
 const menuGroups = [
   {
@@ -133,6 +144,7 @@ const menuGroups = [
 export function AppSidebar() {
   const location = useLocation();
   const { user, signOut, isAdmin, role } = useAuth();
+  const { prefetchModule } = useHoverPrefetch();
   const activeItemRef = useRef<HTMLLIElement>(null);
 
   const userInitials = user?.user_metadata?.full_name
@@ -148,6 +160,14 @@ export function AppSidebar() {
       activeItemRef.current.scrollIntoView({ block: 'center', behavior: 'smooth' });
     }
   }, [location.pathname]);
+
+  // Prefetch data on hover for faster navigation
+  const handleMouseEnter = useCallback((href: string) => {
+    const moduleName = hrefToPrefetchModule[href];
+    if (moduleName) {
+      prefetchModule(moduleName);
+    }
+  }, [prefetchModule]);
 
   return (
     <Sidebar>
@@ -173,6 +193,7 @@ export function AppSidebar() {
                     <SidebarMenuItem 
                       key={item.href}
                       ref={isActive ? activeItemRef : null}
+                      onMouseEnter={() => handleMouseEnter(item.href)}
                     >
                       <SidebarMenuButton
                         asChild
