@@ -212,6 +212,8 @@ export function useKanbanIssues() {
       queryClient.invalidateQueries({ queryKey: ['kanban_issues'] });
       queryClient.invalidateQueries({ queryKey: ['issue_history'] });
       queryClient.invalidateQueries({ queryKey: ['archived-issues'] });
+      queryClient.invalidateQueries({ queryKey: ['kanban_subitems_all'] });
+      toast.success('Demanda movida com sucesso!');
     },
     onError: () => toast.error('Erro ao mover demanda'),
   });

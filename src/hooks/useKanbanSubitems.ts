@@ -102,10 +102,12 @@ export function useAllKanbanSubitems() {
       const { data, error } = await supabase
         .from('kanban_subitems')
         .select('*, kanban_columns(title)')
+        .eq('is_active', true)
         .order('order_index', { ascending: true });
       if (error) throw error;
       return data as (KanbanSubitem & { kanban_columns: { title: string } | null })[];
     },
+    staleTime: 1000 * 60 * 5,
   });
 
   // Agrupar por column_id
