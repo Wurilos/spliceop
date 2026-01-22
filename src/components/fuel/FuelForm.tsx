@@ -19,7 +19,7 @@ const schema = z.object({
   liters: z.coerce.number().min(0.01, 'Litros deve ser maior que 0'),
   price_per_liter: z.coerce.number().min(0).optional(),
   total_value: z.coerce.number().min(0).optional(),
-  odometer: z.coerce.number().min(0).optional(),
+  municipality: z.string().optional(),
   station: z.string().optional(),
 });
 
@@ -33,13 +33,13 @@ interface FuelFormProps {
   loading?: boolean;
 }
 
-const fuelTypes = ['Gasolina', 'Etanol', 'Diesel', 'GNV', 'Flex'];
+const itemTypes = ['Gasolina', 'Etanol', 'Diesel', 'GNV', 'Flex', 'Lava-Rápido', 'Aditivos e Lubrificantes'];
 
 export function FuelForm({ open, onOpenChange, onSubmit, initialData, loading }: FuelFormProps) {
   const { vehicles } = useVehicles();
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { vehicle_id: '', date: new Date().toISOString().split('T')[0], fuel_type: '', liters: 0, price_per_liter: 0, total_value: 0, odometer: 0, station: '' },
+    defaultValues: { vehicle_id: '', date: new Date().toISOString().split('T')[0], fuel_type: '', liters: 0, price_per_liter: 0, total_value: 0, municipality: '', station: '' },
   });
 
   useEffect(() => {
@@ -51,11 +51,11 @@ export function FuelForm({ open, onOpenChange, onSubmit, initialData, loading }:
         liters: Number(initialData.liters) || 0,
         price_per_liter: Number(initialData.price_per_liter) || 0,
         total_value: Number(initialData.total_value) || 0,
-        odometer: initialData.odometer || 0,
+        municipality: initialData.municipality || '',
         station: initialData.station || '',
       });
     } else {
-      form.reset({ vehicle_id: '', date: new Date().toISOString().split('T')[0], fuel_type: '', liters: 0, price_per_liter: 0, total_value: 0, odometer: 0, station: '' });
+      form.reset({ vehicle_id: '', date: new Date().toISOString().split('T')[0], fuel_type: '', liters: 0, price_per_liter: 0, total_value: 0, municipality: '', station: '' });
     }
   }, [initialData, form]);
 
@@ -92,10 +92,10 @@ export function FuelForm({ open, onOpenChange, onSubmit, initialData, loading }:
               )} />
               <FormField control={form.control} name="fuel_type" render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Combustível</FormLabel>
+                  <FormLabel>Item</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl><SelectTrigger><SelectValue placeholder="Tipo" /></SelectTrigger></FormControl>
-                    <SelectContent>{fuelTypes.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+                    <SelectContent>{itemTypes.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
                   </Select>
                   <FormMessage />
                 </FormItem>
@@ -113,8 +113,8 @@ export function FuelForm({ open, onOpenChange, onSubmit, initialData, loading }:
               )} />
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <FormField control={form.control} name="odometer" render={({ field }) => (
-                <FormItem><FormLabel>Km Atual</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+              <FormField control={form.control} name="municipality" render={({ field }) => (
+                <FormItem><FormLabel>Município</FormLabel><FormControl><Input placeholder="Nome do município" {...field} /></FormControl><FormMessage /></FormItem>
               )} />
               <FormField control={form.control} name="station" render={({ field }) => (
                 <FormItem><FormLabel>Posto</FormLabel><FormControl><Input placeholder="Nome do posto" {...field} /></FormControl><FormMessage /></FormItem>
