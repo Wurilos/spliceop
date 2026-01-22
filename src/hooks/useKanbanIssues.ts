@@ -61,10 +61,11 @@ export function useKanbanIssues() {
         `)
         .order('created_at', { ascending: false });
       if (error) throw error;
-      return data as KanbanIssue[];
+      return (data as KanbanIssue[]) ?? [];
     },
     staleTime: 1000 * 60 * 2,
     gcTime: 1000 * 60 * 5,
+    refetchOnMount: 'always',
   });
 
   const createMutation = useMutation({

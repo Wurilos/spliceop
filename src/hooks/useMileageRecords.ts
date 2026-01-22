@@ -19,10 +19,11 @@ export function useMileageRecords() {
         .select('*, vehicles!fk_mileage_records_vehicle(plate, brand, model), teams(id, name)')
         .order('date', { ascending: false });
       if (error) throw error;
-      return data;
+      return data ?? [];
     },
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 2,
     gcTime: 1000 * 60 * 10,
+    refetchOnMount: 'always',
   });
 
   const createMutation = useMutation({

@@ -33,8 +33,11 @@ export function useArchivedIssues() {
         .order('archived_at', { ascending: false });
 
       if (error) throw error;
-      return data as ArchivedIssue[];
+      return (data as ArchivedIssue[]) ?? [];
     },
+    staleTime: 1000 * 60 * 2,
+    gcTime: 1000 * 60 * 10,
+    refetchOnMount: 'always',
   });
 
   // Stats for charts

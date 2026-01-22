@@ -25,8 +25,11 @@ export function useChipNumbers() {
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data as ChipNumber[];
+      return (data as ChipNumber[]) ?? [];
     },
+    staleTime: 1000 * 60 * 2,
+    gcTime: 1000 * 60 * 10,
+    refetchOnMount: 'always',
   });
 
   const createMutation = useMutation({
