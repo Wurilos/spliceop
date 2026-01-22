@@ -84,8 +84,8 @@ const menuGroups = [
     label: 'Pendências',
     items: [
       { title: 'Dashboard', href: '/issues-dashboard', icon: LayoutDashboard },
-      { title: 'Kanban', href: '/kanban', icon: Kanban },
-      { title: 'Itens Kanban', href: '/kanban-items', icon: List },
+      { title: 'Criar Pendências', href: '/kanban', icon: Kanban },
+      { title: 'Itens Pendências', href: '/kanban-items', icon: List },
     ],
   },
   {

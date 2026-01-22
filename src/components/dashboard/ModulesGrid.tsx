@@ -63,8 +63,8 @@ const modules: Module[] = [
   { title: 'Infraestrutura', description: 'Serviços de campo', href: '/infrastructure', icon: Building2, color: 'bg-primary/10 text-primary' },
   { title: 'Lacres', description: 'Controle de lacres', href: '/seals', icon: Lock, color: 'bg-success/10 text-success' },
   { title: 'Adiantamentos', description: 'Controle financeiro', href: '/advances', icon: DollarSign, color: 'bg-warning/10 text-warning' },
-  { title: 'Kanban', description: 'Gestão de demandas', href: '/kanban', icon: Kanban, color: 'bg-info/10 text-info' },
-  { title: 'Colunas Kanban', description: 'Configurar colunas', href: '/kanban-items', icon: Settings, color: 'bg-primary/10 text-primary' },
+  { title: 'Criar Pendências', description: 'Gestão de demandas', href: '/kanban', icon: Kanban, color: 'bg-info/10 text-info' },
+  { title: 'Itens Pendências', description: 'Configurar colunas', href: '/kanban-items', icon: Settings, color: 'bg-primary/10 text-primary' },
   
   { title: 'Alertas', description: 'Alertas do sistema', href: '/alerts', icon: Bell, color: 'bg-warning/10 text-warning' },
   { title: 'Auditoria', description: 'Log de ações', href: '/audit-log', icon: History, color: 'bg-muted-foreground/10 text-muted-foreground' },
