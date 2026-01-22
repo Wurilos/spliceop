@@ -359,8 +359,8 @@ export const fuelImportConfig = {
     { excelColumn: 'Litros', dbColumn: 'liters', required: true, transform: toNumber },
     { excelColumn: 'Preço/Litro', dbColumn: 'price_per_liter', transform: toNumber },
     { excelColumn: 'Valor Total', dbColumn: 'total_value', transform: toNumber },
-    { excelColumn: 'Odômetro', dbColumn: 'odometer', transform: toInteger },
-    { excelColumn: 'Tipo Combustível', dbColumn: 'fuel_type', transform: toString },
+    { excelColumn: 'Município', dbColumn: 'municipality', transform: toString },
+    { excelColumn: 'Item', dbColumn: 'fuel_type', transform: toString },
     { excelColumn: 'Posto', dbColumn: 'station', transform: toString },
   ] as ColumnMapping[],
   templateColumns: [
@@ -369,8 +369,8 @@ export const fuelImportConfig = {
     { key: 'liters', label: 'Litros' },
     { key: 'price_per_liter', label: 'Preço/Litro' },
     { key: 'total_value', label: 'Valor Total' },
-    { key: 'odometer', label: 'Odômetro' },
-    { key: 'fuel_type', label: 'Tipo Combustível' },
+    { key: 'municipality', label: 'Município' },
+    { key: 'fuel_type', label: 'Item' },
     { key: 'station', label: 'Posto' },
   ],
 };

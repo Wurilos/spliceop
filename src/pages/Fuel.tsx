@@ -21,12 +21,12 @@ type FuelRecord = Tables<'fuel_records'> & { vehicles?: { plate: string; brand: 
 const columns: Column<FuelRecord>[] = [
   { key: 'date', label: 'Data', render: (v) => format(new Date(String(v)), 'dd/MM/yyyy') },
   { key: 'vehicles.plate', label: 'Veículo', render: (_, row) => row.vehicles?.plate || '-' },
-  { key: 'fuel_type', label: 'Combustível' },
+  { key: 'fuel_type', label: 'Item' },
   { key: 'liters', label: 'Litros', render: (v) => `${Number(v).toFixed(2)} L` },
   { key: 'price_per_liter', label: 'R$/L', render: (v) => v ? `R$ ${Number(v).toFixed(2)}` : '-' },
   { key: 'total_value', label: 'Total', render: (v) => v ? `R$ ${Number(v).toFixed(2)}` : '-' },
   { key: 'station', label: 'Posto' },
-  { key: 'odometer', label: 'Km', render: (v) => v ? `${Number(v).toLocaleString()} km` : '-' },
+  { key: 'municipality', label: 'Município' },
 ];
 
 export default function Fuel() {

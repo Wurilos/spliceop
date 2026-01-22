@@ -255,8 +255,8 @@ export function FuelDashboard({ records }: FuelDashboardProps) {
       {/* Station Rankings */}
       <Card>
         <CardHeader>
-          <CardTitle>Ranking de Postos Mais Caros por Tipo de Combustível</CardTitle>
-          <CardDescription>Top 5 postos com maiores gastos por combustível</CardDescription>
+          <CardTitle>Ranking de Postos Mais Caros por Item</CardTitle>
+          <CardDescription>Top 5 postos com maiores gastos por item</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -280,11 +280,11 @@ export function FuelDashboard({ records }: FuelDashboardProps) {
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Fuel Type Distribution */}
+        {/* Item Type Distribution */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              Combustível Mais Utilizado
+              Itens Mais Utilizados
               <span className="text-xs font-normal text-muted-foreground">(clique para filtrar)</span>
             </CardTitle>
           </CardHeader>

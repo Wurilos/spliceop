@@ -766,7 +766,7 @@ export type Database = {
           fuel_type: string | null
           id: string
           liters: number
-          odometer: number | null
+          municipality: string | null
           price_per_liter: number | null
           station: string | null
           total_value: number | null
@@ -778,7 +778,7 @@ export type Database = {
           fuel_type?: string | null
           id?: string
           liters: number
-          odometer?: number | null
+          municipality?: string | null
           price_per_liter?: number | null
           station?: string | null
           total_value?: number | null
@@ -790,7 +790,7 @@ export type Database = {
           fuel_type?: string | null
           id?: string
           liters?: number
-          odometer?: number | null
+          municipality?: string | null
           price_per_liter?: number | null
           station?: string | null
           total_value?: number | null
