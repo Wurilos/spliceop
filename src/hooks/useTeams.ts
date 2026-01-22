@@ -33,10 +33,11 @@ export function useTeams() {
         .select('*')
         .order('name', { ascending: true });
       if (error) throw error;
-      return data as Team[];
+      return (data as Team[]) ?? [];
     },
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 2,
     gcTime: 1000 * 60 * 10,
+    refetchOnMount: 'always',
   });
 
   const createMutation = useMutation({

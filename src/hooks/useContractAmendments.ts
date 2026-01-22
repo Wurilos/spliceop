@@ -43,14 +43,14 @@ export function useContractAmendments(contractId?: string) {
       
       const { data, error } = await queryBuilder;
       if (error) throw error;
-      return data as ContractAmendment[];
+      return (data as ContractAmendment[]) ?? [];
     },
     enabled: contractId !== undefined || contractId === undefined,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    gcTime: 1000 * 60 * 10, // 10 minutes
+    staleTime: 1000 * 60 * 2,
+    gcTime: 1000 * 60 * 10,
+    refetchOnMount: 'always',
   });
 
-  // Query para buscar todos os aditivos (para uso no dashboard)
   const allAmendmentsQuery = useQuery({
     queryKey: ['contract_amendments', 'all'],
     queryFn: async () => {
@@ -59,10 +59,11 @@ export function useContractAmendments(contractId?: string) {
         .select('*')
         .order('amendment_number', { ascending: false });
       if (error) throw error;
-      return data as ContractAmendment[];
+      return (data as ContractAmendment[]) ?? [];
     },
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    gcTime: 1000 * 60 * 10, // 10 minutes
+    staleTime: 1000 * 60 * 2,
+    gcTime: 1000 * 60 * 10,
+    refetchOnMount: 'always',
   });
 
   const createMutation = useMutation({

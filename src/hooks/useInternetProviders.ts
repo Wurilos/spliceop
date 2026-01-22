@@ -22,8 +22,11 @@ export function useInternetProviders() {
         .select('*')
         .order('name', { ascending: true });
       if (error) throw error;
-      return data as InternetProvider[];
+      return (data as InternetProvider[]) ?? [];
     },
+    staleTime: 1000 * 60 * 2,
+    gcTime: 1000 * 60 * 10,
+    refetchOnMount: 'always',
   });
 
   const createMutation = useMutation({

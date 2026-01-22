@@ -19,10 +19,11 @@ export function useInvoices() {
         .select('*, contracts!fk_invoices_contract(number, client_name)')
         .order('issue_date', { ascending: false });
       if (error) throw error;
-      return data;
+      return data ?? [];
     },
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    gcTime: 1000 * 60 * 10, // 10 minutes
+    staleTime: 1000 * 60 * 2,
+    gcTime: 1000 * 60 * 10,
+    refetchOnMount: 'always',
   });
 
   const createMutation = useMutation({

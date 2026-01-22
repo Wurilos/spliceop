@@ -25,8 +25,11 @@ export function useComponents() {
         .select('*')
         .order('name', { ascending: true });
       if (error) throw error;
-      return data as Component[];
+      return (data as Component[]) ?? [];
     },
+    staleTime: 1000 * 60 * 2,
+    gcTime: 1000 * 60 * 10,
+    refetchOnMount: 'always',
   });
 
   const createMutation = useMutation({

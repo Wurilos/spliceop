@@ -19,8 +19,11 @@ export function useServiceCalls() {
         .select('*, contracts!fk_service_calls_contract(number, client_name), equipment!fk_service_calls_equipment(serial_number), employees!fk_service_calls_employee(full_name)')
         .order('date', { ascending: false });
       if (error) throw error;
-      return data;
+      return data ?? [];
     },
+    staleTime: 1000 * 60 * 2,
+    gcTime: 1000 * 60 * 10,
+    refetchOnMount: 'always',
   });
 
   const createMutation = useMutation({

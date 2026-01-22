@@ -27,8 +27,11 @@ export function useInfrastructureServices() {
         .select('*, contracts!fk_infrastructure_services_contract(client_name, number)')
         .order('date', { ascending: false });
       if (error) throw error;
-      return data as InfrastructureService[];
+      return (data as InfrastructureService[]) ?? [];
     },
+    staleTime: 1000 * 60 * 2,
+    gcTime: 1000 * 60 * 10,
+    refetchOnMount: 'always',
   });
 
   const createMutation = useMutation({

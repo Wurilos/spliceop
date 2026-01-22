@@ -19,8 +19,11 @@ export function useCalibrations() {
         .select('*, equipment!fk_calibrations_equipment(serial_number, type, brand, contract_id, lanes_qty)')
         .order('calibration_date', { ascending: false });
       if (error) throw error;
-      return data;
+      return data ?? [];
     },
+    staleTime: 1000 * 60 * 2,
+    gcTime: 1000 * 60 * 10,
+    refetchOnMount: 'always',
   });
 
   const createMutation = useMutation({

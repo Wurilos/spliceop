@@ -19,10 +19,11 @@ export function useVehicles() {
         .select('*, contracts!fk_vehicles_contract(number, client_name)')
         .order('created_at', { ascending: false });
       if (error) throw error;
-      return data;
+      return data ?? [];
     },
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 2,
     gcTime: 1000 * 60 * 10,
+    refetchOnMount: 'always',
   });
 
   const createMutation = useMutation({

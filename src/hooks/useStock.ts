@@ -25,8 +25,11 @@ export function useStock() {
         .select('*, contracts(client_name, number), components(name, type)')
         .order('created_at', { ascending: false });
       if (error) throw error;
-      return data as Stock[];
+      return (data as Stock[]) ?? [];
     },
+    staleTime: 1000 * 60 * 2,
+    gcTime: 1000 * 60 * 10,
+    refetchOnMount: 'always',
   });
 
   const createMutation = useMutation({

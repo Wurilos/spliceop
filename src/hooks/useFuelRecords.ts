@@ -19,10 +19,11 @@ export function useFuelRecords() {
         .select('*, vehicles!fk_fuel_records_vehicle(plate, brand, model, contract_id)')
         .order('date', { ascending: false });
       if (error) throw error;
-      return data;
+      return data ?? [];
     },
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 2,
     gcTime: 1000 * 60 * 10,
+    refetchOnMount: 'always',
   });
 
   const createMutation = useMutation({

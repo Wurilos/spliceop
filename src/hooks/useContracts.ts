@@ -19,10 +19,11 @@ export function useContracts() {
         .select('*')
         .order('created_at', { ascending: false });
       if (error) throw error;
-      return data as Contract[];
+      return (data as Contract[]) ?? [];
     },
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    gcTime: 1000 * 60 * 10, // 10 minutes
+    staleTime: 1000 * 60 * 2,
+    gcTime: 1000 * 60 * 10,
+    refetchOnMount: 'always',
   });
 
   const createMutation = useMutation({
