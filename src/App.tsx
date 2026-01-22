@@ -56,18 +56,20 @@ const PageLoader = () => (
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      // Default: 3 minutes stale, 10 minutes cache
-      staleTime: 1000 * 60 * 3,
+      // Default: 2 minutes stale, 10 minutes cache
+      staleTime: 1000 * 60 * 2,
       gcTime: 1000 * 60 * 10,
-      retry: 1,
-      refetchOnWindowFocus: false,
+      retry: 2,
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
+      refetchOnWindowFocus: true,
       refetchOnReconnect: true,
+      refetchOnMount: true,
       // Reduce network requests by keeping previous data while refetching
       placeholderData: (previousData: unknown) => previousData,
     },
     mutations: {
       // Show optimistic updates faster
-      retry: 0,
+      retry: 1,
     },
   },
 });
