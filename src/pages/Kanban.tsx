@@ -95,7 +95,7 @@ export default function Kanban() {
           <div className="p-6 border-b border-border">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h1 className="text-2xl font-bold text-foreground">Kanban Operacional</h1>
+                <h1 className="text-2xl font-bold text-foreground">Criar Pendências</h1>
                 <p className="text-sm text-muted-foreground">
                   Gerencie demandas e ordens de serviço
                 </p>

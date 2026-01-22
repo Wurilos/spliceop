@@ -151,9 +151,9 @@ export default function KanbanItems() {
       <div className="p-6">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Itens do Kanban</h1>
+            <h1 className="text-2xl font-bold text-foreground">Itens Pendências</h1>
             <p className="text-sm text-muted-foreground">
-              Gerencie os itens do quadro operacional
+              Gerencie os itens do quadro de pendências
             </p>
           </div>
           <Button onClick={() => setShowForm(true)}>
@@ -163,7 +163,7 @@ export default function KanbanItems() {
         </div>
 
         <p className="text-sm text-primary mb-6">
-          Configure as colunas que aparecem no Kanban e os tipos de demanda disponíveis. Arraste os itens para reordenar.
+          Configure as colunas que aparecem no quadro de pendências e os tipos de demanda disponíveis. Arraste os itens para reordenar.
         </p>
 
         {isLoading ? (
