@@ -289,15 +289,15 @@ export function FuelDashboard({ records }: FuelDashboardProps) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
+            <ResponsiveContainer width="100%" height={320}>
               <PieChart>
                 <Pie
                   data={fuelTypeData}
                   cx="50%"
-                  cy="50%"
-                  outerRadius={80}
+                  cy="45%"
+                  innerRadius={50}
+                  outerRadius={90}
                   dataKey="value"
-                  label={({ name, value }) => `${name}: ${value}L`}
                   onClick={handleFuelTypeClick}
                   style={{ cursor: 'pointer' }}
                 >
@@ -309,7 +309,12 @@ export function FuelDashboard({ records }: FuelDashboardProps) {
                   })}
                 </Pie>
                 <Tooltip formatter={(value: number) => [`${value.toLocaleString('pt-BR')}L`, 'Litros']} />
-                <Legend />
+                <Legend 
+                  layout="horizontal" 
+                  verticalAlign="bottom" 
+                  align="center"
+                  wrapperStyle={{ paddingTop: 20 }}
+                />
               </PieChart>
             </ResponsiveContainer>
           </CardContent>
