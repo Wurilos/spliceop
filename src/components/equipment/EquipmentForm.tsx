@@ -69,9 +69,9 @@ const equipmentTypes = [
 
 const brands = ['Splice', 'Focalle'];
 
-const communicationTypes = ['3G', '4G', '5G', 'WiFi', 'Fibra Óptica', 'Rádio', 'Satélite'];
+const communicationTypes = ['Modem', 'Satélite', '3G', '4G', '5G', 'WiFi', 'Fibra Óptica', 'Rádio'];
 
-const energyTypes = ['Rede Elétrica', 'Solar', 'Bateria', 'Híbrido'];
+const energyTypes = ['Convencional', 'Solar', 'Rede Elétrica', 'Bateria', 'Híbrido'];
 
 export function EquipmentForm({
   open,
