@@ -67,7 +67,7 @@ const equipmentTypes = [
   'Detector de Avanço',
 ];
 
-const brands = ['Perkons', 'Velsis', 'Kapsch', 'Tecnoradar', 'Autotrac', 'Outro'];
+const brands = ['Splice', 'Focalle'];
 
 const communicationTypes = ['3G', '4G', '5G', 'WiFi', 'Fibra Óptica', 'Rádio', 'Satélite'];
 
