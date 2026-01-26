@@ -71,7 +71,7 @@ const brands = ['Splice', 'Focalle'];
 
 const communicationTypes = ['Modem', 'Satélite', '3G', '4G', '5G', 'WiFi', 'Fibra Óptica', 'Rádio'];
 
-const energyTypes = ['Convencional', 'Solar', 'Rede Elétrica', 'Bateria', 'Híbrido'];
+const energyTypes = ['Convencional', 'Solar'];
 
 export function EquipmentForm({
   open,
@@ -105,19 +105,27 @@ export function EquipmentForm({
 
   useEffect(() => {
     if (initialData) {
+      // Converter date (YYYY-MM-DD) para datetime-local (YYYY-MM-DDTHH:mm)
+      let installationDateForInput = '';
+      if (initialData.installation_date) {
+        const dateStr = String(initialData.installation_date);
+        // Se já tem T, é datetime, senão adiciona T00:00
+        installationDateForInput = dateStr.includes('T') ? dateStr.slice(0, 16) : `${dateStr}T00:00`;
+      }
+      
       form.reset({
         contract_id: initialData.contract_id || '',
         serial_number: initialData.serial_number || '',
         model: initialData.model || '',
         address: initialData.address || '',
-        direction: (initialData as any).direction || '',
-        lanes_qty: (initialData as any).lanes_qty || undefined,
-        speed_limit: (initialData as any).speed_limit || undefined,
-        communication_type: (initialData as any).communication_type || '',
-        energy_type: (initialData as any).energy_type || '',
+        direction: initialData.direction || '',
+        lanes_qty: initialData.lanes_qty || undefined,
+        speed_limit: initialData.speed_limit || undefined,
+        communication_type: initialData.communication_type || '',
+        energy_type: initialData.energy_type || '',
         brand: initialData.brand || '',
         type: initialData.type || '',
-        installation_date: initialData.installation_date || '',
+        installation_date: installationDateForInput,
         latitude: initialData.latitude ? Number(initialData.latitude) : undefined,
         longitude: initialData.longitude ? Number(initialData.longitude) : undefined,
         status: initialData.status || 'active',
