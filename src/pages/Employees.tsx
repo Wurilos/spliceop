@@ -68,12 +68,20 @@ export default function Employees() {
 
   const handleFormSubmit = (data: Partial<Employee>) => {
     if (editingEmployee) {
-      update({ id: editingEmployee.id, ...data });
+      update({ id: editingEmployee.id, ...data }, {
+        onSuccess: () => {
+          setFormOpen(false);
+          setEditingEmployee(null);
+        },
+      });
     } else {
-      create(data as any);
+      create(data as any, {
+        onSuccess: () => {
+          setFormOpen(false);
+          setEditingEmployee(null);
+        },
+      });
     }
-    setFormOpen(false);
-    setEditingEmployee(null);
   };
 
   const handleImport = async (rows: any[]) => {
