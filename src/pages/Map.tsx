@@ -1,4 +1,4 @@
-import { useEffect, useRef, useMemo } from 'react';
+import { useEffect, useRef, useMemo, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { AppLayout } from '@/components/layout/AppLayout';
@@ -6,6 +6,19 @@ import { useEquipment } from '@/hooks/useEquipment';
 import { Card, CardContent } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
+
+// Fix Leaflet default marker icons
+import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+
+// @ts-ignore
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: markerIcon2x,
+  iconUrl: markerIcon,
+  shadowUrl: markerShadow,
+});
 
 // Paleta de cores para contratos
 const CONTRACT_COLORS = [
@@ -29,6 +42,7 @@ const CONTRACT_COLORS = [
 export default function MapPage() {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<L.Map | null>(null);
+  const [mapReady, setMapReady] = useState(false);
   const { equipment, loading } = useEquipment();
 
   // Mapeia cada contrato para uma cor
@@ -62,18 +76,40 @@ export default function MapPage() {
     })).filter(item => item.count > 0).sort((a, b) => a.name.localeCompare(b.name));
   }, [contractColorMap, equipment]);
 
+  // Initialize map
   useEffect(() => {
     if (!mapContainer.current || map.current) return;
 
-    map.current = L.map(mapContainer.current).setView([-15.7801, -47.9292], 4);
+    // Ensure container has dimensions before initializing
+    const container = mapContainer.current;
+    if (container.offsetWidth === 0 || container.offsetHeight === 0) {
+      // Retry after a short delay
+      const timer = setTimeout(() => {
+        if (container.offsetWidth > 0 && container.offsetHeight > 0 && !map.current) {
+          map.current = L.map(container).setView([-15.7801, -47.9292], 4);
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+          }).addTo(map.current);
+          setMapReady(true);
+        }
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+
+    map.current = L.map(container).setView([-15.7801, -47.9292], 4);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap contributors'
     }).addTo(map.current);
 
+    setMapReady(true);
+
     return () => {
-      map.current?.remove();
-      map.current = null;
+      if (map.current) {
+        map.current.remove();
+        map.current = null;
+        setMapReady(false);
+      }
     };
   }, []);
 
