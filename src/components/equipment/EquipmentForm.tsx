@@ -58,14 +58,7 @@ interface EquipmentFormProps {
   loading?: boolean;
 }
 
-const equipmentTypes = [
-  'Radar Fixo',
-  'Radar Móvel',
-  'Medidor de Velocidade',
-  'Lombada Eletrônica',
-  'Semáforo Inteligente',
-  'Detector de Avanço',
-];
+const equipmentTypes = ['CEV', 'CEC', 'REV', 'SAT', 'Fixo'];
 
 const brands = ['Splice', 'Focalle'];
 
