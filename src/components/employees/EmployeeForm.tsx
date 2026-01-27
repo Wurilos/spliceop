@@ -270,7 +270,7 @@ export function EmployeeForm({
                           <SelectValue placeholder="Selecione a equipe" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
+                      <SelectContent className="z-[60]">
                         <SelectItem value="_none">Nenhuma</SelectItem>
                         {teams.map((team) => (
                           <SelectItem key={team.id} value={team.id}>
@@ -366,13 +366,17 @@ export function EmployeeForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Contrato</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select
+                      onValueChange={(value) => field.onChange(value === '_none' ? '' : value)}
+                      value={field.value || '_none'}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione um contrato" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
+                      <SelectContent className="z-[60]">
+                        <SelectItem value="_none">Nenhum</SelectItem>
                         {contracts.map((contract) => (
                           <SelectItem key={contract.id} value={contract.id}>
                             {contract.number} - {contract.client_name}
@@ -397,7 +401,7 @@ export function EmployeeForm({
                           <SelectValue placeholder="Selecione" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
+                      <SelectContent className="z-[60]">
                         <SelectItem value="active">Ativo</SelectItem>
                         <SelectItem value="inactive">Inativo</SelectItem>
                         <SelectItem value="vacation">Férias</SelectItem>
