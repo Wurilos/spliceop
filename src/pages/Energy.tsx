@@ -218,10 +218,41 @@ export default function Energy() {
   };
 
   const handleImport = async (data: any[]) => {
-    const { error } = await supabase.from('energy_bills').insert(data);
+    // Resolve contract_id from consumer_unit by looking up in energy_consumer_units
+    const resolvedData = data.map((row) => {
+      let contractId: string | null = null;
+      let equipmentId: string | null = null;
+      let supplierId: string | null = null;
+
+      // Find the consumer unit registration to get contract and equipment
+      const consumerUnitCode = String(row.consumer_unit || '').trim();
+      const registeredUnit = consumerUnits.find(
+        (cu: any) => cu.consumer_unit === consumerUnitCode
+      );
+
+      if (registeredUnit) {
+        contractId = registeredUnit.contract_id || null;
+        equipmentId = registeredUnit.equipment_id || null;
+        supplierId = registeredUnit.supplier_id || null;
+      }
+
+      return {
+        consumer_unit: consumerUnitCode,
+        reference_month: row.reference_month,
+        value: row.value,
+        due_date: row.due_date || null,
+        status: row.status || 'pending',
+        contract_id: contractId,
+        equipment_id: equipmentId,
+        supplier_id: supplierId,
+        zero_invoice: row.value === 0 || row.value === null,
+      };
+    });
+
+    const { error } = await supabase.from('energy_bills').insert(resolvedData);
     if (error) throw error;
     queryClient.invalidateQueries({ queryKey: ['energy_bills'] });
-    toast.success(`${data.length} faturas importadas com sucesso!`);
+    toast.success(`${resolvedData.length} faturas importadas com sucesso!`);
   };
 
   const handleUnitImport = async (data: any[]) => {
