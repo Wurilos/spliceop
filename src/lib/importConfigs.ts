@@ -59,6 +59,102 @@ const toNumber = (v: any) => {
   return parseFloat(cleaned) || 0;
 };
 const toInteger = (v: any) => parseInt(String(v).replace(/\D/g, ''), 10) || 0;
+
+// Specific transformer for month fields (returns YYYY-MM-01 format)
+const toMonth = (v: any): string | null => {
+  if (v === undefined || v === null || v === '') return null;
+  
+  const str = String(v).trim();
+  if (!str) return null;
+  
+  // Month name mapping (Portuguese)
+  const monthNames: Record<string, string> = {
+    'jan': '01', 'janeiro': '01',
+    'fev': '02', 'fevereiro': '02',
+    'mar': '03', 'março': '03', 'marco': '03',
+    'abr': '04', 'abril': '04',
+    'mai': '05', 'maio': '05',
+    'jun': '06', 'junho': '06',
+    'jul': '07', 'julho': '07',
+    'ago': '08', 'agosto': '08',
+    'set': '09', 'setembro': '09',
+    'out': '10', 'outubro': '10',
+    'nov': '11', 'novembro': '11',
+    'dez': '12', 'dezembro': '12',
+  };
+  
+  // Format: "jan/26" or "jan/2026" or "janeiro/26"
+  const monthNameMatch = str.match(/^([a-záéíóúç]+)[\/-](\d{2}|\d{4})$/i);
+  if (monthNameMatch) {
+    const monthKey = monthNameMatch[1].toLowerCase();
+    const month = monthNames[monthKey];
+    if (month) {
+      let year = parseInt(monthNameMatch[2], 10);
+      if (year < 100) year = 2000 + year;
+      if (year >= 1900 && year <= 2100) {
+        return `${year}-${month}-01`;
+      }
+    }
+  }
+  
+  // Format: "01/26" or "01/2026" (MM/YY or MM/YYYY)
+  const mmYYMatch = str.match(/^(\d{1,2})[\/-](\d{2}|\d{4})$/);
+  if (mmYYMatch) {
+    const month = parseInt(mmYYMatch[1], 10);
+    let year = parseInt(mmYYMatch[2], 10);
+    if (year < 100) year = 2000 + year;
+    if (month >= 1 && month <= 12 && year >= 1900 && year <= 2100) {
+      return `${year}-${String(month).padStart(2, '0')}-01`;
+    }
+  }
+  
+  // Format: "2026-01" (YYYY-MM)
+  const isoMonthMatch = str.match(/^(\d{4})-(\d{1,2})$/);
+  if (isoMonthMatch) {
+    const year = parseInt(isoMonthMatch[1], 10);
+    const month = parseInt(isoMonthMatch[2], 10);
+    if (month >= 1 && month <= 12 && year >= 1900 && year <= 2100) {
+      return `${year}-${String(month).padStart(2, '0')}-01`;
+    }
+  }
+  
+  // Format: "2026-01-15" (YYYY-MM-DD) - just take the month
+  const isoDateMatch = str.match(/^(\d{4})-(\d{1,2})-\d{1,2}$/);
+  if (isoDateMatch) {
+    const year = parseInt(isoDateMatch[1], 10);
+    const month = parseInt(isoDateMatch[2], 10);
+    if (month >= 1 && month <= 12 && year >= 1900 && year <= 2100) {
+      return `${year}-${String(month).padStart(2, '0')}-01`;
+    }
+  }
+  
+  // Format: "26/01/2026" (DD/MM/YYYY) - extract month/year
+  const brDateMatch = str.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/);
+  if (brDateMatch) {
+    const month = parseInt(brDateMatch[2], 10);
+    const year = parseInt(brDateMatch[3], 10);
+    if (month >= 1 && month <= 12 && year >= 1900 && year <= 2100) {
+      return `${year}-${String(month).padStart(2, '0')}-01`;
+    }
+  }
+  
+  // Excel serial date number (like toDate does)
+  if (typeof v === 'number' || /^\d+(\.\d+)?$/.test(str)) {
+    const serial = typeof v === 'number' ? v : parseFloat(str);
+    if (!Number.isNaN(serial) && serial > 25000 && serial < 100000) {
+      const excelEpoch = new Date(Date.UTC(1899, 11, 30));
+      const msPerDay = 24 * 60 * 60 * 1000;
+      const date = new Date(excelEpoch.getTime() + serial * msPerDay);
+      const year = date.getUTCFullYear();
+      const month = date.getUTCMonth() + 1;
+      if (year >= 1900 && year <= 2100) {
+        return `${year}-${String(month).padStart(2, '0')}-01`;
+      }
+    }
+  }
+  
+  return null;
+};
 const toDate = (v: any) => {
   if (v === undefined || v === null || v === '') return null;
 
@@ -502,7 +598,7 @@ export const energyConsumerUnitImportConfig = {
 export const energyImportConfig = {
   mappings: [
     { excelColumn: 'Unidade Consumidora', dbColumn: 'consumer_unit', required: true, transform: toString },
-    { excelColumn: 'Mês Referência', dbColumn: 'reference_month', required: true, transform: toDate },
+    { excelColumn: 'Mês Referência', dbColumn: 'reference_month', required: true, transform: toMonth },
     { excelColumn: 'Valor', dbColumn: 'value', transform: toNumber },
     { excelColumn: 'Vencimento', dbColumn: 'due_date', transform: toDate },
     { excelColumn: 'Status', dbColumn: 'status', transform: (v: string) => v?.toLowerCase() || 'pending' },
@@ -550,7 +646,7 @@ export const internetConnectionImportConfig = {
 export const internetImportConfig = {
   mappings: [
     { excelColumn: 'Provedor', dbColumn: 'provider', required: true, transform: toString },
-    { excelColumn: 'Mês Referência', dbColumn: 'reference_month', required: true, transform: toDate },
+    { excelColumn: 'Mês Referência', dbColumn: 'reference_month', required: true, transform: toMonth },
     { excelColumn: 'Valor', dbColumn: 'value', transform: toNumber },
     { excelColumn: 'Vencimento', dbColumn: 'due_date', transform: toDate },
     { excelColumn: 'Status', dbColumn: 'status', transform: (v: string) => v?.toLowerCase() || 'pending' },
