@@ -76,7 +76,8 @@ export function CalibrationForm({ open, onOpenChange, onSubmit, initialData, loa
   }, [selectedContractId, form, initialData]);
 
   useEffect(() => {
-    if (initialData) {
+    // Wait for relational data to load before populating the form
+    if (initialData && equipment.length > 0) {
       const equipmentItem = equipment.find(e => e.id === initialData.equipment_id);
       form.reset({
         contract_id: equipmentItem?.contract_id || '',
@@ -87,7 +88,7 @@ export function CalibrationForm({ open, onOpenChange, onSubmit, initialData, loa
         inmetro_number: initialData.inmetro_number || '',
         status: (initialData.status as 'valid' | 'expired' | 'pending') || 'valid',
       });
-    } else {
+    } else if (!initialData) {
       form.reset({ 
         contract_id: '',
         equipment_id: '', 

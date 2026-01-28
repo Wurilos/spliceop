@@ -66,7 +66,8 @@ export function InfractionForm({ open, onOpenChange, infraction }: InfractionFor
   });
 
   useEffect(() => {
-    if (infraction) {
+    // Wait for relational data to load before populating the form
+    if (infraction && equipment.length > 0) {
       form.reset({
         contract_id: infraction.contract_id || '',
         equipment_id: infraction.equipment_id,
@@ -76,7 +77,7 @@ export function InfractionForm({ open, onOpenChange, infraction }: InfractionFor
         physical_lane: infraction.physical_lane || '',
         image_count: infraction.image_count || 0,
       });
-    } else {
+    } else if (!infraction) {
       form.reset({
         contract_id: '',
         equipment_id: '',
@@ -87,7 +88,7 @@ export function InfractionForm({ open, onOpenChange, infraction }: InfractionFor
         image_count: 0,
       });
     }
-  }, [infraction, form]);
+  }, [infraction, form, equipment]);
 
   const onSubmit = (values: FormValues) => {
     const data = {
