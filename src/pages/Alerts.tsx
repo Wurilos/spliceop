@@ -186,7 +186,7 @@ function StatCard({
 }
 
 export default function Alerts() {
-  const { alerts, alertsByCategory, alertCounts, isLoading, refetch } = useSystemAlerts();
+  const { alerts, alertsByCategory, alertCounts, isLoading, isFetching, refetch } = useSystemAlerts();
   const [activeTab, setActiveTab] = useState('all');
 
   const filteredAlerts = activeTab === 'all' 
@@ -210,8 +210,8 @@ export default function Alerts() {
               </div>
             </div>
           </div>
-          <Button onClick={() => refetch()} disabled={isLoading} variant="outline">
-            <RefreshCw className={cn('h-4 w-4 mr-2', isLoading && 'animate-spin')} />
+          <Button onClick={() => refetch()} disabled={isFetching} variant="outline">
+            <RefreshCw className={cn('h-4 w-4 mr-2', isFetching && 'animate-spin')} />
             Atualizar
           </Button>
         </div>

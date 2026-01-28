@@ -54,10 +54,11 @@ function getPreviousReferenceMonth(): string {
 }
 
 export function useSystemAlerts() {
-  const { data: alerts = [], isLoading, refetch } = useQuery({
+  const { data: alerts = [], isLoading, isFetching, refetch } = useQuery({
     queryKey: ['system-alerts'],
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 10,
+    refetchOnMount: 'always',
     queryFn: async (): Promise<SystemAlert[]> => {
       const allAlerts: SystemAlert[] = [];
       const today = new Date();
@@ -703,6 +704,7 @@ export function useSystemAlerts() {
     alertsByCategory,
     alertCounts,
     isLoading,
+    isFetching,
     refetch,
   };
 }
