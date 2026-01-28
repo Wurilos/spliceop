@@ -110,6 +110,20 @@ export function EnergyForm({ open, onOpenChange, bill, prefillData }: EnergyForm
     return filteredConsumerUnits.map((cu: any) => cu.consumer_unit);
   }, [filteredConsumerUnits]);
 
+  // Normalize status from database to match Select options
+  const normalizeStatus = (status: string | null): string => {
+    if (!status) return 'pending';
+    const statusMap: Record<string, string> = {
+      'enviada': 'sent',
+      'pendente': 'pending',
+      'zerada': 'zeroed',
+      'sent': 'sent',
+      'pending': 'pending',
+      'zeroed': 'zeroed',
+    };
+    return statusMap[status.toLowerCase()] || 'pending';
+  };
+
   useEffect(() => {
     // Wait for relational data to load before populating the form
     if (bill && contracts.length > 0) {
@@ -120,7 +134,7 @@ export function EnergyForm({ open, onOpenChange, bill, prefillData }: EnergyForm
         value: bill.value || 0,
         zero_invoice: bill.zero_invoice || false,
         due_date: bill.due_date || '',
-        status: bill.status || 'pending',
+        status: normalizeStatus(bill.status),
       });
     } else if (prefillData) {
       // Pre-fill from dashboard click
@@ -209,7 +223,7 @@ export function EnergyForm({ open, onOpenChange, bill, prefillData }: EnergyForm
                         <SelectValue placeholder="Selecione um contrato" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent>
+                    <SelectContent className="z-[60]">
                       {contracts.map((c) => (
                         <SelectItem key={c.id} value={c.id}>
                           {c.number} - {c.client_name}
@@ -377,7 +391,7 @@ export function EnergyForm({ open, onOpenChange, bill, prefillData }: EnergyForm
                         <SelectValue />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent>
+                    <SelectContent className="z-[60]">
                       <SelectItem value="pending">Pendente</SelectItem>
                       <SelectItem value="sent">Enviada</SelectItem>
                       <SelectItem value="zeroed">Zerada</SelectItem>
