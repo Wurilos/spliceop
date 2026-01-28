@@ -601,7 +601,18 @@ export const energyImportConfig = {
     { excelColumn: 'Mês Referência', dbColumn: 'reference_month', required: true, transform: toMonth },
     { excelColumn: 'Valor', dbColumn: 'value', transform: toNumber },
     { excelColumn: 'Vencimento', dbColumn: 'due_date', transform: toDate },
-    { excelColumn: 'Status', dbColumn: 'status', transform: (v: string) => v?.toLowerCase() || 'pending' },
+    { excelColumn: 'Status', dbColumn: 'status', transform: (v: string) => {
+      const statusMap: Record<string, string> = {
+        'enviada': 'sent',
+        'pendente': 'pending',
+        'zerada': 'zeroed',
+        'sent': 'sent',
+        'pending': 'pending',
+        'zeroed': 'zeroed',
+      };
+      const normalized = v?.toLowerCase().trim();
+      return statusMap[normalized] || 'pending';
+    }},
   ] as ColumnMapping[],
   templateColumns: [
     { key: 'consumer_unit', label: 'Unidade Consumidora' },
