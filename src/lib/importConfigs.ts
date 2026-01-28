@@ -503,7 +503,6 @@ export const energyImportConfig = {
   mappings: [
     { excelColumn: 'Unidade Consumidora', dbColumn: 'consumer_unit', required: true, transform: toString },
     { excelColumn: 'Mês Referência', dbColumn: 'reference_month', required: true, transform: toDate },
-    { excelColumn: 'Consumo kWh', dbColumn: 'consumption_kwh', transform: toNumber },
     { excelColumn: 'Valor', dbColumn: 'value', transform: toNumber },
     { excelColumn: 'Vencimento', dbColumn: 'due_date', transform: toDate },
     { excelColumn: 'Status', dbColumn: 'status', transform: (v: string) => v?.toLowerCase() || 'pending' },
@@ -511,7 +510,6 @@ export const energyImportConfig = {
   templateColumns: [
     { key: 'consumer_unit', label: 'Unidade Consumidora' },
     { key: 'reference_month', label: 'Mês Referência' },
-    { key: 'consumption_kwh', label: 'Consumo kWh' },
     { key: 'value', label: 'Valor' },
     { key: 'due_date', label: 'Vencimento' },
     { key: 'status', label: 'Status' },

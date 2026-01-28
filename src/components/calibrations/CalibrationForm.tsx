@@ -60,26 +60,34 @@ export function CalibrationForm({ open, onOpenChange, onSubmit, initialData, loa
     return equipment.filter(e => e.contract_id === selectedContractId);
   }, [equipment, selectedContractId]);
 
-  // Auto-calculate expiration date (1 year from calibration date)
+  // Auto-calculate expiration date (1 year from calibration date) - only for new records or manual changes
   useEffect(() => {
-    if (calibrationDate) {
+    if (calibrationDate && !initialData) {
       const expirationDate = addYears(new Date(calibrationDate), 1);
-      form.setValue('expiration_date', format(expirationDate, 'yyyy-MM-dd'));
+      const formattedDate = format(expirationDate, 'yyyy-MM-dd');
+      const currentExpiration = form.getValues('expiration_date');
+      if (currentExpiration !== formattedDate) {
+        form.setValue('expiration_date', formattedDate, { shouldValidate: false });
+      }
     }
-  }, [calibrationDate, form]);
+  }, [calibrationDate, form, initialData]);
 
-  // Reset equipment when contract changes
+  // Reset equipment when contract changes - only for new records
   useEffect(() => {
     if (selectedContractId && !initialData) {
-      form.setValue('equipment_id', '');
+      const currentEquipment = form.getValues('equipment_id');
+      if (currentEquipment) {
+        form.setValue('equipment_id', '', { shouldValidate: false });
+      }
     }
   }, [selectedContractId, form, initialData]);
 
+  // Populate form when editing - use ref to prevent infinite loops
   useEffect(() => {
     // Wait for relational data to load before populating the form
     if (initialData && equipment.length > 0) {
       const equipmentItem = equipment.find(e => e.id === initialData.equipment_id);
-      form.reset({
+      const newValues = {
         contract_id: equipmentItem?.contract_id || '',
         equipment_id: initialData.equipment_id,
         calibration_date: initialData.calibration_date,
@@ -87,8 +95,14 @@ export function CalibrationForm({ open, onOpenChange, onSubmit, initialData, loa
         certificate_number: initialData.certificate_number || '',
         inmetro_number: initialData.inmetro_number || '',
         status: (initialData.status as 'valid' | 'expired' | 'pending') || 'valid',
-      });
-    } else if (!initialData) {
+      };
+      
+      // Only reset if values are different to prevent loops
+      const currentValues = form.getValues();
+      if (currentValues.equipment_id !== newValues.equipment_id) {
+        form.reset(newValues);
+      }
+    } else if (!initialData && open) {
       form.reset({ 
         contract_id: '',
         equipment_id: '', 
@@ -99,7 +113,7 @@ export function CalibrationForm({ open, onOpenChange, onSubmit, initialData, loa
         status: 'valid' 
       });
     }
-  }, [initialData, form, equipment]);
+  }, [initialData, equipment, open]);
 
   const handleSubmit = (data: FormData) => {
     // Remove contract_id as it's not in the calibrations table
