@@ -111,7 +111,8 @@ export function EnergyForm({ open, onOpenChange, bill, prefillData }: EnergyForm
   }, [filteredConsumerUnits]);
 
   useEffect(() => {
-    if (bill) {
+    // Wait for relational data to load before populating the form
+    if (bill && contracts.length > 0) {
       form.reset({
         contract_id: bill.contract_id || '',
         consumer_unit: bill.consumer_unit,
@@ -132,7 +133,7 @@ export function EnergyForm({ open, onOpenChange, bill, prefillData }: EnergyForm
         due_date: '',
         status: 'pending',
       });
-    } else {
+    } else if (!bill) {
       form.reset({
         contract_id: '',
         consumer_unit: '',
@@ -143,7 +144,7 @@ export function EnergyForm({ open, onOpenChange, bill, prefillData }: EnergyForm
         status: 'pending',
       });
     }
-  }, [bill, prefillData, form]);
+  }, [bill, prefillData, form, contracts]);
 
   const onSubmit = (values: FormValues) => {
     // Check for duplicate: same consumer_unit and reference_month

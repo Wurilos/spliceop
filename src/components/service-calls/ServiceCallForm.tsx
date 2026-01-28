@@ -41,7 +41,8 @@ export function ServiceCallForm({ open, onOpenChange, onSubmit, initialData, loa
   });
 
   useEffect(() => {
-    if (initialData) {
+    // Wait for relational data to load before populating the form
+    if (initialData && contracts.length > 0 && equipment.length > 0 && employees.length > 0) {
       form.reset({
         date: initialData.date,
         type: initialData.type || '',
@@ -52,10 +53,10 @@ export function ServiceCallForm({ open, onOpenChange, onSubmit, initialData, loa
         employee_id: initialData.employee_id || '',
         mob_code: initialData.mob_code || '',
       });
-    } else {
+    } else if (!initialData) {
       form.reset({ date: new Date().toISOString().split('T')[0], type: '', description: '', contract_id: '', third_party_contract: '', equipment_id: '', employee_id: '', mob_code: '' });
     }
-  }, [initialData, form]);
+  }, [initialData, form, contracts, equipment, employees]);
 
   const handleSubmit = (data: FormData) => {
     onSubmit({ ...data, contract_id: data.contract_id || null, third_party_contract: data.third_party_contract || null, equipment_id: data.equipment_id || null, employee_id: data.employee_id || null } as any);

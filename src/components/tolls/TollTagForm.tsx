@@ -46,16 +46,25 @@ export function TollTagForm({ open, onOpenChange, tag }: TollTagFormProps) {
   });
 
   useEffect(() => {
-    if (tag) {
+    // Wait for relational data to load before populating the form
+    if (tag && vehicles.length > 0 && contracts.length > 0) {
+      // Convert passage_date to datetime-local format
+      let passageDate = tag.passage_date || '';
+      if (passageDate && !passageDate.includes('T')) {
+        passageDate = passageDate + 'T00:00';
+      } else if (passageDate) {
+        passageDate = passageDate.slice(0, 16); // YYYY-MM-DDTHH:mm
+      }
+      
       form.reset({
         contract_id: tag.contract_id || '',
         vehicle_id: tag.vehicle_id,
-        passage_date: tag.passage_date.slice(0, 16),
+        passage_date: passageDate,
         value: tag.value,
         tag_number: tag.tag_number,
         toll_plaza: tag.toll_plaza || '',
       });
-    } else {
+    } else if (!tag) {
       form.reset({
         contract_id: '',
         vehicle_id: '',
@@ -65,7 +74,7 @@ export function TollTagForm({ open, onOpenChange, tag }: TollTagFormProps) {
         toll_plaza: '',
       });
     }
-  }, [tag, form]);
+  }, [tag, form, vehicles, contracts]);
 
   const onSubmit = (values: FormValues) => {
     const data = {

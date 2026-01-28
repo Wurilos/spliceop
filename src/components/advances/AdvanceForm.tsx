@@ -86,7 +86,8 @@ export function AdvanceForm({ open, onOpenChange, advance }: AdvanceFormProps) {
   }, [requestedValue, provenValue]);
 
   useEffect(() => {
-    if (advance) {
+    // Wait for relational data to load before populating the form
+    if (advance && employees.length > 0 && contracts.length > 0) {
       form.reset({
         contract_id: advance.contract_id || '',
         employee_id: advance.employee_id,
@@ -98,7 +99,7 @@ export function AdvanceForm({ open, onOpenChange, advance }: AdvanceFormProps) {
         proven_value: advance.proven_value || 0,
         status: advance.status || 'Pendente',
       });
-    } else {
+    } else if (!advance) {
       form.reset({
         contract_id: '',
         employee_id: '',
@@ -111,7 +112,7 @@ export function AdvanceForm({ open, onOpenChange, advance }: AdvanceFormProps) {
         status: 'Pendente',
       });
     }
-  }, [advance, form]);
+  }, [advance, form, employees, contracts]);
 
   // Reset employee when contract changes
   useEffect(() => {

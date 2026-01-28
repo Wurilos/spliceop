@@ -44,14 +44,21 @@ export function InternetBillForm({ open, onOpenChange, bill }: InternetBillFormP
   });
 
   useEffect(() => {
-    if (bill) {
+    // Wait for relational data to load before populating the form
+    if (bill && connections.length > 0) {
+      // Convert reference_month date to month input format (YYYY-MM)
+      let referenceMonth = bill.reference_month || '';
+      if (referenceMonth && referenceMonth.length > 7) {
+        referenceMonth = referenceMonth.slice(0, 7); // Extract YYYY-MM from YYYY-MM-DD
+      }
+      
       form.reset({
         connection_id: (bill as any).connection_id || '',
-        reference_month: bill.reference_month,
+        reference_month: referenceMonth,
         value: bill.value?.toString() || '',
         status: bill.status || 'pending',
       });
-    } else {
+    } else if (!bill) {
       form.reset({
         connection_id: '',
         reference_month: '',
@@ -59,7 +66,7 @@ export function InternetBillForm({ open, onOpenChange, bill }: InternetBillFormP
         status: 'pending',
       });
     }
-  }, [bill, form]);
+  }, [bill, form, connections]);
 
   const getConnectionLabel = (conn: any) => {
     const contract = contracts.find(c => c.id === conn.contract_id);
