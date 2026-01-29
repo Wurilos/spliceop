@@ -1,156 +1,154 @@
 
-# Análise: Dados Aparecem na Listagem mas Não no Formulário de Edição
 
-## Diagnóstico do Problema
+# Plano: Exibir Detalhes dos Equipamentos Vencidos nos Tooltips
 
-Após analisar diversos módulos do sistema, identifiquei **três causas principais** para este problema recorrente:
-
----
-
-## Causa 1: Incompatibilidade de Valores em Campos Select
-
-**O que acontece:**
-- O banco de dados armazena um valor (ex: "Convencional")
-- O formulário tem opções diferentes nas listboxes (ex: "Energia Convencional")
-- Quando o valor do banco não existe nas opções do Select, o campo aparece vazio
-
-**Módulos afetados já corrigidos:**
-- EquipmentForm (Tipo, Meio de Comunicação, Tipo de Energia)
-
-**Módulos que precisam verificação:**
-- CalibrationForm (Status)
-- InfractionForm (Contrato, Equipamento)
-- ServiceCallForm (Tipo, Contrato, Equipamento, Colaborador)
-- AdvanceForm (Contrato, Colaborador, Status)
-- TollTagForm (Contrato, Veículo)
+## Objetivo
+Ao passar o mouse sobre os segmentos de aferições **vencidas** nos gráficos do dashboard de Calibrações, exibir uma lista com os equipamentos específicos que estão com a calibração vencida.
 
 ---
 
-## Causa 2: Conversão de Formato de Data/Hora
+## Resumo da Solução
 
-**O que acontece:**
-- Campos `datetime-local` requerem formato `YYYY-MM-DDTHH:mm`
-- O banco armazena formato `YYYY-MM-DD` ou `YYYY-MM-DD HH:mm:ss`
-- Se a conversão não é feita, o campo aparece vazio
-
-**Exemplo já corrigido:**
-- EquipmentForm: `installation_date` agora converte corretamente
-
-**Módulos que precisam verificação:**
-- TollTagForm: `passage_date`
-- Qualquer formulário com campos datetime-local
+Vou modificar o `CalibrationsDashboard.tsx` para:
+1. Enriquecer os dados dos gráficos com listas de equipamentos
+2. Criar um componente de tooltip customizado que exibe esses detalhes
+3. Aplicar o tooltip nos gráficos relevantes
 
 ---
 
-## Causa 3: Dependência de Dados Relacionais
+## Gráficos Afetados
 
-**O que acontece:**
-- Formulários com campos dependentes (ex: Contrato → Equipamento filtrado)
-- Quando o `useEffect` popula o formulário, os dados relacionais (equipamentos, contratos) podem ainda não estar carregados
-- O valor do banco é válido, mas não encontra correspondência nas opções disponíveis
-
-**Exemplo no CalibrationForm:**
-```javascript
-// Linha 78-101: O useEffect depende de 'equipment' estar carregado
-useEffect(() => {
-  if (initialData) {
-    const equipmentItem = equipment.find(e => e.id === initialData.equipment_id);
-    form.reset({
-      contract_id: equipmentItem?.contract_id || '', // Se equipment vazio, contract_id fica vazio
-      // ...
-    });
-  }
-}, [initialData, form, equipment]); // Equipment pode não estar carregado ainda
-```
+| Gráfico | Comportamento Atual | Novo Comportamento |
+|---------|---------------------|-------------------|
+| **Aferições por Status** | Mostra apenas "Vencida: 2" | Mostrará os nº de série dos equipamentos vencidos |
+| **Aferições por Tipo de Equipamento** | Mostra "Vencida: 2" por tipo | Mostrará quais equipamentos de cada tipo estão vencidos |
+| **Vencimentos por Contrato e Mês** | Mostra quantidade por contrato | Mostrará os equipamentos que vencem em cada mês/contrato |
 
 ---
 
-## Plano de Correção
+## Mudanças Técnicas
 
-### Etapa 1: Correção do CalibrationForm
-- Garantir que o `useEffect` só execute quando `equipment` e `contracts` estiverem carregados
-- Adicionar verificação de carregamento
+### 1. Enriquecer Dados com Listas de Equipamentos
 
-### Etapa 2: Correção do InfractionForm  
-- Verificar se os valores de `equipment_id` e `contract_id` existem nas opções
-- Adicionar fallback para valores não encontrados
-
-### Etapa 3: Correção do ServiceCallForm
-- Verificar campos Select que podem não ter correspondência
-- Adicionar z-index nas SelectContent se necessário
-
-### Etapa 4: Correção do AdvanceForm
-- Verificar filtragem de colaboradores por contrato
-- Garantir que o colaborador seja populado mesmo se filtrado por outro contrato
-
-### Etapa 5: Correção do TollTagForm
-- Converter `passage_date` para formato datetime-local correto
-
-### Etapa 6: Correção do InternetBillForm
-- Verificar campo `reference_month` que usa input type="month" (formato diferente)
-
-### Etapa 7: Auditoria Geral
-- Revisar todos os formulários com campos Select dependentes
-- Adicionar logs de debug em desenvolvimento para identificar valores não correspondentes
-
----
-
-## Detalhes Técnicos das Correções
-
-### Padrão de Correção para Campos Select com Dados Relacionais:
+Modificar os `useMemo` que calculam os dados dos gráficos para incluir arrays de equipamentos:
 
 ```typescript
-useEffect(() => {
-  // Aguardar dados carregarem antes de popular o form
-  if (initialData && equipment.length > 0 && contracts.length > 0) {
-    const equipmentItem = equipment.find(e => e.id === initialData.equipment_id);
-    form.reset({
-      contract_id: equipmentItem?.contract_id || '',
-      equipment_id: initialData.equipment_id,
-      // ...
-    });
-  }
-}, [initialData, form, equipment, contracts]);
-```
+// Exemplo para calibrationsByStatus
+const calibrationsByStatus = useMemo(() => {
+  const statusData: Record<string, { value: number; items: string[] }> = {
+    'Válida': { value: 0, items: [] },
+    'Vencida': { value: 0, items: [] },
+    'Pendente': { value: 0, items: [] },
+  };
 
-### Padrão de Correção para Campos datetime-local:
-
-```typescript
-useEffect(() => {
-  if (initialData) {
-    // Converter data do banco para formato datetime-local
-    let passageDate = initialData.passage_date || '';
-    if (passageDate && !passageDate.includes('T')) {
-      passageDate = passageDate + 'T00:00';
-    } else if (passageDate) {
-      passageDate = passageDate.slice(0, 16); // YYYY-MM-DDTHH:mm
-    }
+  calibrations.forEach(cal => {
+    const serial = cal.equipment?.serial_number || 'N/A';
+    const expDate = new Date(cal.expiration_date);
     
-    form.reset({
-      passage_date: passageDate,
-      // ...
-    });
-  }
-}, [initialData, form]);
+    if (isBefore(expDate, today)) {
+      statusData['Vencida'].value++;
+      statusData['Vencida'].items.push(serial);
+    } else if (cal.status === 'pending') {
+      statusData['Pendente'].value++;
+      statusData['Pendente'].items.push(serial);
+    } else {
+      statusData['Válida'].value++;
+      statusData['Válida'].items.push(serial);
+    }
+  });
+
+  return Object.entries(statusData)
+    .filter(([_, data]) => data.value > 0)
+    .map(([name, data]) => ({
+      name,
+      value: data.value,
+      items: data.items,
+      color: STATUS_COLORS[name === 'Válida' ? 'valid' : name === 'Vencida' ? 'expired' : 'pending'],
+    }));
+}, [calibrations]);
+```
+
+### 2. Criar Tooltip Customizado
+
+Criar um componente local que renderiza a lista de equipamentos:
+
+```typescript
+const CalibrationTooltip = ({ active, payload, label }: any) => {
+  if (!active || !payload?.length) return null;
+  
+  return (
+    <div className="rounded-lg border bg-background px-3 py-2 text-xs shadow-xl max-w-xs">
+      {label && <div className="font-medium mb-2">{label}</div>}
+      {payload.map((entry: any, idx: number) => {
+        const items = entry.payload?.items || entry.payload?.[`${entry.dataKey}_items`] || [];
+        return (
+          <div key={idx} className="mb-2">
+            <div className="flex items-center gap-2">
+              <div 
+                className="h-2.5 w-2.5 rounded-sm" 
+                style={{ backgroundColor: entry.color || entry.payload?.color }}
+              />
+              <span>{entry.name}: <strong>{entry.value}</strong></span>
+            </div>
+            {items.length > 0 && items.length <= 10 && (
+              <div className="ml-4 mt-1 text-muted-foreground">
+                {items.map((item: string, i: number) => (
+                  <div key={i}>• {item}</div>
+                ))}
+              </div>
+            )}
+            {items.length > 10 && (
+              <div className="ml-4 mt-1 text-muted-foreground">
+                <div>• {items.slice(0, 8).join(', ')}</div>
+                <div className="italic">+{items.length - 8} outros...</div>
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+```
+
+### 3. Aplicar nos Gráficos
+
+Substituir `<ChartTooltip content={<ChartTooltipContent />} />` pelo novo componente nos gráficos relevantes:
+
+```typescript
+<ChartTooltip content={<CalibrationTooltip />} />
 ```
 
 ---
 
 ## Arquivos a Modificar
 
-1. `src/components/calibrations/CalibrationForm.tsx` - Aguardar carregamento de dados
-2. `src/components/infractions/InfractionForm.tsx` - Verificar correspondência de valores
-3. `src/components/service-calls/ServiceCallForm.tsx` - Verificar correspondência de valores
-4. `src/components/advances/AdvanceForm.tsx` - Corrigir filtragem de colaboradores
-5. `src/components/tolls/TollTagForm.tsx` - Conversão de datetime
-6. `src/components/internet/InternetBillForm.tsx` - Formato de mês
-7. `src/components/energy/EnergyForm.tsx` - Verificar correspondência de contrato
+| Arquivo | Tipo de Mudança |
+|---------|-----------------|
+| `src/components/calibrations/CalibrationsDashboard.tsx` | Adicionar tooltip customizado e enriquecer dados |
 
 ---
 
-## Resultado Esperado
+## Comportamento Visual Esperado
 
-Após as correções:
-- Todos os campos serão populados corretamente ao abrir o formulário de edição
-- Os dados do banco serão convertidos para os formatos esperados pelos inputs
-- Os campos Select encontrarão correspondência mesmo quando dados relacionais demoram para carregar
+Ao passar o mouse sobre uma barra "Vencida" no gráfico:
+
+```text
+┌─────────────────────────────┐
+│ Fixo                        │
+├─────────────────────────────┤
+│ 🟢 Válida: 43               │
+│ 🔴 Vencida: 2               │
+│    • ECF-001234             │
+│    • ECF-005678             │
+└─────────────────────────────┘
+```
+
+Se houver muitos itens (>10), será resumido:
+
+```text
+│ 🔴 Vencida: 15              │
+│    • ECF-001, ECF-002, ...  │
+│    +7 outros...             │
+```
+
