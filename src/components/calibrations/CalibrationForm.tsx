@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -60,15 +60,26 @@ export function CalibrationForm({ open, onOpenChange, onSubmit, initialData, loa
     return equipment.filter(e => e.contract_id === selectedContractId);
   }, [equipment, selectedContractId]);
 
-  // Auto-calculate expiration date (1 year from calibration date) - only for new records or manual changes
+  // Track if user manually changed the calibration date (vs initial load)
+  const prevCalibrationDateRef = React.useRef<string | null>(null);
+
+  // Auto-calculate expiration date (1 year from calibration date)
   useEffect(() => {
-    if (calibrationDate && !initialData) {
+    if (!calibrationDate) return;
+    
+    // Skip auto-calculation on initial form population for edits
+    const isInitialLoad = initialData && prevCalibrationDateRef.current === null;
+    if (isInitialLoad) {
+      prevCalibrationDateRef.current = calibrationDate;
+      return;
+    }
+    
+    // Only recalculate if calibration date actually changed
+    if (prevCalibrationDateRef.current !== calibrationDate) {
       const expirationDate = addYears(new Date(calibrationDate), 1);
       const formattedDate = format(expirationDate, 'yyyy-MM-dd');
-      const currentExpiration = form.getValues('expiration_date');
-      if (currentExpiration !== formattedDate) {
-        form.setValue('expiration_date', formattedDate, { shouldValidate: false });
-      }
+      form.setValue('expiration_date', formattedDate, { shouldValidate: false });
+      prevCalibrationDateRef.current = calibrationDate;
     }
   }, [calibrationDate, form, initialData]);
 
