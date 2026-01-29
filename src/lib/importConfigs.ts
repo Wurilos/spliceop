@@ -714,7 +714,22 @@ export const calibrationImportConfig = {
     { excelColumn: 'Data Vencimento', dbColumn: 'expiration_date', transform: toDate },
     { excelColumn: 'Número Certificado', dbColumn: 'certificate_number', transform: toString },
     { excelColumn: 'Número INMETRO', dbColumn: 'inmetro_number', transform: toString },
-    { excelColumn: 'Status', dbColumn: 'status', transform: (v: string) => v?.toLowerCase() || 'valid' },
+    { excelColumn: 'Status', dbColumn: 'status', transform: (v: string) => {
+      const statusMap: Record<string, string> = {
+        'válido': 'valid',
+        'valido': 'valid',
+        'válida': 'valid',
+        'valida': 'valid',
+        'vencido': 'expired',
+        'vencida': 'expired',
+        'pendente': 'pending',
+        'valid': 'valid',
+        'expired': 'expired',
+        'pending': 'pending',
+      };
+      const normalized = v?.toLowerCase().trim();
+      return statusMap[normalized] || 'valid';
+    }},
   ] as ColumnMapping[],
   templateColumns: [
     { key: 'contract_ref', label: 'Contrato' },
