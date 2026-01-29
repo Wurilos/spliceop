@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { ChartContainer, ChartTooltip } from '@/components/ui/chart';
+import { CalibrationTooltip } from './CalibrationTooltip';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, CartesianGrid, Legend, PieChart, Pie, Cell } from 'recharts';
 import { ClipboardCheck, AlertTriangle, Clock, CheckCircle2 } from 'lucide-react';
 import { Tables } from '@/integrations/supabase/types';
@@ -64,7 +65,7 @@ export function CalibrationsDashboard({ calibrations, contracts = [] }: Calibrat
 
   // Data for stacked bar chart - Expirations by Contract and Month
   const expirationsByContractMonth = useMemo(() => {
-    const monthsData: Record<string, Record<string, number>> = {};
+    const monthsData: Record<string, Record<string, { count: number; items: string[] }>> = {};
     const contractNames: Set<string> = new Set();
     
     // Generate next 6 months
@@ -77,6 +78,7 @@ export function CalibrationsDashboard({ calibrations, contracts = [] }: Calibrat
     calibrations.forEach(cal => {
       const expDate = new Date(cal.expiration_date);
       const monthKey = format(expDate, 'MMM/yy', { locale: ptBR });
+      const serial = cal.equipment?.serial_number || 'N/A';
       
       if (monthsData[monthKey] !== undefined) {
         // Get contract name from equipment's contract
@@ -84,20 +86,29 @@ export function CalibrationsDashboard({ calibrations, contracts = [] }: Calibrat
         const contractName = contract?.client_name || 'Sem Contrato';
         contractNames.add(contractName);
         
+        if (!monthsData[monthKey][contractName]) {
+          monthsData[monthKey][contractName] = { count: 0, items: [] };
+        }
+        
         // Calculate count based on view mode
         const countValue = viewMode === 'lanes' 
           ? (cal.equipment?.lanes_qty || 1) 
           : 1;
         
-        monthsData[monthKey][contractName] = (monthsData[monthKey][contractName] || 0) + countValue;
+        monthsData[monthKey][contractName].count += countValue;
+        monthsData[monthKey][contractName].items.push(serial);
       }
     });
 
     return {
-      data: Object.entries(monthsData).map(([month, contractCounts]) => ({
-        month,
-        ...contractCounts,
-      })),
+      data: Object.entries(monthsData).map(([month, contractData]) => {
+        const result: Record<string, any> = { month };
+        Object.entries(contractData).forEach(([contractName, data]) => {
+          result[contractName] = data.count;
+          result[`${contractName}_items`] = data.items;
+        });
+        return result;
+      }),
       contractNames: Array.from(contractNames),
     };
   }, [calibrations, contracts, viewMode]);
@@ -123,43 +134,52 @@ export function CalibrationsDashboard({ calibrations, contracts = [] }: Calibrat
 
   // Data for bar chart - Calibrations by Status
   const calibrationsByStatus = useMemo(() => {
-    const statusCounts: Record<string, number> = {
-      'Válida': 0,
-      'Vencida': 0,
-      'Pendente': 0,
+    const statusData: Record<string, { value: number; items: string[] }> = {
+      'Válida': { value: 0, items: [] },
+      'Vencida': { value: 0, items: [] },
+      'Pendente': { value: 0, items: [] },
     };
 
     calibrations.forEach(cal => {
+      const serial = cal.equipment?.serial_number || 'N/A';
       const expDate = new Date(cal.expiration_date);
+      
       if (isBefore(expDate, today)) {
-        statusCounts['Vencida']++;
+        statusData['Vencida'].value++;
+        statusData['Vencida'].items.push(serial);
       } else if (cal.status === 'pending') {
-        statusCounts['Pendente']++;
+        statusData['Pendente'].value++;
+        statusData['Pendente'].items.push(serial);
       } else {
-        statusCounts['Válida']++;
+        statusData['Válida'].value++;
+        statusData['Válida'].items.push(serial);
       }
     });
 
     return [
-      { name: 'Válida', value: statusCounts['Válida'], color: STATUS_COLORS.valid },
-      { name: 'Vencida', value: statusCounts['Vencida'], color: STATUS_COLORS.expired },
-      { name: 'Pendente', value: statusCounts['Pendente'], color: STATUS_COLORS.pending },
+      { name: 'Válida', value: statusData['Válida'].value, items: statusData['Válida'].items, color: STATUS_COLORS.valid },
+      { name: 'Vencida', value: statusData['Vencida'].value, items: statusData['Vencida'].items, color: STATUS_COLORS.expired },
+      { name: 'Pendente', value: statusData['Pendente'].value, items: statusData['Pendente'].items, color: STATUS_COLORS.pending },
     ].filter(item => item.value > 0);
   }, [calibrations]);
 
   // Calibrations by equipment type
   const calibrationsByType = useMemo(() => {
-    const typeCounts: Record<string, { valid: number; expired: number }> = {};
+    const typeCounts: Record<string, { valid: number; expired: number; validItems: string[]; expiredItems: string[] }> = {};
 
     calibrations.forEach(cal => {
       const type = cal.equipment?.type || 'Outros';
+      const serial = cal.equipment?.serial_number || 'N/A';
+      
       if (!typeCounts[type]) {
-        typeCounts[type] = { valid: 0, expired: 0 };
+        typeCounts[type] = { valid: 0, expired: 0, validItems: [], expiredItems: [] };
       }
       if (isBefore(new Date(cal.expiration_date), today)) {
         typeCounts[type].expired++;
+        typeCounts[type].expiredItems.push(serial);
       } else {
         typeCounts[type].valid++;
+        typeCounts[type].validItems.push(serial);
       }
     });
 
@@ -167,6 +187,8 @@ export function CalibrationsDashboard({ calibrations, contracts = [] }: Calibrat
       type,
       valida: counts.valid,
       vencida: counts.expired,
+      valida_items: counts.validItems,
+      vencida_items: counts.expiredItems,
     }));
   }, [calibrations]);
 
@@ -253,7 +275,7 @@ export function CalibrationsDashboard({ calibrations, contracts = [] }: Calibrat
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
               <XAxis dataKey="month" fontSize={12} />
               <YAxis fontSize={12} />
-              <ChartTooltip content={<ChartTooltipContent />} />
+              <ChartTooltip content={<CalibrationTooltip />} />
               <Legend />
               {expirationsByContractMonth.contractNames.map((contractName, idx) => (
                 <Bar
@@ -283,7 +305,7 @@ export function CalibrationsDashboard({ calibrations, contracts = [] }: Calibrat
                 <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
                 <XAxis type="number" fontSize={12} />
                 <YAxis dataKey="name" type="category" width={100} fontSize={11} />
-                <ChartTooltip content={<ChartTooltipContent />} />
+                <ChartTooltip content={<CalibrationTooltip />} />
                 <Bar dataKey="count" name="Quantidade" fill="hsl(217, 91%, 60%)" radius={[0, 4, 4, 0]} />
               </BarChart>
             </ChartContainer>
@@ -302,7 +324,7 @@ export function CalibrationsDashboard({ calibrations, contracts = [] }: Calibrat
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="name" fontSize={12} />
                 <YAxis fontSize={12} />
-                <ChartTooltip content={<ChartTooltipContent />} />
+                <ChartTooltip content={<CalibrationTooltip />} />
                 <Bar dataKey="value" name="Quantidade" radius={[4, 4, 0, 0]}>
                   {calibrationsByStatus.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
@@ -326,7 +348,7 @@ export function CalibrationsDashboard({ calibrations, contracts = [] }: Calibrat
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
               <XAxis dataKey="type" fontSize={12} />
               <YAxis fontSize={12} />
-              <ChartTooltip content={<ChartTooltipContent />} />
+              <ChartTooltip content={<CalibrationTooltip />} />
               <Legend />
               <Bar dataKey="valida" name="Válida" fill="hsl(142, 76%, 36%)" radius={[4, 4, 0, 0]} />
               <Bar dataKey="vencida" name="Vencida" fill="hsl(0, 84%, 60%)" radius={[4, 4, 0, 0]} />
