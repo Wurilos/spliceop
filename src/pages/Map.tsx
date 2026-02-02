@@ -1,4 +1,4 @@
-import { useEffect, useRef, useMemo, useState } from 'react';
+import { useEffect, useRef, useMemo, useState, useLayoutEffect, useCallback } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { AppLayout } from '@/components/layout/AppLayout';
@@ -76,47 +76,86 @@ export default function MapPage() {
     })).filter(item => item.count > 0).sort((a, b) => a.name.localeCompare(b.name));
   }, [contractColorMap, equipment]);
 
-  // Initialize map (needs to run after loading finishes, otherwise the map container
-  // doesn't exist yet and this effect would early-return forever in production).
-  useEffect(() => {
-    if (loading) return;
-    if (!mapContainer.current || map.current) return;
-
-    // Ensure container has dimensions before initializing
+  // Initialize map function
+  const initializeMap = useCallback(() => {
     const container = mapContainer.current;
-    if (container.offsetWidth === 0 || container.offsetHeight === 0) {
-      // Retry after a short delay
-      const timer = setTimeout(() => {
-        if (container.offsetWidth > 0 && container.offsetHeight > 0 && !map.current) {
-          map.current = L.map(container).setView([-15.7801, -47.9292], 4);
-          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors'
-          }).addTo(map.current);
-          setMapReady(true);
-        }
+    if (!container || map.current) return false;
+    
+    // Force browser to calculate dimensions
+    const rect = container.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return false;
+    
+    try {
+      map.current = L.map(container, {
+        center: [-15.7801, -47.9292],
+        zoom: 4,
+        scrollWheelZoom: true,
+        zoomControl: true,
+      });
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 19,
+      }).addTo(map.current);
+
+      // Force a resize to ensure tiles load properly
+      setTimeout(() => {
+        map.current?.invalidateSize();
       }, 100);
-      return () => clearTimeout(timer);
+
+      setMapReady(true);
+      return true;
+    } catch (error) {
+      console.error('Error initializing map:', error);
+      return false;
     }
+  }, []);
 
-    map.current = L.map(container).setView([-15.7801, -47.9292], 4);
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors'
-    }).addTo(map.current);
-
-    setMapReady(true);
-
+  // Initialize map after loading finishes and DOM is ready
+  useLayoutEffect(() => {
+    if (loading) return;
+    
+    // Try to initialize immediately
+    if (initializeMap()) return;
+    
+    // If not ready, retry with increasing delays
+    const delays = [50, 100, 200, 500, 1000];
+    const timers: NodeJS.Timeout[] = [];
+    
+    delays.forEach((delay) => {
+      const timer = setTimeout(() => {
+        if (!map.current) {
+          initializeMap();
+        }
+      }, delay);
+      timers.push(timer);
+    });
+    
     return () => {
+      timers.forEach(clearTimeout);
       if (map.current) {
         map.current.remove();
         map.current = null;
         setMapReady(false);
       }
     };
-  }, [loading]);
+  }, [loading, initializeMap]);
 
+  // Handle window resize
   useEffect(() => {
-    if (!map.current || loading) return;
+    const handleResize = () => {
+      if (map.current) {
+        map.current.invalidateSize();
+      }
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Add markers to map
+  useEffect(() => {
+    if (!map.current || loading || !mapReady) return;
 
     map.current.eachLayer((layer) => {
       if (layer instanceof L.Marker) map.current?.removeLayer(layer);
@@ -154,7 +193,7 @@ export default function MapPage() {
       const bounds = L.latLngBounds(equipmentWithCoords.map(e => [Number(e.latitude), Number(e.longitude)]));
       map.current.fitBounds(bounds, { padding: [50, 50] });
     }
-  }, [equipment, loading, contractColorMap]);
+  }, [equipment, loading, contractColorMap, mapReady]);
 
   const equipmentWithCoords = equipment.filter(e => e.latitude && e.longitude);
   const noContractCount = equipmentWithCoords.filter(e => !e.contract_id).length;
@@ -182,8 +221,14 @@ export default function MapPage() {
               ) : (
                 <div 
                   ref={mapContainer} 
+                  id="map-container"
                   className="h-[600px] w-full rounded-lg" 
-                  style={{ position: 'relative', zIndex: 1 }}
+                  style={{ 
+                    position: 'relative', 
+                    zIndex: 1,
+                    minHeight: '600px',
+                    display: 'block',
+                  }}
                 />
               )}
             </CardContent>
