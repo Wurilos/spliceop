@@ -192,6 +192,22 @@ export function useKanbanIssues() {
             created_at: currentIssue.created_at,
             completed_at: new Date().toISOString(),
           });
+          
+          // Revert equipment status to 'active' when issue is completed
+          if (currentIssue.equipment_id) {
+            await supabase
+              .from('equipment')
+              .update({ status: 'active' })
+              .eq('id', currentIssue.equipment_id);
+          }
+          
+          // Revert vehicle status to 'active' when issue is completed
+          if (currentIssue.vehicle_id) {
+            await supabase
+              .from('vehicles')
+              .update({ status: 'active' })
+              .eq('id', currentIssue.vehicle_id);
+          }
         }
       }
       
@@ -214,6 +230,8 @@ export function useKanbanIssues() {
       queryClient.invalidateQueries({ queryKey: ['issue_history'] });
       queryClient.invalidateQueries({ queryKey: ['archived-issues'] });
       queryClient.invalidateQueries({ queryKey: ['kanban_subitems_all'] });
+      queryClient.invalidateQueries({ queryKey: ['equipment'] });
+      queryClient.invalidateQueries({ queryKey: ['vehicles'] });
       toast.success('Demanda movida com sucesso!');
     },
     onError: () => toast.error('Erro ao mover demanda'),
