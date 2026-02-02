@@ -172,13 +172,17 @@ export default function MapPage() {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
           {/* Mapa */}
           <Card className="lg:col-span-3">
-            <CardContent className="p-0">
+            <CardContent className="p-0 relative">
               {loading ? (
                 <div className="h-[600px] flex items-center justify-center">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 </div>
               ) : (
-                <div ref={mapContainer} className="h-[600px] rounded-lg" />
+                <div 
+                  ref={mapContainer} 
+                  className="h-[600px] w-full rounded-lg" 
+                  style={{ position: 'relative', zIndex: 1 }}
+                />
               )}
             </CardContent>
           </Card>

@@ -154,30 +154,55 @@
   }
 }
 
-/* Leaflet Map Styles - ensure map renders correctly */
+/* Leaflet Map Styles - ensure map renders correctly in all environments */
 .leaflet-container {
-  width: 100%;
-  height: 100%;
-  z-index: 1;
+  width: 100% !important;
+  height: 100% !important;
+  z-index: 1 !important;
+  position: relative !important;
+  background: hsl(var(--muted));
 }
 
 .leaflet-tile-pane {
-  z-index: 1;
+  z-index: 1 !important;
+}
+
+.leaflet-tile {
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
 .leaflet-overlay-pane {
-  z-index: 2;
+  z-index: 2 !important;
 }
 
 .leaflet-marker-pane {
-  z-index: 3;
+  z-index: 3 !important;
+}
+
+.leaflet-tooltip-pane {
+  z-index: 4 !important;
 }
 
 .leaflet-popup-pane {
-  z-index: 4;
+  z-index: 5 !important;
+}
+
+.leaflet-control-container {
+  z-index: 6 !important;
+}
+
+.leaflet-top,
+.leaflet-bottom {
+  z-index: 6 !important;
 }
 
 .custom-marker {
   background: transparent;
   border: none;
+}
+
+/* Fix for map container in production builds */
+[class*="h-[600px]"] .leaflet-container {
+  min-height: 600px;
 }
