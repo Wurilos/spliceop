@@ -76,8 +76,10 @@ export default function MapPage() {
     })).filter(item => item.count > 0).sort((a, b) => a.name.localeCompare(b.name));
   }, [contractColorMap, equipment]);
 
-  // Initialize map
+  // Initialize map (needs to run after loading finishes, otherwise the map container
+  // doesn't exist yet and this effect would early-return forever in production).
   useEffect(() => {
+    if (loading) return;
     if (!mapContainer.current || map.current) return;
 
     // Ensure container has dimensions before initializing
@@ -111,7 +113,7 @@ export default function MapPage() {
         setMapReady(false);
       }
     };
-  }, []);
+  }, [loading]);
 
   useEffect(() => {
     if (!map.current || loading) return;
