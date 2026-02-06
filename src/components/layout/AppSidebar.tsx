@@ -59,6 +59,7 @@ import {
   Kanban,
   List,
   Smartphone,
+  HardHat,
 } from 'lucide-react';
 
 // Map hrefs to prefetch module names
