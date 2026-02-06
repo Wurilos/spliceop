@@ -43,6 +43,7 @@ const Kanban = lazy(() => import("./pages/Kanban"));
 const KanbanItems = lazy(() => import("./pages/KanbanItems"));
 const PhoneLines = lazy(() => import("./pages/PhoneLines"));
 const IssuesDashboard = lazy(() => import("./pages/IssuesDashboard"));
+const Epi = lazy(() => import("./pages/Epi"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Loading fallback component
