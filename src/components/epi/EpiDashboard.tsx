@@ -10,6 +10,14 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
   BarChart,
   Bar,
   XAxis,
@@ -17,12 +25,9 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
   Legend,
 } from 'recharts';
-import { Package, ArrowDownToLine, ArrowUpFromLine, Boxes } from 'lucide-react';
+import { Package, ArrowDownToLine, ArrowUpFromLine, Boxes, ImageOff } from 'lucide-react';
 import { EpiItem } from '@/hooks/useEpiItems';
 import { EpiReceipt } from '@/hooks/useEpiReceipts';
 import { EpiOutput } from '@/hooks/useEpiOutputs';
@@ -34,17 +39,6 @@ interface EpiDashboardProps {
   receipts: EpiReceipt[];
   outputs: EpiOutput[];
 }
-
-const COLORS = [
-  'hsl(var(--primary))',
-  'hsl(var(--chart-2))',
-  'hsl(var(--chart-3))',
-  'hsl(var(--chart-4))',
-  'hsl(var(--chart-5))',
-  'hsl(217, 91%, 60%)',
-  'hsl(142, 76%, 36%)',
-  'hsl(38, 92%, 50%)',
-];
 
 export function EpiDashboard({ items, receipts, outputs }: EpiDashboardProps) {
   const [startDate, setStartDate] = useState('');
@@ -81,7 +75,7 @@ export function EpiDashboard({ items, receipts, outputs }: EpiDashboardProps) {
     return filteredOutputs.reduce((sum, o) => sum + o.quantity, 0);
   }, [filteredOutputs]);
 
-  // Calculate stock per item (without date filter - always total)
+  // Calculate stock per item (considering all transactions for total balance)
   const stockByItem = useMemo(() => {
     const stock: Record<string, { item: EpiItem; received: number; output: number; balance: number }> = {};
 
@@ -89,17 +83,14 @@ export function EpiDashboard({ items, receipts, outputs }: EpiDashboardProps) {
       stock[item.id] = { item, received: 0, output: 0, balance: 0 };
     });
 
-    // Consider all receipts for stock calculation (or filtered if item is selected)
-    const receiptsForStock = selectedItem === 'all' ? receipts : receipts.filter(r => r.item_id === selectedItem);
-    const outputsForStock = selectedItem === 'all' ? outputs : outputs.filter(o => o.item_id === selectedItem);
-
-    receiptsForStock.forEach((r) => {
+    // Use all receipts/outputs for stock calculation (total balance)
+    receipts.forEach((r) => {
       if (stock[r.item_id]) {
         stock[r.item_id].received += r.quantity;
       }
     });
 
-    outputsForStock.forEach((o) => {
+    outputs.forEach((o) => {
       if (stock[o.item_id]) {
         stock[o.item_id].output += o.quantity;
       }
@@ -109,38 +100,14 @@ export function EpiDashboard({ items, receipts, outputs }: EpiDashboardProps) {
       s.balance = s.received - s.output;
     });
 
-    return Object.values(stock).filter(s => s.received > 0 || s.output > 0);
-  }, [items, receipts, outputs, selectedItem]);
+    return Object.values(stock).sort((a, b) => a.item.code.localeCompare(b.item.code));
+  }, [items, receipts, outputs]);
 
   const totalStock = useMemo(() => {
     return stockByItem.reduce((sum, s) => sum + s.balance, 0);
   }, [stockByItem]);
 
-  // Data for bar chart - stock by item
-  const stockChartData = useMemo(() => {
-    return stockByItem
-      .map((s) => ({
-        name: s.item.code,
-        description: s.item.description,
-        entradas: s.received,
-        saidas: s.output,
-        saldo: s.balance,
-      }))
-      .sort((a, b) => b.saldo - a.saldo);
-  }, [stockByItem]);
-
-  // Data for pie chart - distribution by item
-  const pieChartData = useMemo(() => {
-    return stockByItem
-      .filter((s) => s.balance > 0)
-      .map((s) => ({
-        name: s.item.code,
-        value: s.balance,
-      }))
-      .sort((a, b) => b.value - a.value);
-  }, [stockByItem]);
-
-  // Movement by month
+  // Data for bar chart - movement by month
   const movementByMonth = useMemo(() => {
     const months: Record<string, { month: string; entradas: number; saidas: number }> = {};
 
@@ -225,10 +192,10 @@ export function EpiDashboard({ items, receipts, outputs }: EpiDashboardProps) {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Total Entradas</CardTitle>
-            <ArrowDownToLine className="h-4 w-4 text-green-500" />
+            <ArrowDownToLine className="h-4 w-4 text-emerald-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{totalReceived}</div>
+            <div className="text-2xl font-bold text-emerald-600">{totalReceived}</div>
             <p className="text-xs text-muted-foreground">unidades recebidas</p>
           </CardContent>
         </Card>
@@ -236,10 +203,10 @@ export function EpiDashboard({ items, receipts, outputs }: EpiDashboardProps) {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Total Saídas</CardTitle>
-            <ArrowUpFromLine className="h-4 w-4 text-red-500" />
+            <ArrowUpFromLine className="h-4 w-4 text-destructive" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{totalOutput}</div>
+            <div className="text-2xl font-bold text-destructive">{totalOutput}</div>
             <p className="text-xs text-muted-foreground">unidades distribuídas</p>
           </CardContent>
         </Card>
@@ -256,92 +223,99 @@ export function EpiDashboard({ items, receipts, outputs }: EpiDashboardProps) {
         </Card>
       </div>
 
-      {/* Charts Row */}
-      <div className="grid gap-4 md:grid-cols-2">
-        {/* Stock by Item */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Estoque por Item</CardTitle>
-            <CardDescription>Entradas, saídas e saldo por item de EPI</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={stockChartData} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" />
-                <YAxis dataKey="name" type="category" width={80} tick={{ fontSize: 11 }} />
-                <Tooltip
-                  content={({ active, payload }) => {
-                    if (!active || !payload?.length) return null;
-                    const data = payload[0].payload;
-                    return (
-                      <div className="rounded-lg border bg-background p-2 shadow-md">
-                        <p className="font-medium">{data.name}</p>
-                        <p className="text-xs text-muted-foreground">{data.description}</p>
-                        <div className="mt-1 space-y-1 text-sm">
-                          <p className="text-green-600">Entradas: {data.entradas}</p>
-                          <p className="text-red-600">Saídas: {data.saidas}</p>
-                          <p className="font-medium">Saldo: {data.saldo}</p>
-                        </div>
-                      </div>
-                    );
-                  }}
-                />
-                <Legend />
-                <Bar dataKey="entradas" name="Entradas" fill="hsl(142, 76%, 36%)" />
-                <Bar dataKey="saidas" name="Saídas" fill="hsl(0, 84%, 60%)" />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        {/* Distribution Pie Chart */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Distribuição do Estoque</CardTitle>
-            <CardDescription>Proporção do saldo por item</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={pieChartData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={100}
-                  paddingAngle={2}
-                  dataKey="value"
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  labelLine={false}
-                >
-                  {pieChartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Movement by Month */}
+      {/* Stock Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Movimentação Mensal</CardTitle>
-          <CardDescription>Entradas e saídas por mês</CardDescription>
+          <CardTitle>Estoque por Item</CardTitle>
+          <CardDescription>Quantidade em estoque de cada item de EPI</CardDescription>
         </CardHeader>
         <CardContent>
-          <ResponsiveContainer width="100%" height={250}>
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[80px]">Foto</TableHead>
+                  <TableHead className="w-[100px]">Código</TableHead>
+                  <TableHead>Descrição</TableHead>
+                  <TableHead className="text-right w-[100px]">Entradas</TableHead>
+                  <TableHead className="text-right w-[100px]">Saídas</TableHead>
+                  <TableHead className="text-right w-[100px]">Saldo</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {stockByItem.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                      Nenhum item cadastrado
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  stockByItem.map((stock) => (
+                    <TableRow key={stock.item.id}>
+                      <TableCell>
+                        {stock.item.photo_url ? (
+                          <img
+                            src={stock.item.photo_url}
+                            alt={stock.item.description}
+                            className="w-12 h-12 object-cover rounded-md border"
+                          />
+                        ) : (
+                          <div className="w-12 h-12 rounded-md border bg-muted flex items-center justify-center">
+                            <ImageOff className="h-5 w-5 text-muted-foreground" />
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell className="font-mono font-medium">{stock.item.code}</TableCell>
+                      <TableCell>{stock.item.description}</TableCell>
+                      <TableCell className="text-right text-emerald-600 font-medium">
+                        {stock.received}
+                      </TableCell>
+                      <TableCell className="text-right text-destructive font-medium">
+                        {stock.output}
+                      </TableCell>
+                      <TableCell className="text-right font-bold">
+                        <span className={stock.balance < 0 ? 'text-destructive' : stock.balance === 0 ? 'text-muted-foreground' : 'text-primary'}>
+                          {stock.balance}
+                        </span>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Movement by Month Chart */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Movimentação por Mês</CardTitle>
+          <CardDescription>Entradas e saídas nos últimos meses</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={300}>
             <BarChart data={movementByMonth}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+              <XAxis dataKey="month" />
               <YAxis />
-              <Tooltip />
+              <Tooltip
+                content={({ active, payload, label }) => {
+                  if (!active || !payload?.length) return null;
+                  return (
+                    <div className="rounded-lg border bg-background p-2 shadow-md">
+                      <p className="font-medium">{label}</p>
+                      <div className="mt-1 space-y-1 text-sm">
+                        <p className="text-emerald-600">Entradas: {payload[0]?.value || 0}</p>
+                        <p className="text-destructive">Saídas: {payload[1]?.value || 0}</p>
+                      </div>
+                    </div>
+                  );
+                }}
+              />
               <Legend />
-              <Bar dataKey="entradas" name="Entradas" fill="hsl(142, 76%, 36%)" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="saidas" name="Saídas" fill="hsl(0, 84%, 60%)" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="entradas" name="Entradas" fill="hsl(var(--chart-2))" />
+              <Bar dataKey="saidas" name="Saídas" fill="hsl(var(--destructive))" />
             </BarChart>
           </ResponsiveContainer>
         </CardContent>
