@@ -43,6 +43,7 @@ const Kanban = lazy(() => import("./pages/Kanban"));
 const KanbanItems = lazy(() => import("./pages/KanbanItems"));
 const PhoneLines = lazy(() => import("./pages/PhoneLines"));
 const IssuesDashboard = lazy(() => import("./pages/IssuesDashboard"));
+const Epi = lazy(() => import("./pages/Epi"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Loading fallback component
@@ -115,6 +116,7 @@ const App = () => (
               <Route path="/seals" element={<ProtectedRoute><Seals /></ProtectedRoute>} />
               <Route path="/audit" element={<ProtectedRoute><AuditLog /></ProtectedRoute>} />
               <Route path="/phone-lines" element={<ProtectedRoute><PhoneLines /></ProtectedRoute>} />
+              <Route path="/epi" element={<ProtectedRoute><Epi /></ProtectedRoute>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>

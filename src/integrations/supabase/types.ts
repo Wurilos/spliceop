@@ -672,6 +672,119 @@ export type Database = {
         }
         Relationships: []
       }
+      epi_items: {
+        Row: {
+          code: string
+          created_at: string
+          description: string
+          id: string
+          photo_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description: string
+          id?: string
+          photo_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string
+          id?: string
+          photo_url?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      epi_outputs: {
+        Row: {
+          created_at: string
+          employee_id: string
+          id: string
+          item_id: string
+          notes: string | null
+          output_date: string
+          quantity: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          employee_id: string
+          id?: string
+          item_id: string
+          notes?: string | null
+          output_date?: string
+          quantity: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          employee_id?: string
+          id?: string
+          item_id?: string
+          notes?: string | null
+          output_date?: string
+          quantity?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "epi_outputs_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "epi_outputs_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "epi_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      epi_receipts: {
+        Row: {
+          created_at: string
+          id: string
+          item_id: string
+          notes: string | null
+          quantity: number
+          receipt_date: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          item_id: string
+          notes?: string | null
+          quantity: number
+          receipt_date?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item_id?: string
+          notes?: string | null
+          quantity?: number
+          receipt_date?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "epi_receipts_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "epi_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       equipment: {
         Row: {
           address: string | null
