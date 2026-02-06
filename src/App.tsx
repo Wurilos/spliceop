@@ -116,6 +116,7 @@ const App = () => (
               <Route path="/seals" element={<ProtectedRoute><Seals /></ProtectedRoute>} />
               <Route path="/audit" element={<ProtectedRoute><AuditLog /></ProtectedRoute>} />
               <Route path="/phone-lines" element={<ProtectedRoute><PhoneLines /></ProtectedRoute>} />
+              <Route path="/epi" element={<ProtectedRoute><Epi /></ProtectedRoute>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>

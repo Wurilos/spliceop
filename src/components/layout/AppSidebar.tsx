@@ -137,6 +137,7 @@ const menuGroups = [
       { title: 'Linhas / Chip', href: '/phone-lines', icon: Smartphone },
       { title: 'Lacres e OS', href: '/seals', icon: Tag },
       { title: 'Estoque', href: '/inventory', icon: Package },
+      { title: 'EPI', href: '/epi', icon: HardHat },
       { title: 'Administração', href: '/audit', icon: History },
     ],
   },
