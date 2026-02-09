@@ -85,7 +85,10 @@ export default function Internet() {
     {
       key: 'reference_month',
       label: 'Mês Referência',
-      render: (value: string) => format(new Date(value), 'MM/yyyy', { locale: ptBR }),
+      render: (value: string) => {
+        const [year, month] = value.split('-').map(Number);
+        return `${String(month).padStart(2, '0')}/${year}`;
+      },
     },
     {
       key: 'value',
