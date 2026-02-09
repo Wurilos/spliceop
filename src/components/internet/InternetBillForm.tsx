@@ -78,7 +78,7 @@ export function InternetBillForm({ open, onOpenChange, bill }: InternetBillFormP
     const connection = connections.find(c => c.id === data.connection_id);
     const payload = {
       provider: providers.find(p => p.id === connection?.provider_id)?.name || '',
-      reference_month: data.reference_month,
+      reference_month: data.reference_month.length === 7 ? `${data.reference_month}-01` : data.reference_month,
       value: parseFloat(data.value),
       contract_id: connection?.contract_id || null,
       connection_id: data.connection_id,
