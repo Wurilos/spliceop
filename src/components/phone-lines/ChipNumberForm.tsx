@@ -29,9 +29,17 @@ import type { ChipNumber } from '@/hooks/useChipNumbers';
 
 const CARRIERS = ['Vivo', 'Oi', 'TIM', 'Claro', 'DATATEM'] as const;
 
+const SUB_CARRIERS: Record<string, string[]> = {
+  'DATATEM': ['Vivo', 'Oi', 'TIM', 'Claro'],
+};
+
+const STATUSES = ['Ativo', 'Inativo', 'Suspenso'] as const;
+
 const formSchema = z.object({
   line_number: z.string().min(1, 'Número da linha é obrigatório'),
   carrier: z.string().min(1, 'Operadora é obrigatória'),
+  sub_carrier: z.string().optional(),
+  status: z.string().min(1, 'Status é obrigatório'),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -56,6 +64,8 @@ export function ChipNumberForm({
     defaultValues: {
       line_number: '',
       carrier: '',
+      sub_carrier: '',
+      status: 'Ativo',
     },
   });
 
@@ -64,11 +74,15 @@ export function ChipNumberForm({
       form.reset({
         line_number: chipNumber.line_number,
         carrier: chipNumber.carrier,
+        sub_carrier: chipNumber.sub_carrier || '',
+        status: chipNumber.status || 'Ativo',
       });
     } else {
       form.reset({
         line_number: '',
         carrier: '',
+        sub_carrier: '',
+        status: 'Ativo',
       });
     }
   }, [chipNumber, form]);
@@ -107,7 +121,13 @@ export function ChipNumberForm({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Operadora</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
+                  <Select onValueChange={(val) => {
+                    field.onChange(val);
+                    // Reset sub_carrier when carrier changes
+                    if (!SUB_CARRIERS[val]) {
+                      form.setValue('sub_carrier', '');
+                    }
+                  }} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione a operadora" />
@@ -117,6 +137,58 @@ export function ChipNumberForm({
                       {CARRIERS.map((carrier) => (
                         <SelectItem key={carrier} value={carrier}>
                           {carrier}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {SUB_CARRIERS[form.watch('carrier')] && (
+              <FormField
+                control={form.control}
+                name="sub_carrier"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Sub Operadora</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value || ''}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione a sub operadora" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {SUB_CARRIERS[form.watch('carrier')].map((sub) => (
+                          <SelectItem key={sub} value={sub}>
+                            {sub}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            <FormField
+              control={form.control}
+              name="status"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Status</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o status" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {STATUSES.map((status) => (
+                        <SelectItem key={status} value={status}>
+                          {status}
                         </SelectItem>
                       ))}
                     </SelectContent>

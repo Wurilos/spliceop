@@ -20,6 +20,19 @@ const columns = [
     label: 'Operadora',
     render: (value: string) => <Badge variant="outline">{value}</Badge>
   },
+  { 
+    key: 'sub_carrier', 
+    label: 'Sub Operadora',
+    render: (value: string | null) => value ? <Badge variant="outline">{value}</Badge> : <span className="text-muted-foreground">-</span>
+  },
+  {
+    key: 'status',
+    label: 'Status',
+    render: (value: string) => {
+      const variant = value === 'Ativo' ? 'default' : value === 'Suspenso' ? 'secondary' : 'outline';
+      return <Badge variant={variant}>{value}</Badge>;
+    }
+  },
 ];
 
 export function ChipNumbersTab() {

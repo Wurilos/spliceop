@@ -6,6 +6,8 @@ export interface ChipNumber {
   id: string;
   line_number: string;
   carrier: string;
+  sub_carrier: string | null;
+  status: string;
   created_at: string;
   updated_at: string;
 }
