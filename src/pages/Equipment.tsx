@@ -637,7 +637,7 @@ export default function EquipmentPage() {
                               <span className="font-medium text-primary">{eq.serial_number}</span>
                             </td>
                             <td className="py-3 px-4 max-w-[80px] truncate" title={eq.model || ''}>{eq.model || '-'}</td>
-                            <td className="py-3 px-4 max-w-[150px] truncate" title={eq.address || ''}>{eq.address || '-'}</td>
+                            <td className="py-3 px-4 min-w-[200px] whitespace-normal" title={eq.address || ''}>{eq.address || '-'}</td>
                             <td className="py-3 px-4 max-w-[100px] truncate" title={eq.direction || ''}>{eq.direction || '-'}</td>
                             <td className="py-3 px-4 text-center">{eq.lanes_qty ?? '-'}</td>
                             <td className="py-3 px-4 whitespace-nowrap">{eq.speed_limit ? `${eq.speed_limit} km/h` : '-'}</td>
