@@ -50,7 +50,7 @@ const columns = [
 ];
 
 export default function PhoneLines() {
-  const { phoneLines, loading, createPhoneLine, updatePhoneLine, deletePhoneLine, isCreating, isUpdating, isDeleting } = usePhoneLines();
+  const { phoneLines, loading, createPhoneLine, updatePhoneLine, deletePhoneLine, deleteMany: deleteManyPhoneLines, isCreating, isUpdating, isDeleting } = usePhoneLines();
   const { contracts } = useContracts();
   const { equipment } = useEquipment();
   const [formOpen, setFormOpen] = useState(false);
@@ -299,6 +299,7 @@ export default function PhoneLines() {
               loading={loading}
               onEdit={handleEdit}
               onDelete={handleDelete}
+              onDeleteMany={deleteManyPhoneLines}
             />
           </TabsContent>
         </Tabs>

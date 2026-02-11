@@ -103,6 +103,28 @@ export function useChipNumbers() {
     },
   });
 
+  const deleteManyMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase
+        .from('chip_numbers')
+        .delete()
+        .in('id', ids);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['chip_numbers'] });
+      toast({ title: 'Chips excluídos com sucesso!' });
+    },
+    onError: (error: any) => {
+      if (error.code === '23503') {
+        toast({ title: 'Erro', description: 'Alguns chips estão vinculados a equipamentos e não podem ser excluídos', variant: 'destructive' });
+      } else {
+        toast({ title: 'Erro ao excluir chips', description: error.message, variant: 'destructive' });
+      }
+    },
+  });
+
   return {
     chipNumbers,
     loading,
@@ -110,6 +132,7 @@ export function useChipNumbers() {
     createChipNumber: createMutation.mutate,
     updateChipNumber: updateMutation.mutate,
     deleteChipNumber: deleteMutation.mutate,
+    deleteMany: deleteManyMutation.mutate,
     isCreating: createMutation.isPending,
     isUpdating: updateMutation.isPending,
     isDeleting: deleteMutation.isPending,
