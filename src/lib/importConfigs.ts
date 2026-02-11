@@ -1007,9 +1007,17 @@ export const chipNumberImportConfig = {
       const normalized = v?.toLowerCase().trim();
       return carrierMap[normalized] || v?.trim() || '';
     }},
+    { excelColumn: 'Sub Operadora', dbColumn: 'sub_carrier', required: false, transform: (v: any) => v ? String(v).trim() : null },
+    { excelColumn: 'Status', dbColumn: 'status', required: false, transform: (v: any) => {
+      const statusMap: Record<string, string> = { 'ativo': 'Ativo', 'inativo': 'Inativo', 'suspenso': 'Suspenso' };
+      const normalized = v?.toLowerCase?.().trim();
+      return statusMap[normalized] || 'Ativo';
+    }},
   ] as ColumnMapping[],
   templateColumns: [
     { key: 'line_number', label: 'Numero Linha' },
     { key: 'carrier', label: 'Operadora' },
+    { key: 'sub_carrier', label: 'Sub Operadora' },
+    { key: 'status', label: 'Status' },
   ],
 };
