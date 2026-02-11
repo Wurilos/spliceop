@@ -23,7 +23,7 @@ const columns = [
 ];
 
 export function ChipNumbersTab() {
-  const { chipNumbers, loading, createChipNumber, updateChipNumber, deleteChipNumber, isCreating, isUpdating, isDeleting } = useChipNumbers();
+  const { chipNumbers, loading, createChipNumber, updateChipNumber, deleteChipNumber, deleteMany: deleteManyChips, isCreating, isUpdating, isDeleting } = useChipNumbers();
   const { phoneLines } = usePhoneLines();
   const [formOpen, setFormOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
@@ -144,6 +144,7 @@ export function ChipNumbersTab() {
         loading={loading}
         onEdit={handleEdit}
         onDelete={handleDelete}
+        onDeleteMany={deleteManyChips}
       />
 
       <ChipNumberForm
