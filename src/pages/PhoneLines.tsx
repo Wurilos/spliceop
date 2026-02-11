@@ -57,6 +57,7 @@ export default function PhoneLines() {
   const [importOpen, setImportOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [selectedPhoneLine, setSelectedPhoneLine] = useState<PhoneLine | null>(null);
+  const [activeTab, setActiveTab] = useState('dashboard');
 
   const handleCreate = () => {
     setSelectedPhoneLine(null);
@@ -271,13 +272,13 @@ export default function PhoneLines() {
         <PageHeader
           title="Linhas / Chip"
           description="Gerenciamento de linhas telefônicas dos equipamentos"
-          onAdd={handleCreate}
+          onAdd={activeTab === 'list' ? handleCreate : undefined}
           addLabel="Nova Linha / Equipamento"
-          onExport={handleExport}
-          onImport={() => setImportOpen(true)}
+          onExport={activeTab === 'list' ? handleExport : undefined}
+          onImport={activeTab === 'list' ? () => setImportOpen(true) : undefined}
         />
 
-        <Tabs defaultValue="dashboard" className="space-y-4">
+        <Tabs defaultValue="dashboard" className="space-y-4" onValueChange={setActiveTab}>
           <TabsList>
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="chips">Cadastro de Chips</TabsTrigger>
