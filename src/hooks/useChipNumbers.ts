@@ -5,6 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 export interface ChipNumber {
   id: string;
   line_number: string;
+  iccid: string | null;
   carrier: string;
   sub_carrier: string | null;
   status: string;

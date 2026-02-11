@@ -15,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 
 const columns = [
   { key: 'line_number', label: 'Número da Linha' },
+  { key: 'iccid', label: 'ICCID', render: (value: string | null) => value || <span className="text-muted-foreground">-</span> },
   { 
     key: 'carrier', 
     label: 'Operadora',

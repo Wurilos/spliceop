@@ -239,6 +239,7 @@ export type Database = {
         Row: {
           carrier: string
           created_at: string
+          iccid: string | null
           id: string
           line_number: string
           status: string
@@ -248,6 +249,7 @@ export type Database = {
         Insert: {
           carrier: string
           created_at?: string
+          iccid?: string | null
           id?: string
           line_number: string
           status?: string
@@ -257,6 +259,7 @@ export type Database = {
         Update: {
           carrier?: string
           created_at?: string
+          iccid?: string | null
           id?: string
           line_number?: string
           status?: string
