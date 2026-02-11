@@ -996,6 +996,7 @@ export const componentImportConfig = {
 export const chipNumberImportConfig = {
   mappings: [
     { excelColumn: 'Numero Linha', dbColumn: 'line_number', required: true, transform: (v: any) => String(v).trim() },
+    { excelColumn: 'ICCID', dbColumn: 'iccid', required: false, transform: (v: any) => v ? String(v).trim() : null },
     { excelColumn: 'Operadora', dbColumn: 'carrier', required: true, transform: (v: string) => {
       const carrierMap: Record<string, string> = {
         'vivo': 'Vivo',
@@ -1009,13 +1010,14 @@ export const chipNumberImportConfig = {
     }},
     { excelColumn: 'Sub Operadora', dbColumn: 'sub_carrier', required: false, transform: (v: any) => v ? String(v).trim() : null },
     { excelColumn: 'Status', dbColumn: 'status', required: false, transform: (v: any) => {
-      const statusMap: Record<string, string> = { 'ativo': 'Ativo', 'inativo': 'Inativo', 'suspenso': 'Suspenso' };
+      const statusMap: Record<string, string> = { 'ativo': 'Ativo', 'inativo': 'Inativo', 'suspenso': 'Suspenso', 'sobressalente': 'Sobressalente' };
       const normalized = v?.toLowerCase?.().trim();
       return statusMap[normalized] || 'Ativo';
     }},
   ] as ColumnMapping[],
   templateColumns: [
     { key: 'line_number', label: 'Numero Linha' },
+    { key: 'iccid', label: 'ICCID' },
     { key: 'carrier', label: 'Operadora' },
     { key: 'sub_carrier', label: 'Sub Operadora' },
     { key: 'status', label: 'Status' },

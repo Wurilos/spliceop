@@ -33,10 +33,11 @@ const SUB_CARRIERS: Record<string, string[]> = {
   'DATATEM': ['Vivo', 'Oi', 'TIM', 'Claro'],
 };
 
-const STATUSES = ['Ativo', 'Inativo', 'Suspenso'] as const;
+const STATUSES = ['Ativo', 'Inativo', 'Suspenso', 'Sobressalente'] as const;
 
 const formSchema = z.object({
   line_number: z.string().min(1, 'Número da linha é obrigatório'),
+  iccid: z.string().optional(),
   carrier: z.string().min(1, 'Operadora é obrigatória'),
   sub_carrier: z.string().optional(),
   status: z.string().min(1, 'Status é obrigatório'),
@@ -63,6 +64,7 @@ export function ChipNumberForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
       line_number: '',
+      iccid: '',
       carrier: '',
       sub_carrier: '',
       status: 'Ativo',
@@ -73,6 +75,7 @@ export function ChipNumberForm({
     if (chipNumber) {
       form.reset({
         line_number: chipNumber.line_number,
+        iccid: chipNumber.iccid || '',
         carrier: chipNumber.carrier,
         sub_carrier: chipNumber.sub_carrier || '',
         status: chipNumber.status || 'Ativo',
@@ -80,6 +83,7 @@ export function ChipNumberForm({
     } else {
       form.reset({
         line_number: '',
+        iccid: '',
         carrier: '',
         sub_carrier: '',
         status: 'Ativo',
@@ -109,6 +113,20 @@ export function ChipNumberForm({
                   <FormLabel>Número da Linha</FormLabel>
                   <FormControl>
                     <Input placeholder="Ex: (11) 99999-9999" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="iccid"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>ICCID</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Ex: 8955031234567890123" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
