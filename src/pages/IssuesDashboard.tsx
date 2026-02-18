@@ -5,7 +5,9 @@ import { useContracts } from '@/hooks/useContracts';
 import { useEquipment } from '@/hooks/useEquipment';
 import { useEmployees } from '@/hooks/useEmployees';
 import { ClipboardList, Clock, AlertTriangle, CheckCircle2, FileText, Radar, Users } from 'lucide-react';
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend as RechartLegend } from 'recharts';
+
+const TYPE_COLORS = ['#3b82f6', '#f97316', '#10b981', '#8b5cf6', '#ef4444', '#06b6d4', '#f59e0b', '#ec4899'];
 
 export default function IssuesDashboard() {
   const { pendingIssues, isLoading: loadingIssues } = usePendingIssues();
@@ -46,6 +48,26 @@ export default function IssuesDashboard() {
     return acc;
   }, {});
   const teamData = Object.entries(teamCounts).map(([name, value]) => ({ name, value }));
+
+  // Chart data - Demandas por Contrato
+  const contractCounts = pendingIssues.reduce((acc: Record<string, number>, issue: any) => {
+    const contractId = issue.contract_id;
+    const contract = contracts.find((c: any) => c.id === contractId);
+    const label = contract ? `${contract.number} - ${contract.client_name}` : 'Sem contrato';
+    acc[label] = (acc[label] || 0) + 1;
+    return acc;
+  }, {});
+  const contractData = Object.entries(contractCounts)
+    .map(([name, value]) => ({ name, value }))
+    .sort((a, b) => (b as any).value - (a as any).value);
+
+  // Chart data - Demandas por Tipo
+  const typeCounts = pendingIssues.reduce((acc: Record<string, number>, issue: any) => {
+    const type = issue.type || 'Sem tipo';
+    acc[type] = (acc[type] || 0) + 1;
+    return acc;
+  }, {});
+  const typeData = Object.entries(typeCounts).map(([name, value]) => ({ name, value }));
 
   // SLA Performance
   const slaCompliance = totalDemandas > 0 
@@ -268,6 +290,78 @@ export default function IssuesDashboard() {
                         <span className="text-xs text-muted-foreground">no prazo</span>
                       </div>
                     </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Fourth row - Charts by Contract and Type */}
+            <div className="grid gap-4 md:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Pendências por Contrato</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[300px]">
+                    {contractData.length > 0 ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={contractData} layout="vertical" margin={{ left: 10, right: 20 }}>
+                          <XAxis type="number" allowDecimals={false} />
+                          <YAxis
+                            dataKey="name"
+                            type="category"
+                            width={120}
+                            fontSize={11}
+                            tickFormatter={(v: string) => v.length > 18 ? v.slice(0, 18) + '…' : v}
+                          />
+                          <Tooltip />
+                          <Bar dataKey="value" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div className="flex items-center justify-center h-full text-muted-foreground">
+                        Nenhuma demanda encontrada
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Pendências por Tipo</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[300px]">
+                    {typeData.length > 0 ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={typeData}
+                            cx="50%"
+                            cy="45%"
+                            innerRadius={50}
+                            outerRadius={90}
+                            dataKey="value"
+                            label={({ name, value }) => `${value}`}
+                          >
+                            {typeData.map((entry, index) => (
+                              <Cell key={`type-cell-${index}`} fill={TYPE_COLORS[index % TYPE_COLORS.length]} />
+                            ))}
+                          </Pie>
+                          <Tooltip />
+                          <RechartLegend
+                            verticalAlign="bottom"
+                            height={36}
+                            formatter={(value: string) => <span className="text-xs">{value}</span>}
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div className="flex items-center justify-center h-full text-muted-foreground">
+                        Nenhuma demanda encontrada
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
