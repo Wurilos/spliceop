@@ -17,6 +17,7 @@ interface EnergyConsumerUnit {
   equipment_id: string | null;
   suppliers?: { name: string } | null;
   contracts?: { number: string; client_name: string } | null;
+  equipment?: { serial_number: string } | null;
 }
 
 interface EnergyBill {
@@ -315,6 +316,11 @@ export function EnergyBillingStatusGrid({
                       return (
                         <tr key={uc.id} className="border-t">
                           <td className="p-2">
+                            {uc.equipment?.serial_number && (
+                              <div className="text-xs text-muted-foreground font-medium">
+                                {uc.equipment.serial_number}
+                              </div>
+                            )}
                             <div className="font-medium truncate max-w-[200px]" title={uc.consumer_unit}>
                               {uc.consumer_unit}
                             </div>
