@@ -51,7 +51,7 @@ const getStatusNFBadge = (status: string | null) => {
 };
 
 const maintenanceColumns: Column<StockMaintenance>[] = [
-  { key: 'contracts', label: 'Contrato', render: (_, row) => row.contracts ? `${row.contracts.number}` : '-' },
+  { key: 'contracts', label: 'Contrato', render: (_, row) => row.contracts ? `${row.contracts.number} - ${row.contracts.client_name}` : '-' },
   { key: 'solicitante', label: 'Solicitante', render: (v) => (v as string) || '-' },
   { key: 'send_date', label: 'Data Envio', render: (v) => v ? format(new Date(v as string), 'dd/MM/yyyy') : '-' },
   { key: 'om_number', label: 'Nº O.M', render: (v) => (v as string) || '-' },
