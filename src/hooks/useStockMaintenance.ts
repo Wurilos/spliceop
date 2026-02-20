@@ -73,8 +73,11 @@ export function useStockMaintenance() {
       status_nf?: string | null;
       items: MaintenanceItem[];
     }) => {
-      const { items, ...maintenanceData } = record;
+      const { items, ...rawData } = record;
       
+      // Sanitize empty date strings to null
+      const maintenanceData = { ...rawData };
+      if (!maintenanceData.return_date) maintenanceData.return_date = null;
       // Create maintenance record
       const { data: maintenance, error: maintenanceError } = await supabase
         .from('stock_maintenance')
@@ -136,9 +139,18 @@ export function useStockMaintenance() {
       status_nf?: string;
       items?: MaintenanceItem[];
     }) => {
+      // Sanitize empty date strings to null
+      const sanitized = { ...record };
+      const dateFields = ['send_date', 'return_date'] as const;
+      for (const field of dateFields) {
+        if (field in sanitized && !(sanitized as any)[field]) {
+          (sanitized as any)[field] = null;
+        }
+      }
+
       const { data, error } = await supabase
         .from('stock_maintenance')
-        .update(record)
+        .update(sanitized)
         .eq('id', id)
         .select()
         .single();
