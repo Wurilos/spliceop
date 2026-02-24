@@ -53,7 +53,7 @@ export function useInvoices() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, ...record }: InvoiceUpdate & { id: string }) => {
-      const { data, error } = await supabase.from('invoices').update(record).eq('id', id).select().single();
+      const { data, error } = await supabase.from('invoices').update(sanitizeDates(record)).eq('id', id).select().single();
       if (error) throw error;
       return data;
     },
