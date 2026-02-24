@@ -1,154 +1,57 @@
 
 
-# Plano: Exibir Detalhes dos Equipamentos Vencidos nos Tooltips
+# Corrigir Tela Branca em Determinados Computadores
 
-## Objetivo
-Ao passar o mouse sobre os segmentos de aferições **vencidas** nos gráficos do dashboard de Calibrações, exibir uma lista com os equipamentos específicos que estão com a calibração vencida.
+## Problema Identificado
 
----
+O sistema trava e exibe tela branca em alguns computadores. Após análise do codigo, identifiquei as seguintes causas principais:
 
-## Resumo da Solução
+1. **Carga pesada no carregamento inicial**: O hook `useSystemAlerts` executa mais de 10 consultas ao banco de dados em paralelo toda vez que qualquer pagina carrega (ele roda no `AppLayout` via `NotificationPopup`). Em computadores mais lentos ou com conexao instavel, isso pode travar o navegador.
 
-Vou modificar o `CalibrationsDashboard.tsx` para:
-1. Enriquecer os dados dos gráficos com listas de equipamentos
-2. Criar um componente de tooltip customizado que exibe esses detalhes
-3. Aplicar o tooltip nos gráficos relevantes
+2. **Ausencia de Error Boundary**: Quando ocorre qualquer erro nao tratado em JavaScript (como falha de rede, timeout, ou erro de renderizacao de graficos), o React "morre" silenciosamente e exibe tela branca. Nao existe nenhum componente de Error Boundary no projeto.
 
----
+3. **Erros assincronos nao capturados**: Nao ha tratamento global para `unhandledrejection`, entao promises rejeitadas (ex: falha de rede) causam crash silencioso.
 
-## Gráficos Afetados
+4. **Renderizacao pesada de graficos SVG**: Os dashboards com Recharts podem sobrecarregar computadores com hardware limitado.
 
-| Gráfico | Comportamento Atual | Novo Comportamento |
-|---------|---------------------|-------------------|
-| **Aferições por Status** | Mostra apenas "Vencida: 2" | Mostrará os nº de série dos equipamentos vencidos |
-| **Aferições por Tipo de Equipamento** | Mostra "Vencida: 2" por tipo | Mostrará quais equipamentos de cada tipo estão vencidos |
-| **Vencimentos por Contrato e Mês** | Mostra quantidade por contrato | Mostrará os equipamentos que vencem em cada mês/contrato |
+## Solucao Proposta
 
----
+### 1. Criar um Error Boundary Global
+Adicionar um componente React Error Boundary que captura erros de renderizacao e exibe uma tela amigavel com opcao de recarregar, em vez de tela branca.
 
-## Mudanças Técnicas
+- Novo arquivo: `src/components/ErrorBoundary.tsx`
+- Envolve toda a aplicacao no `App.tsx`
 
-### 1. Enriquecer Dados com Listas de Equipamentos
+### 2. Adicionar Tratamento Global de Erros Assincronos
+No `App.tsx`, adicionar listener para `unhandledrejection` que exibe um toast de erro em vez de crashar silenciosamente.
 
-Modificar os `useMemo` que calculam os dados dos gráficos para incluir arrays de equipamentos:
+### 3. Otimizar o `useSystemAlerts`
+- Adicionar `try/catch` em volta de cada consulta ao banco
+- Usar `Promise.allSettled` em vez de executar consultas sequencialmente (se uma falhar, as outras continuam)
+- Aumentar o `staleTime` para evitar reconsultas desnecessarias
 
-```typescript
-// Exemplo para calibrationsByStatus
-const calibrationsByStatus = useMemo(() => {
-  const statusData: Record<string, { value: number; items: string[] }> = {
-    'Válida': { value: 0, items: [] },
-    'Vencida': { value: 0, items: [] },
-    'Pendente': { value: 0, items: [] },
-  };
-
-  calibrations.forEach(cal => {
-    const serial = cal.equipment?.serial_number || 'N/A';
-    const expDate = new Date(cal.expiration_date);
-    
-    if (isBefore(expDate, today)) {
-      statusData['Vencida'].value++;
-      statusData['Vencida'].items.push(serial);
-    } else if (cal.status === 'pending') {
-      statusData['Pendente'].value++;
-      statusData['Pendente'].items.push(serial);
-    } else {
-      statusData['Válida'].value++;
-      statusData['Válida'].items.push(serial);
-    }
-  });
-
-  return Object.entries(statusData)
-    .filter(([_, data]) => data.value > 0)
-    .map(([name, data]) => ({
-      name,
-      value: data.value,
-      items: data.items,
-      color: STATUS_COLORS[name === 'Válida' ? 'valid' : name === 'Vencida' ? 'expired' : 'pending'],
-    }));
-}, [calibrations]);
-```
-
-### 2. Criar Tooltip Customizado
-
-Criar um componente local que renderiza a lista de equipamentos:
-
-```typescript
-const CalibrationTooltip = ({ active, payload, label }: any) => {
-  if (!active || !payload?.length) return null;
-  
-  return (
-    <div className="rounded-lg border bg-background px-3 py-2 text-xs shadow-xl max-w-xs">
-      {label && <div className="font-medium mb-2">{label}</div>}
-      {payload.map((entry: any, idx: number) => {
-        const items = entry.payload?.items || entry.payload?.[`${entry.dataKey}_items`] || [];
-        return (
-          <div key={idx} className="mb-2">
-            <div className="flex items-center gap-2">
-              <div 
-                className="h-2.5 w-2.5 rounded-sm" 
-                style={{ backgroundColor: entry.color || entry.payload?.color }}
-              />
-              <span>{entry.name}: <strong>{entry.value}</strong></span>
-            </div>
-            {items.length > 0 && items.length <= 10 && (
-              <div className="ml-4 mt-1 text-muted-foreground">
-                {items.map((item: string, i: number) => (
-                  <div key={i}>• {item}</div>
-                ))}
-              </div>
-            )}
-            {items.length > 10 && (
-              <div className="ml-4 mt-1 text-muted-foreground">
-                <div>• {items.slice(0, 8).join(', ')}</div>
-                <div className="italic">+{items.length - 8} outros...</div>
-              </div>
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
-};
-```
-
-### 3. Aplicar nos Gráficos
-
-Substituir `<ChartTooltip content={<ChartTooltipContent />} />` pelo novo componente nos gráficos relevantes:
-
-```typescript
-<ChartTooltip content={<CalibrationTooltip />} />
-```
+### 4. Proteger o Dashboard contra erros de renderizacao
+- Adicionar `try/catch` nos componentes de graficos/dashboards que usam Recharts
 
 ---
 
-## Arquivos a Modificar
+### Detalhes Tecnicos
 
-| Arquivo | Tipo de Mudança |
-|---------|-----------------|
-| `src/components/calibrations/CalibrationsDashboard.tsx` | Adicionar tooltip customizado e enriquecer dados |
+**Arquivo: `src/components/ErrorBoundary.tsx`** (novo)
+- Componente class-based React Error Boundary
+- Exibe mensagem "Algo deu errado" com botao para recarregar a pagina
+- Captura e loga o erro no console
 
----
+**Arquivo: `src/App.tsx`** (modificar)
+- Envolver `<Routes>` com `<ErrorBoundary>`
+- Adicionar `useEffect` com listener `unhandledrejection`
+- Converter `App` de arrow function para componente funcional para usar hooks
 
-## Comportamento Visual Esperado
+**Arquivo: `src/hooks/useSystemAlerts.ts`** (modificar)
+- Envolver a `queryFn` principal em `try/catch` retornando array vazio em caso de erro
+- Usar `Promise.allSettled` para as consultas paralelas ao banco
+- Proteger cada bloco de processamento de alertas individualmente
 
-Ao passar o mouse sobre uma barra "Vencida" no gráfico:
-
-```text
-┌─────────────────────────────┐
-│ Fixo                        │
-├─────────────────────────────┤
-│ 🟢 Válida: 43               │
-│ 🔴 Vencida: 2               │
-│    • ECF-001234             │
-│    • ECF-005678             │
-└─────────────────────────────┘
-```
-
-Se houver muitos itens (>10), será resumido:
-
-```text
-│ 🔴 Vencida: 15              │
-│    • ECF-001, ECF-002, ...  │
-│    +7 outros...             │
-```
+**Arquivo: `src/pages/Index.tsx`** (modificar)
+- Adicionar `try/catch` no `Promise.all` que busca stats do dashboard
 
