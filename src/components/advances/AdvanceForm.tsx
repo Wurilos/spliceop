@@ -61,7 +61,7 @@ export function AdvanceForm({ open, onOpenChange, advance }: AdvanceFormProps) {
       contract_id: '',
       employee_id: '',
       intranet: '',
-      request_date: new Date().toISOString().split('T')[0],
+      request_date: getLocalDateString(),
       requested_value: 0,
       reason: '',
       closing_date: '',
@@ -101,7 +101,7 @@ export function AdvanceForm({ open, onOpenChange, advance }: AdvanceFormProps) {
         contract_id: '',
         employee_id: '',
         intranet: '',
-        request_date: new Date().toISOString().split('T')[0],
+        request_date: getLocalDateString(),
         requested_value: 0,
         reason: '',
         closing_date: '',
@@ -111,6 +111,12 @@ export function AdvanceForm({ open, onOpenChange, advance }: AdvanceFormProps) {
     }
   }, [advance, form, employees, contracts]);
 
+function getLocalDateString(date: Date = new Date()): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
 
   const onSubmit = (values: FormValues) => {
     const data = {

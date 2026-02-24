@@ -45,7 +45,10 @@ export default function Advances() {
     {
       key: 'request_date',
       label: 'Data Solicitação',
-      render: (value: string) => format(new Date(value), 'dd/MM/yyyy', { locale: ptBR }),
+      render: (value: string) => {
+        const [year, month, day] = value.split('-');
+        return `${day}/${month}/${year}`;
+      },
     },
     {
       key: 'contract_id',
@@ -81,8 +84,11 @@ export default function Advances() {
     {
       key: 'closing_date',
       label: 'Data Fechamento',
-      render: (value: string | null) => 
-        value ? format(new Date(value), 'dd/MM/yyyy', { locale: ptBR }) : '-',
+      render: (value: string | null) => {
+        if (!value) return '-';
+        const [year, month, day] = value.split('-');
+        return `${day}/${month}/${year}`;
+      },
     },
     {
       key: 'status',
@@ -124,13 +130,13 @@ export default function Advances() {
 
   const handleExport = (type: 'pdf' | 'excel' | 'csv') => {
     const data = advances.map((a) => ({
-      'Data Solicitação': format(new Date(a.request_date), 'dd/MM/yyyy'),
+      'Data Solicitação': a.request_date.split('-').reverse().join('/'),
       'Contrato': getContractName(a.contract_id),
       'Colaborador': getEmployeeName(a.employee_id),
       'Intranet': a.intranet || '',
       'Valor Solicitado': a.requested_value,
       'Motivo': a.reason || '',
-      'Data Fechamento': a.closing_date ? format(new Date(a.closing_date), 'dd/MM/yyyy') : '',
+      'Data Fechamento': a.closing_date ? a.closing_date.split('-').reverse().join('/') : '',
       'Valor Comprovado': a.proven_value || 0,
       'Saldo a Devolver': Math.max(0, (a.requested_value || 0) - (a.proven_value || 0)),
       'Status': a.status || '',
