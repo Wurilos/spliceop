@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tables } from '@/integrations/supabase/types';
 import { useContracts } from '@/hooks/useContracts';
+import { useContractAmendments } from '@/hooks/useContractAmendments';
 
 type Invoice = Tables<'invoices'>;
 
@@ -30,6 +31,7 @@ type FormData = z.infer<typeof schema>;
 
 export function InvoiceForm({ open, onOpenChange, onSubmit, initialData, loading }: { open: boolean; onOpenChange: (open: boolean) => void; onSubmit: (data: FormData) => void; initialData?: Invoice | null; loading?: boolean }) {
   const { contracts } = useContracts();
+  const { getEffectiveValue, allAmendments } = useContractAmendments();
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: { number: '', contract_id: '', issue_date: new Date().toISOString().split('T')[0], due_date: '', value: 0, monthly_value: 0, discount: 0, payment_date: '', status: 'pending', notes: '' },
@@ -39,15 +41,16 @@ export function InvoiceForm({ open, onOpenChange, onSubmit, initialData, loading
   const monthlyValue = useWatch({ control: form.control, name: 'monthly_value' });
   const contractValue = useWatch({ control: form.control, name: 'value' });
 
-  // Auto-fill contract value when contract is selected
+  // Auto-fill contract value when contract is selected (uses latest amendment value if available)
   useEffect(() => {
     if (contractId && !initialData) {
       const selectedContract = contracts.find(c => c.id === contractId);
-      if (selectedContract && selectedContract.value) {
-        form.setValue('value', Number(selectedContract.value));
+      if (selectedContract) {
+        const effectiveValue = getEffectiveValue(contractId, Number(selectedContract.value) || 0);
+        form.setValue('value', effectiveValue);
       }
     }
-  }, [contractId, contracts, form, initialData]);
+  }, [contractId, contracts, form, initialData, getEffectiveValue, allAmendments]);
 
   // Auto-calculate discount/addition based on contract value and monthly value
   useEffect(() => {
