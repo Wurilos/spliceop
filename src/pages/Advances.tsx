@@ -45,7 +45,10 @@ export default function Advances() {
     {
       key: 'request_date',
       label: 'Data Solicitação',
-      render: (value: string) => format(new Date(value), 'dd/MM/yyyy', { locale: ptBR }),
+      render: (value: string) => {
+        const [year, month, day] = value.split('-');
+        return `${day}/${month}/${year}`;
+      },
     },
     {
       key: 'contract_id',
