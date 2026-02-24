@@ -26,9 +26,19 @@ export function useInvoices() {
     refetchOnMount: 'always',
   });
 
+  const sanitizeDates = (record: any) => {
+    const sanitized = { ...record };
+    ['due_date', 'payment_date', 'issue_date'].forEach(field => {
+      if (field in sanitized && !sanitized[field]) {
+        sanitized[field] = null;
+      }
+    });
+    return sanitized;
+  };
+
   const createMutation = useMutation({
     mutationFn: async (record: InvoiceInsert) => {
-      const { data, error } = await supabase.from('invoices').insert(record).select().single();
+      const { data, error } = await supabase.from('invoices').insert(sanitizeDates(record)).select().single();
       if (error) throw error;
       return data;
     },
@@ -43,7 +53,7 @@ export function useInvoices() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, ...record }: InvoiceUpdate & { id: string }) => {
-      const { data, error } = await supabase.from('invoices').update(record).eq('id', id).select().single();
+      const { data, error } = await supabase.from('invoices').update(sanitizeDates(record)).eq('id', id).select().single();
       if (error) throw error;
       return data;
     },
