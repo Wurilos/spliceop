@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tables } from '@/integrations/supabase/types';
 import { useContracts } from '@/hooks/useContracts';
+import { useContractAmendments } from '@/hooks/useContractAmendments';
 
 type Invoice = Tables<'invoices'>;
 
