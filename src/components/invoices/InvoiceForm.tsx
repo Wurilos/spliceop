@@ -31,7 +31,7 @@ type FormData = z.infer<typeof schema>;
 
 export function InvoiceForm({ open, onOpenChange, onSubmit, initialData, loading }: { open: boolean; onOpenChange: (open: boolean) => void; onSubmit: (data: FormData) => void; initialData?: Invoice | null; loading?: boolean }) {
   const { contracts } = useContracts();
-  const { getEffectiveValue, allAmendments } = useContractAmendments();
+  const { allAmendments } = useContractAmendments();
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: { number: '', contract_id: '', issue_date: new Date().toISOString().split('T')[0], due_date: '', value: 0, monthly_value: 0, discount: 0, payment_date: '', status: 'pending', notes: '' },
