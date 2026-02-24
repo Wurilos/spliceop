@@ -67,7 +67,7 @@ export function InvoiceForm({ open, onOpenChange, onSubmit, initialData, loading
     const monthlyVal = Number(monthlyValue) || 0;
     
     if (contractVal > 0 && monthlyVal > 0) {
-      const difference = monthlyVal - contractVal;
+      const difference = Math.round((monthlyVal - contractVal) * 100) / 100;
       form.setValue('discount', difference);
     }
   }, [monthlyValue, contractValue, form]);
