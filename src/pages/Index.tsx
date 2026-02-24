@@ -57,6 +57,9 @@ export default function Index() {
           vehicles: vehicles.count || 0,
         });
         setLoadingStats(false);
+      }).catch((error) => {
+        console.error('[Dashboard] Erro ao carregar estatísticas:', error);
+        setLoadingStats(false);
       });
     }
   }, [user]);
