@@ -130,7 +130,7 @@ export default function Advances() {
 
   const handleExport = (type: 'pdf' | 'excel' | 'csv') => {
     const data = advances.map((a) => ({
-      'Data Solicitação': format(new Date(a.request_date), 'dd/MM/yyyy'),
+      'Data Solicitação': a.request_date.split('-').reverse().join('/'),
       'Contrato': getContractName(a.contract_id),
       'Colaborador': getEmployeeName(a.employee_id),
       'Intranet': a.intranet || '',
