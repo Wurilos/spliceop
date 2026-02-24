@@ -111,16 +111,6 @@ export function AdvanceForm({ open, onOpenChange, advance }: AdvanceFormProps) {
     }
   }, [advance, form, employees, contracts]);
 
-  // Reset employee when contract changes
-  useEffect(() => {
-    if (!advance && selectedContractId) {
-      const currentEmployee = form.getValues('employee_id');
-      const employeeInContract = filteredEmployees.find(e => e.id === currentEmployee);
-      if (!employeeInContract) {
-        form.setValue('employee_id', '');
-      }
-    }
-  }, [selectedContractId, filteredEmployees, form, advance]);
 
   const onSubmit = (values: FormValues) => {
     const data = {
