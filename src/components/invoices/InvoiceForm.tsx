@@ -67,7 +67,7 @@ export function InvoiceForm({ open, onOpenChange, onSubmit, initialData, loading
     const monthlyVal = Number(monthlyValue) || 0;
     
     if (contractVal > 0 && monthlyVal > 0) {
-      const difference = monthlyVal - contractVal;
+      const difference = Math.round((monthlyVal - contractVal) * 100) / 100;
       form.setValue('discount', difference);
     }
   }, [monthlyValue, contractValue, form]);
@@ -138,15 +138,25 @@ export function InvoiceForm({ open, onOpenChange, onSubmit, initialData, loading
             <div className="grid grid-cols-2 gap-4">
               <FormField control={form.control} name="value" render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Valor do Contrato (R$)</FormLabel>
-                  <FormControl><Input type="number" step="0.01" {...field} readOnly className="bg-muted" /></FormControl>
+                  <FormLabel>Valor do Contrato</FormLabel>
+                  <FormControl>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">R$</span>
+                      <Input type="number" step="0.01" {...field} readOnly className="bg-muted pl-10" />
+                    </div>
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )} />
               <FormField control={form.control} name="monthly_value" render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Valor do Mês (R$)</FormLabel>
-                  <FormControl><Input type="number" step="0.01" placeholder="0.00" {...field} /></FormControl>
+                  <FormLabel>Valor do Mês</FormLabel>
+                  <FormControl>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">R$</span>
+                      <Input type="number" step="0.01" placeholder="0.00" {...field} className="pl-10" />
+                    </div>
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )} />
@@ -154,8 +164,13 @@ export function InvoiceForm({ open, onOpenChange, onSubmit, initialData, loading
             <div className="grid grid-cols-2 gap-4">
               <FormField control={form.control} name="discount" render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Desconto/Acréscimo (R$)</FormLabel>
-                  <FormControl><Input type="number" step="0.01" {...field} readOnly className="bg-muted" /></FormControl>
+                  <FormLabel>Desconto/Acréscimo</FormLabel>
+                  <FormControl>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">R$</span>
+                      <Input type="number" step="0.01" {...field} readOnly className="bg-muted pl-10" />
+                    </div>
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )} />
