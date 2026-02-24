@@ -46,11 +46,20 @@ export function InvoiceForm({ open, onOpenChange, onSubmit, initialData, loading
     if (contractId && !initialData) {
       const selectedContract = contracts.find(c => c.id === contractId);
       if (selectedContract) {
-        const effectiveValue = getEffectiveValue(contractId, Number(selectedContract.value) || 0);
+        const originalValue = Number(selectedContract.value) || 0;
+        // Check amendments directly for this contract
+        const contractAmendments = allAmendments.filter(a => a.contract_id === contractId);
+        let effectiveValue = originalValue;
+        if (contractAmendments.length > 0) {
+          const latestAmendment = contractAmendments.reduce((prev, curr) =>
+            curr.amendment_number > prev.amendment_number ? curr : prev
+          );
+          effectiveValue = Number(latestAmendment.value) || originalValue;
+        }
         form.setValue('value', effectiveValue);
       }
     }
-  }, [contractId, contracts, form, initialData, getEffectiveValue, allAmendments]);
+  }, [contractId, contracts, form, initialData, allAmendments]);
 
   // Auto-calculate discount/addition based on contract value and monthly value
   useEffect(() => {
