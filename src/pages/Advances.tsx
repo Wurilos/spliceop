@@ -84,8 +84,11 @@ export default function Advances() {
     {
       key: 'closing_date',
       label: 'Data Fechamento',
-      render: (value: string | null) => 
-        value ? format(new Date(value), 'dd/MM/yyyy', { locale: ptBR }) : '-',
+      render: (value: string | null) => {
+        if (!value) return '-';
+        const [year, month, day] = value.split('-');
+        return `${day}/${month}/${year}`;
+      },
     },
     {
       key: 'status',
