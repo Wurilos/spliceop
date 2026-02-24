@@ -74,11 +74,8 @@ export function AdvanceForm({ open, onOpenChange, advance }: AdvanceFormProps) {
   const requestedValue = form.watch('requested_value') || 0;
   const provenValue = form.watch('proven_value') || 0;
 
-  // Filter employees by selected contract
-  const filteredEmployees = useMemo(() => {
-    if (!selectedContractId) return employees;
-    return employees.filter(e => e.contract_id === selectedContractId);
-  }, [employees, selectedContractId]);
+  // Show all employees regardless of contract
+  const filteredEmployees = employees;
 
   // Calculate balance to return
   const balanceToReturn = useMemo(() => {
@@ -114,16 +111,6 @@ export function AdvanceForm({ open, onOpenChange, advance }: AdvanceFormProps) {
     }
   }, [advance, form, employees, contracts]);
 
-  // Reset employee when contract changes
-  useEffect(() => {
-    if (!advance && selectedContractId) {
-      const currentEmployee = form.getValues('employee_id');
-      const employeeInContract = filteredEmployees.find(e => e.id === currentEmployee);
-      if (!employeeInContract) {
-        form.setValue('employee_id', '');
-      }
-    }
-  }, [selectedContractId, filteredEmployees, form, advance]);
 
   const onSubmit = (values: FormValues) => {
     const data = {
