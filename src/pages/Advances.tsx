@@ -136,7 +136,7 @@ export default function Advances() {
       'Intranet': a.intranet || '',
       'Valor Solicitado': a.requested_value,
       'Motivo': a.reason || '',
-      'Data Fechamento': a.closing_date ? format(new Date(a.closing_date), 'dd/MM/yyyy') : '',
+      'Data Fechamento': a.closing_date ? a.closing_date.split('-').reverse().join('/') : '',
       'Valor Comprovado': a.proven_value || 0,
       'Saldo a Devolver': Math.max(0, (a.requested_value || 0) - (a.proven_value || 0)),
       'Status': a.status || '',

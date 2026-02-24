@@ -101,7 +101,7 @@ export function AdvanceForm({ open, onOpenChange, advance }: AdvanceFormProps) {
         contract_id: '',
         employee_id: '',
         intranet: '',
-        request_date: new Date().toISOString().split('T')[0],
+        request_date: getLocalDateString(),
         requested_value: 0,
         reason: '',
         closing_date: '',
