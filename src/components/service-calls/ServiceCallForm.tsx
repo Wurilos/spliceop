@@ -28,7 +28,7 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>;
 
-const defaultCallTypes = ['Instalação', 'Manutenção Corretiva', 'Manutenção Preventiva', 'Aferição', 'Relocação', 'Desinstalação', 'Suporte', 'INFRA PARCIAL', 'INFRA COMPLETA', 'AJUSTE DE EQUIPAMENTO/ ATIVAÇÃO_AFERIÇÃO', 'AJUSTE DE EQUIPAMENTO/ ATIVAÇÃO_AFERIÇÃO - RTM', 'AJUSTE DE EQUIPAMENTO/ ATIVAÇÃO_IMPLANTAÇÃO', 'CHECK LIST - RTM', 'CHECK LIST - ELETRICISTA', 'EQUIPAMENTO SEM COMUNICAÇÃO - RTM', 'LIGAÇÃO DE ENERGIA', 'AFERIÇÃO PERIODICA', 'NÃO GERA INFRAÇÃO', 'ATENDIMENTOS ADMINISTRATIVOS/OPERACIONAL'];
+const defaultCallTypes = ['BASE', 'Instalação', 'Manutenção Corretiva', 'Manutenção Preventiva', 'Aferição', 'Relocação', 'Desinstalação', 'Suporte', 'INFRA PARCIAL', 'INFRA COMPLETA', 'AJUSTE DE EQUIPAMENTO/ ATIVAÇÃO_AFERIÇÃO', 'AJUSTE DE EQUIPAMENTO/ ATIVAÇÃO_AFERIÇÃO - RTM', 'AJUSTE DE EQUIPAMENTO/ ATIVAÇÃO_IMPLANTAÇÃO', 'CHECK LIST - RTM', 'CHECK LIST - ELETRICISTA', 'EQUIPAMENTO SEM COMUNICAÇÃO - RTM', 'LIGAÇÃO DE ENERGIA', 'AFERIÇÃO PERIODICA', 'NÃO GERA INFRAÇÃO', 'ATENDIMENTOS ADMINISTRATIVOS/OPERACIONAL'];
 
 export function ServiceCallForm({ open, onOpenChange, onSubmit, initialData, loading }: { open: boolean; onOpenChange: (open: boolean) => void; onSubmit: (data: FormData) => void; initialData?: ServiceCall | null; loading?: boolean }) {
   const callTypes = initialData?.type && !defaultCallTypes.includes(initialData.type)
