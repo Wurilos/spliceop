@@ -19,12 +19,14 @@ interface Contract {
 interface EquipmentFiltersProps {
   contracts: Contract[];
   equipment: any[];
+  searchTerm: string;
   selectedContract: string;
   selectedSpeed: string;
   selectedCommunication: string;
   selectedEnergy: string;
   selectedType: string;
   selectedStatus: string;
+  onSearchChange: (value: string) => void;
   onContractChange: (value: string) => void;
   onSpeedChange: (value: string) => void;
   onCommunicationChange: (value: string) => void;
