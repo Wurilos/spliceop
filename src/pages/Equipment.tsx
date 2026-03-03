@@ -99,6 +99,7 @@ export default function EquipmentPage() {
   const itemsPerPage = 10;
 
   // Filter states
+  const [searchTerm, setSearchTerm] = useState('');
   const [filterContract, setFilterContract] = useState('all');
   const [filterSpeed, setFilterSpeed] = useState('all');
   const [filterCommunication, setFilterCommunication] = useState('all');
@@ -109,6 +110,7 @@ export default function EquipmentPage() {
   // Apply filters
   const filteredEquipment = useMemo(() => {
     return equipment.filter((eq) => {
+      if (searchTerm && !eq.serial_number?.toLowerCase().includes(searchTerm.toLowerCase())) return false;
       if (filterContract !== 'all' && eq.contract_id !== filterContract) return false;
       if (filterSpeed !== 'all' && eq.speed_limit !== Number(filterSpeed)) return false;
       if (filterCommunication !== 'all' && eq.communication_type !== filterCommunication) return false;
@@ -117,9 +119,10 @@ export default function EquipmentPage() {
       if (filterStatus !== 'all' && eq.status !== filterStatus) return false;
       return true;
     });
-  }, [equipment, filterContract, filterSpeed, filterCommunication, filterEnergy, filterType, filterStatus]);
+  }, [equipment, searchTerm, filterContract, filterSpeed, filterCommunication, filterEnergy, filterType, filterStatus]);
 
   const clearFilters = () => {
+    setSearchTerm('');
     setFilterContract('all');
     setFilterSpeed('all');
     setFilterCommunication('all');
