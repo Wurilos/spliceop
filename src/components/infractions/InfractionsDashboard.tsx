@@ -1,9 +1,6 @@
 import { useMemo, useState } from 'react';
-import { format, startOfMonth, endOfMonth, parseISO } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useInfractions } from '@/hooks/useInfractions';
 import { useEquipment } from '@/hooks/useEquipment';
