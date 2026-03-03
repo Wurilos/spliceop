@@ -563,12 +563,14 @@ export default function EquipmentPage() {
               <EquipmentFilters
                 contracts={contracts}
                 equipment={equipment}
+                searchTerm={searchTerm}
                 selectedContract={filterContract}
                 selectedSpeed={filterSpeed}
                 selectedCommunication={filterCommunication}
                 selectedEnergy={filterEnergy}
                 selectedType={filterType}
                 selectedStatus={filterStatus}
+                onSearchChange={(v) => { setSearchTerm(v); setCurrentPage(1); }}
                 onContractChange={(v) => { setFilterContract(v); setCurrentPage(1); }}
                 onSpeedChange={(v) => { setFilterSpeed(v); setCurrentPage(1); }}
                 onCommunicationChange={(v) => { setFilterCommunication(v); setCurrentPage(1); }}
