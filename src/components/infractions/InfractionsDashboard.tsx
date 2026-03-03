@@ -1,9 +1,6 @@
 import { useMemo, useState } from 'react';
-import { format, startOfMonth, endOfMonth, parseISO } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useInfractions } from '@/hooks/useInfractions';
 import { useEquipment } from '@/hooks/useEquipment';
@@ -20,8 +17,21 @@ export function InfractionsDashboard() {
   
   const [selectedContract, setSelectedContract] = useState<string>('all');
   const [selectedEquipment, setSelectedEquipment] = useState<string>('all');
-  const [startDate, setStartDate] = useState<string>('');
-  const [endDate, setEndDate] = useState<string>('');
+  const [selectedMonth, setSelectedMonth] = useState<string>('all');
+  const [selectedYear, setSelectedYear] = useState<string>('all');
+
+  // Available months and years from registered data
+  const availableYears = useMemo(() => {
+    const years = [...new Set(infractions.map(i => i.year).filter(Boolean))] as number[];
+    return years.sort((a, b) => b - a);
+  }, [infractions]);
+
+  const availableMonths = useMemo(() => {
+    const months = [...new Set(infractions.map(i => i.month).filter(Boolean))] as string[];
+    const monthOrder = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+      'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+    return months.sort((a, b) => monthOrder.indexOf(a) - monthOrder.indexOf(b));
+  }, [infractions]);
 
   const filteredInfractions = useMemo(() => {
     return infractions.filter((infraction) => {
@@ -31,20 +41,15 @@ export function InfractionsDashboard() {
       if (selectedEquipment !== 'all' && infraction.equipment_id !== selectedEquipment) {
         return false;
       }
-      // Filter by year/month combination using startDate and endDate
-      if (startDate || endDate) {
-        const infractionYear = infraction.year || 0;
-        const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-          'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
-        const infractionMonth = infraction.month ? months.indexOf(infraction.month) + 1 : 1;
-        const infractionDate = new Date(infractionYear, infractionMonth - 1, 1);
-        
-        if (startDate && infractionDate < new Date(startDate)) return false;
-        if (endDate && infractionDate > new Date(endDate)) return false;
+      if (selectedMonth !== 'all' && infraction.month !== selectedMonth) {
+        return false;
+      }
+      if (selectedYear !== 'all' && infraction.year !== Number(selectedYear)) {
+        return false;
       }
       return true;
     });
-  }, [infractions, selectedContract, selectedEquipment, startDate, endDate]);
+  }, [infractions, selectedContract, selectedEquipment, selectedMonth, selectedYear]);
 
   // Stats
   const totalImages = filteredInfractions.reduce((sum, i) => sum + (i.image_count || 0), 0);
@@ -192,20 +197,32 @@ export function InfractionsDashboard() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Data Inicial</Label>
-              <Input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-              />
+              <Label>Mês</Label>
+              <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos os meses" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os meses</SelectItem>
+                  {availableMonths.map((m) => (
+                    <SelectItem key={m} value={m}>{m}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
-              <Label>Data Final</Label>
-              <Input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-              />
+              <Label>Ano</Label>
+              <Select value={selectedYear} onValueChange={setSelectedYear}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos os anos" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os anos</SelectItem>
+                  {availableYears.map((y) => (
+                    <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </CardContent>
