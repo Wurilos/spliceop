@@ -1,4 +1,4 @@
-import { Filter, X } from 'lucide-react';
+import { Filter, Search, X } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -7,6 +7,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 interface Contract {
   id: string;
